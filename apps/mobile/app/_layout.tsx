@@ -4,6 +4,22 @@ import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter'
+import {
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans'
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono'
 import '../global.css'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/lib/supabase'
@@ -63,7 +79,21 @@ async function resolveProfileState(
 export default function RootLayout() {
   const { setSession, setRole, setOnboardingComplete, setLoading, reset } = useAuthStore()
 
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_700Bold,
+  })
+
   useEffect(() => {
+    if (!fontsLoaded) return
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session?.user) {
@@ -83,7 +113,7 @@ export default function RootLayout() {
     })
 
     return () => subscription.unsubscribe()
-  }, [setSession, setRole, setOnboardingComplete, setLoading, reset])
+  }, [fontsLoaded, setSession, setRole, setOnboardingComplete, setLoading, reset])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
