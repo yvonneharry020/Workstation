@@ -6,9 +6,11 @@ interface AuthState {
   session: Session | null
   user: User | null
   role: UserRole | null
+  isOnboardingComplete: boolean
   isLoading: boolean
   setSession: (session: Session | null) => void
   setRole: (role: UserRole | null) => void
+  setOnboardingComplete: (complete: boolean) => void
   setLoading: (loading: boolean) => void
   reset: () => void
 }
@@ -17,6 +19,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   user: null,
   role: null,
+  isOnboardingComplete: false,
   isLoading: true,
 
   setSession: (session) =>
@@ -24,8 +27,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setRole: (role) => set({ role }),
 
+  setOnboardingComplete: (isOnboardingComplete) => set({ isOnboardingComplete }),
+
   setLoading: (isLoading) => set({ isLoading }),
 
   reset: () =>
-    set({ session: null, user: null, role: null, isLoading: false }),
+    set({ session: null, user: null, role: null, isOnboardingComplete: false, isLoading: false }),
 }))

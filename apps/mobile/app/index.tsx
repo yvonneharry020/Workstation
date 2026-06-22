@@ -3,7 +3,7 @@ import { View, ActivityIndicator } from 'react-native'
 import { useAuthStore } from '@/stores/authStore'
 
 export default function Index() {
-  const { session, role, isLoading } = useAuthStore()
+  const { session, role, isOnboardingComplete, isLoading } = useAuthStore()
 
   if (isLoading) {
     return (
@@ -18,10 +18,16 @@ export default function Index() {
   }
 
   if (role === 'candidate') {
+    if (!isOnboardingComplete) {
+      return <Redirect href="/(onboarding)/candidate/step-1" />
+    }
     return <Redirect href="/(candidate)/" />
   }
 
   if (role === 'company') {
+    if (!isOnboardingComplete) {
+      return <Redirect href="/(onboarding)/company/step-1" />
+    }
     return <Redirect href="/(company)/" />
   }
 

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '../global.css'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/lib/supabase'
+import type { UserRole } from '@workstation/types'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -20,22 +21,69 @@ const queryClient = new QueryClient({
   },
 })
 
+async function resolveProfileState(
+  userId: string,
+  setRole: (role: UserRole | null) => void,
+  setOnboardingComplete: (v: boolean) => void,
+) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+
+  if (!profile) {
+    setRole(null)
+    setOnboardingComplete(false)
+    return
+  }
+
+  const role = profile.role as UserRole
+  setRole(role)
+
+  if (role === 'candidate') {
+    const { data: cp } = await supabase
+      .from('candidate_profiles')
+      .select('first_name')
+      .eq('id', userId)
+      .single()
+    setOnboardingComplete(!!cp?.first_name)
+  } else if (role === 'company') {
+    const { data: co } = await supabase
+      .from('company_profiles')
+      .select('company_name')
+      .eq('id', userId)
+      .single()
+    setOnboardingComplete(!!co?.company_name)
+  } else {
+    setOnboardingComplete(true)
+  }
+}
+
 export default function RootLayout() {
-  const { setSession, setLoading } = useAuthStore()
+  const { setSession, setRole, setOnboardingComplete, setLoading, reset } = useAuthStore()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
+      if (session?.user) {
+        await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+      }
       setLoading(false)
       SplashScreen.hideAsync()
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
+      if (session?.user) {
+        await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+      } else {
+        reset()
+      }
     })
 
     return () => subscription.unsubscribe()
-  }, [setSession, setLoading])
+  }, [setSession, setRole, setOnboardingComplete, setLoading, reset])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
