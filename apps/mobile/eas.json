@@ -1,0 +1,44 @@
+{
+  "cli": {
+    "version": ">= 9.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_MOCK_VERIFICATION": "true"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "preview",
+        "EXPO_PUBLIC_MOCK_VERIFICATION": "true"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_MOCK_VERIFICATION": "false"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+      }
+    }
+  }
+}

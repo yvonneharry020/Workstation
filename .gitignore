@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment files — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# EAS
+android/
+ios/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+build/
+dist/
+
+# Turbo
+.turbo/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Temp
+*.tmp
+*.temp
+/tmp/
