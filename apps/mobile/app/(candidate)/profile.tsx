@@ -1,11 +1,492 @@
-import { View, Text } from 'react-native'
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Image } from 'expo-image'
+import { router } from 'expo-router'
+import { useQuery } from '@tanstack/react-query'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import Svg, { Circle } from 'react-native-svg'
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/authStore'
+
+interface CandidateData {
+  id: string
+  first_name: string
+  last_name: string
+  headline: string | null
+  bio: string | null
+  avatar_url: string | null
+  github_url: string | null
+  linkedin_url: string | null
+  portfolio_url: string | null
+  profile_completion: number
+  is_open_to_work: boolean
+  nin_verified: boolean
+  phone_verified: boolean
+  liveness_verified: boolean
+  preferred_work_mode: string | null
+  trust_scores: { score: number; level: string } | null
+}
+
+interface WorkHistory {
+  id: string
+  job_title: string
+  company_name: string
+  start_date: string
+  end_date: string | null
+  is_current: boolean
+  description: string | null
+}
+
+interface Education {
+  id: string
+  institution: string
+  degree: string
+  field_of_study: string | null
+  start_year: number | null
+  end_year: number | null
+}
+
+interface Skill {
+  id: string
+  skills: { name: string; category: string | null } | null
+}
+
+interface BadgeSummary {
+  id: string
+  role_held: string
+  issued_at: string
+  company_profiles: { company_name: string; logo_url: string | null; is_verified: boolean } | null
+}
+
+const TRUST_LEVEL_COLORS: Record<string, string> = {
+  bronze: '#CD7F32',
+  silver: '#C0C0C0',
+  gold: '#FFD700',
+  platinum: '#0DD4C3',
+}
+
+function SmallTrustRing({ score }: { score: number }) {
+  const circ = 2 * Math.PI * 36
+  const color = score >= 80 ? '#22C55E' : score >= 50 ? '#F59E0B' : '#EF4444'
+  return (
+    <View style={{ width: 80, height: 80, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={80} height={80} viewBox="0 0 80 80">
+        <Circle cx="40" cy="40" r="36" stroke="#1E1B2E" strokeWidth={6} fill="none" />
+        <Circle
+          cx="40" cy="40" r="36"
+          stroke={color}
+          strokeWidth={6}
+          fill="none"
+          strokeDasharray={`${(score / 100) * circ} ${circ}`}
+          strokeLinecap="round"
+          transform="rotate(-90 40 40)"
+        />
+      </Svg>
+      <View style={{ position: 'absolute', alignItems: 'center' }}>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{score}</Text>
+      </View>
+    </View>
+  )
+}
+
+function VerifPill({ label, verified }: { label: string; verified: boolean }) {
+  const color = verified ? '#22C55E' : '#64748B'
+  return (
+    <View style={{
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 10,
+      backgroundColor: color + '15',
+      borderWidth: 1,
+      borderColor: color + '40',
+      marginRight: 6,
+    }}>
+      <Text style={{ color, fontSize: 11, fontWeight: '600' }}>
+        {verified ? `${label} ✓` : `${label} ○`}
+      </Text>
+    </View>
+  )
+}
+
+function SectionLabel({ title }: { title: string }) {
+  return (
+    <Text style={{
+      color: '#94A3B8',
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginBottom: 12,
+    }}>
+      {title}
+    </Text>
+  )
+}
+
+function formatPeriod(start: string, end: string | null, isCurrent: boolean): string {
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
+  const endLabel = isCurrent ? 'Present' : (end ? fmt(end) : '')
+  return `${fmt(start)} – ${endLabel}`
+}
 
 export default function CandidateProfileScreen() {
+  const user = useAuthStore((s) => s.user)
+
+  const { data: candidate, isLoading } = useQuery<CandidateData>({
+    queryKey: ['candidate-profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('candidate_profiles')
+        .select('*, trust_scores(score, level)')
+        .eq('id', user!.id)
+        .single()
+      if (error) throw new Error(error.message)
+      return data as unknown as CandidateData
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2,
+  })
+
+  const { data: workHistory = [] } = useQuery<WorkHistory[]>({
+    queryKey: ['candidate-work', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('candidate_work_history')
+        .select('*')
+        .eq('candidate_id', user!.id)
+        .order('start_date', { ascending: false })
+      if (error) throw new Error(error.message)
+      return (data ?? []) as WorkHistory[]
+    },
+    enabled: !!user?.id,
+  })
+
+  const { data: education = [] } = useQuery<Education[]>({
+    queryKey: ['candidate-education', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('candidate_education')
+        .select('*')
+        .eq('candidate_id', user!.id)
+      if (error) throw new Error(error.message)
+      return (data ?? []) as Education[]
+    },
+    enabled: !!user?.id,
+  })
+
+  const { data: skills = [] } = useQuery<Skill[]>({
+    queryKey: ['candidate-skills', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('candidate_skills')
+        .select('id, skills(name, category)')
+        .eq('candidate_id', user!.id)
+      if (error) throw new Error(error.message)
+      return (data ?? []) as unknown as Skill[]
+    },
+    enabled: !!user?.id,
+  })
+
+  const { data: badges = [] } = useQuery<BadgeSummary[]>({
+    queryKey: ['candidate-badges-preview', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('badges')
+        .select('id, role_held, issued_at, company_profiles(company_name, logo_url, is_verified)')
+        .eq('recipient_id', user!.id)
+        .eq('status', 'active')
+        .limit(3)
+      if (error) throw new Error(error.message)
+      return (data ?? []) as unknown as BadgeSummary[]
+    },
+    enabled: !!user?.id,
+  })
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface items-center justify-center">
+        <ActivityIndicator color="#FF6240" size="large" />
+      </SafeAreaView>
+    )
+  }
+
+  const trustScore = candidate?.trust_scores?.score ?? 0
+  const trustLevel = candidate?.trust_scores?.level ?? 'bronze'
+  const levelColor = TRUST_LEVEL_COLORS[trustLevel] ?? '#CD7F32'
+  const fullName = candidate ? `${candidate.first_name} ${candidate.last_name}` : 'Your Profile'
+  const hasSocialLinks = !!(candidate?.github_url || candidate?.linkedin_url || candidate?.portfolio_url)
+
   return (
-    <SafeAreaView className="flex-1 bg-surface px-6 pt-6">
-      <Text className="text-white text-2xl font-bold mb-2">My Profile</Text>
-      <Text className="text-slate-400 text-sm">Your public professional profile</Text>
+    <SafeAreaView className="flex-1 bg-surface">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <Animated.View entering={FadeInDown.duration(400)} className="flex-row items-center justify-between mt-4 mb-6">
+          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>My Profile</Text>
+          <Pressable onPress={() => router.push('/(candidate)/profile/edit')} hitSlop={12}>
+            <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>Edit profile</Text>
+          </Pressable>
+        </Animated.View>
+
+        {/* Avatar + name */}
+        <Animated.View entering={FadeInDown.delay(80).duration(400)} className="items-center mb-5">
+          <Image
+            source={candidate?.avatar_url ? { uri: candidate.avatar_url } : undefined}
+            style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 12, backgroundColor: '#1E1B2E' }}
+            contentFit="cover"
+          />
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', textAlign: 'center' }}>
+            {fullName}
+          </Text>
+          {candidate?.headline ? (
+            <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 4 }}>
+              {candidate.headline}
+            </Text>
+          ) : null}
+          {candidate?.is_open_to_work ? (
+            <View style={{
+              marginTop: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 5,
+              borderRadius: 12,
+              backgroundColor: '#22C55E15',
+              borderWidth: 1,
+              borderColor: '#22C55E40',
+            }}>
+              <Text style={{ color: '#22C55E', fontSize: 12, fontWeight: '600' }}>✓ Open to work</Text>
+            </View>
+          ) : null}
+        </Animated.View>
+
+        {/* Verification pills */}
+        <Animated.View entering={FadeInDown.delay(120).duration(400)} className="flex-row mb-5">
+          <VerifPill label="Phone" verified={candidate?.phone_verified ?? false} />
+          <VerifPill label="NIN" verified={candidate?.nin_verified ?? false} />
+          <VerifPill label="Liveness" verified={candidate?.liveness_verified ?? false} />
+        </Animated.View>
+
+        {/* Trust score card */}
+        <Animated.View
+          entering={FadeInDown.delay(160).duration(400)}
+          style={{
+            backgroundColor: '#131118',
+            borderWidth: 1,
+            borderColor: '#1E1B2E',
+            borderRadius: 16,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          <SmallTrustRing score={trustScore} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>TRUST SCORE</Text>
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 6 }}>
+              {trustScore}
+              <Text style={{ color: '#64748B', fontSize: 13 }}>/100</Text>
+            </Text>
+            <View style={{
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 8,
+              backgroundColor: levelColor + '20',
+              borderWidth: 1,
+              borderColor: levelColor + '40',
+              alignSelf: 'flex-start',
+            }}>
+              <Text style={{ color: levelColor, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' }}>
+                {trustLevel}
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* About */}
+        <Animated.View entering={FadeInDown.delay(200).duration(400)} style={{ marginBottom: 24 }}>
+          <SectionLabel title="About" />
+          {candidate?.bio ? (
+            <Text style={{ color: '#CBD5E1', fontSize: 14, lineHeight: 22 }}>{candidate.bio}</Text>
+          ) : (
+            <Text style={{ color: '#475569', fontSize: 14, fontStyle: 'italic' }}>
+              No bio added yet. Tap Edit profile to add one.
+            </Text>
+          )}
+        </Animated.View>
+
+        {/* Skills */}
+        {skills.length > 0 ? (
+          <Animated.View entering={FadeInDown.delay(240).duration(400)} style={{ marginBottom: 24 }}>
+            <SectionLabel title="Skills" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {skills.map((s) => (
+                <View key={s.id} style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 10,
+                  backgroundColor: '#1E1B2E',
+                  borderWidth: 1,
+                  borderColor: '#2D2A3E',
+                }}>
+                  <Text style={{ color: '#CBD5E1', fontSize: 13 }}>{s.skills?.name ?? ''}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* Work history */}
+        {workHistory.length > 0 ? (
+          <Animated.View entering={FadeInDown.delay(280).duration(400)} style={{ marginBottom: 24 }}>
+            <SectionLabel title="Work Experience" />
+            {workHistory.map((w) => (
+              <View key={w.id} style={{
+                backgroundColor: '#131118',
+                borderWidth: 1,
+                borderColor: '#1E1B2E',
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 10,
+              }}>
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 2 }}>{w.job_title}</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 13 }}>{w.company_name}</Text>
+                <Text style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>
+                  {formatPeriod(w.start_date, w.end_date, w.is_current)}
+                </Text>
+                {w.is_current ? (
+                  <View style={{ marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: '#22C55E15' }}>
+                    <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '600' }}>Current role</Text>
+                  </View>
+                ) : null}
+                {w.description ? (
+                  <Text style={{ color: '#64748B', fontSize: 12, marginTop: 8, lineHeight: 18 }} numberOfLines={3}>
+                    {w.description}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </Animated.View>
+        ) : null}
+
+        {/* Education */}
+        {education.length > 0 ? (
+          <Animated.View entering={FadeInDown.delay(320).duration(400)} style={{ marginBottom: 24 }}>
+            <SectionLabel title="Education" />
+            {education.map((e) => (
+              <View key={e.id} style={{
+                backgroundColor: '#131118',
+                borderWidth: 1,
+                borderColor: '#1E1B2E',
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 10,
+              }}>
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 2 }}>{e.degree}</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 13 }}>{e.institution}</Text>
+                {e.field_of_study ? (
+                  <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{e.field_of_study}</Text>
+                ) : null}
+                {(e.start_year || e.end_year) ? (
+                  <Text style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>
+                    {e.start_year} – {e.end_year ?? 'Present'}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </Animated.View>
+        ) : null}
+
+        {/* Badges preview */}
+        {badges.length > 0 ? (
+          <Animated.View entering={FadeInDown.delay(360).duration(400)} style={{ marginBottom: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <SectionLabel title="Badges" />
+              <Pressable onPress={() => router.push('/(candidate)/badges')} hitSlop={10}>
+                <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>View all →</Text>
+              </Pressable>
+            </View>
+            {badges.map((b) => (
+              <View key={b.id} style={{
+                backgroundColor: '#131118',
+                borderWidth: 1,
+                borderColor: '#1E1B2E',
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}>
+                {b.company_profiles?.logo_url ? (
+                  <Image source={{ uri: b.company_profiles.logo_url }} style={{ width: 40, height: 40, borderRadius: 10 }} contentFit="cover" />
+                ) : (
+                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 18 }}>🏅</Text>
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{b.role_held}</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 12 }}>{b.company_profiles?.company_name}</Text>
+                </View>
+                <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#0DD4C320' }}>
+                  <Text style={{ color: '#0DD4C3', fontSize: 10, fontWeight: '700' }}>VERIFIED</Text>
+                </View>
+              </View>
+            ))}
+          </Animated.View>
+        ) : null}
+
+        {/* Social links */}
+        {hasSocialLinks ? (
+          <Animated.View entering={FadeInDown.delay(400).duration(400)} style={{ marginBottom: 24 }}>
+            <SectionLabel title="Links" />
+            <View style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 14, overflow: 'hidden' }}>
+              {candidate?.github_url ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#1E1B2E', gap: 10 }}>
+                  <Text style={{ fontSize: 16 }}>🐙</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 13, flex: 1 }} numberOfLines={1}>{candidate.github_url}</Text>
+                </View>
+              ) : null}
+              {candidate?.linkedin_url ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: candidate?.portfolio_url ? 1 : 0, borderBottomColor: '#1E1B2E', gap: 10 }}>
+                  <Text style={{ fontSize: 16 }}>💼</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 13, flex: 1 }} numberOfLines={1}>{candidate.linkedin_url}</Text>
+                </View>
+              ) : null}
+              {candidate?.portfolio_url ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 }}>
+                  <Text style={{ fontSize: 16 }}>🌐</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 13, flex: 1 }} numberOfLines={1}>{candidate.portfolio_url}</Text>
+                </View>
+              ) : null}
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* As-seen note */}
+        <View style={{
+          backgroundColor: '#0DD4C310',
+          borderWidth: 1,
+          borderColor: '#0DD4C330',
+          borderRadius: 12,
+          padding: 12,
+        }}>
+          <Text style={{ color: '#0DD4C3', fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+            👁 This is how verified companies see your profile
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }

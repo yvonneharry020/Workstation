@@ -7,18 +7,16 @@ export default function CandidateLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1E293B',
-          borderTopColor: '#334155',
+          backgroundColor: '#0D0C14',
+          borderTopColor: '#1E1B2E',
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 68,
+          paddingBottom: 10,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: '#6366F1',
-        tabBarInactiveTintColor: '#64748B',
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-        },
+        tabBarActiveTintColor: '#FF6240',
+        tabBarInactiveTintColor: '#475569',
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}
     >
       <Tabs.Screen
@@ -42,7 +40,7 @@ export default function CandidateLayout() {
       <Tabs.Screen
         name="applications"
         options={{
-          title: 'Applications',
+          title: 'Applied',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text-outline" size={size} color={color} />
           ),
@@ -57,6 +55,12 @@ export default function CandidateLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="saved" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="profile-views" options={{ href: null }} />
+      <Tabs.Screen name="badges" options={{ href: null }} />
+      <Tabs.Screen name="portfolio" options={{ href: null }} />
     </Tabs>
   )
 }
