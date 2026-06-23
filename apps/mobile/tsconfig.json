@@ -4,15 +4,22 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@/*": ["./*"],
-      "@workstation/types": ["../../packages/types/src/index.ts"],
-      "@workstation/validators": ["../../packages/validators/src/index.ts"]
+      "@/*": [
+        "./*"
+      ],
+      "@workstation/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@workstation/validators": [
+        "../../packages/validators/src/index.ts"
+      ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.d.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
   ]
 }

@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { View, Modal } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
@@ -23,6 +24,11 @@ import {
 import '../global.css'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/lib/supabase'
+import { useNetworkStatus } from '@/lib/useNetworkStatus'
+import { usePlatformConfig } from '@/lib/usePlatformConfig'
+import { OfflineScreen } from '@/components/system/OfflineScreen'
+import { UpdateRequiredScreen } from '@/components/system/UpdateRequiredScreen'
+import { MaintenanceScreen } from '@/components/system/MaintenanceScreen'
 import type { UserRole } from '@workstation/types'
 
 SplashScreen.preventAutoHideAsync()
@@ -76,6 +82,36 @@ async function resolveProfileState(
   }
 }
 
+function SystemOverlay() {
+  const isOnline = useNetworkStatus()
+  const { isMaintenanceMode, maintenanceMessage, isUpdateRequired } = usePlatformConfig()
+  const [retryCount, setRetryCount] = useState(0)
+
+  const showOffline = !isOnline
+  const showUpdate = isOnline && isUpdateRequired
+  const showMaintenance = isOnline && !isUpdateRequired && isMaintenanceMode
+  const isVisible = showOffline || showUpdate || showMaintenance
+
+  return (
+    <Modal
+      visible={isVisible}
+      statusBarTranslucent
+      transparent={false}
+      animationType="fade"
+    >
+      <View style={{ flex: 1, backgroundColor: '#09080E' }}>
+        {showOffline ? (
+          <OfflineScreen onRetry={() => setRetryCount((c) => c + 1)} key={retryCount} />
+        ) : showUpdate ? (
+          <UpdateRequiredScreen />
+        ) : (
+          <MaintenanceScreen message={maintenanceMessage} />
+        )}
+      </View>
+    </Modal>
+  )
+}
+
 export default function RootLayout() {
   const { setSession, setRole, setOnboardingComplete, setLoading, reset } = useAuthStore()
 
@@ -94,16 +130,19 @@ export default function RootLayout() {
   useEffect(() => {
     if (!fontsLoaded) return
 
+    SplashScreen.hideAsync()
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session?.user) {
         await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
       }
       setLoading(false)
-      SplashScreen.hideAsync()
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       if (session?.user) {
         await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
@@ -120,6 +159,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }} />
+        <SystemOverlay />
       </QueryClientProvider>
     </GestureHandlerRootView>
   )
