@@ -1,41 +1,301 @@
-import { View, Text, ScrollView } from 'react-native'
+import { View, Text, ScrollView, Pressable, FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { router } from 'expo-router'
+import { Image } from 'expo-image'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import Svg, { Path, Circle } from 'react-native-svg'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/authStore'
+
+type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
+
+interface RecentApplication {
+  id: string
+  pipeline_stage: PipelineStage
+  email_opened_at: string | null
+  submitted_at: string
+  job_postings: { title: string } | null
+  candidate_profiles: { full_name: string; avatar_url: string | null } | null
+}
+
+interface DashboardStats {
+  activeJobs: number
+  newApplicationsThisWeek: number
+  interviewsToday: number
+  profileViews: number
+  trustScore: number
+  companyName: string
+  recentApplications: RecentApplication[]
+  hasJobs: boolean
+}
+
+const STAGE_COLORS: Record<PipelineStage, string> = {
+  new: '#60A5FA',
+  reviewed: '#A78BFA',
+  shortlisted: '#34D399',
+  interview_scheduled: '#F59E0B',
+  offer_made: '#22C55E',
+  rejected: '#EF4444',
+  withdrawn: '#475569',
+}
+
+const STAGE_LABELS: Record<PipelineStage, string> = {
+  new: 'New',
+  reviewed: 'Reviewed',
+  shortlisted: 'Shortlisted',
+  interview_scheduled: 'Interview',
+  offer_made: 'Offer',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn',
+}
+
+function BellIcon() {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <Path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </Svg>
+  )
+}
+
+function BriefcaseIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+      <Path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    </Svg>
+  )
+}
+
+function PeopleIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#0DD4C3" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <Circle cx={9} cy={7} r={4} />
+      <Path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </Svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={11} cy={11} r={8} />
+      <Path d="m21 21-4.35-4.35" />
+    </Svg>
+  )
+}
+
+function EmptyJobsState() {
+  return (
+    <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ backgroundColor: '#131118', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 32, alignItems: 'center', marginTop: 12 }}>
+      <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FF624015', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        <BriefcaseIcon />
+      </View>
+      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>Post your first job</Text>
+      <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
+        Reach thousands of verified Nigerian professionals. Start hiring in minutes.
+      </Text>
+      <Pressable
+        onPress={() => router.push('/(company)/jobs/post' as any)}
+        style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}
+        className="active:opacity-80"
+      >
+        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Post a job</Text>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
+function ApplicationRow({ item, index }: { item: RecentApplication; index: number }) {
+  const stageColor = STAGE_COLORS[item.pipeline_stage] ?? '#475569'
+  const stageLabel = STAGE_LABELS[item.pipeline_stage] ?? item.pipeline_stage
+  const candidateName = item.candidate_profiles?.full_name ?? 'Candidate'
+  const avatarUrl = item.candidate_profiles?.avatar_url
+  const jobTitle = item.job_postings?.title ?? 'Job'
+  const initials = candidateName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+
+  return (
+    <Animated.View entering={FadeInDown.delay(index * 60).duration(350)}>
+      <Pressable
+        onPress={() => router.push(`/(company)/candidates/${item.candidate_profiles?.full_name ?? item.id}` as any)}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}
+        className="active:opacity-70"
+      >
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={{ width: 42, height: 42, borderRadius: 21 }} contentFit="cover" />
+        ) : (
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{candidateName}</Text>
+          <Text style={{ color: '#64748B', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{jobTitle}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end', gap: 4 }}>
+          <View style={{ backgroundColor: `${stageColor}20`, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
+            <Text style={{ color: stageColor, fontSize: 10, fontWeight: '600' }}>{stageLabel}</Text>
+          </View>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.email_opened_at ? '#22C55E' : '#475569' }} />
+        </View>
+      </Pressable>
+    </Animated.View>
+  )
+}
 
 export default function CompanyDashboard() {
+  const user = useAuthStore((s) => s.user)
+  const today = new Date().toISOString().slice(0, 10)
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ['company-dashboard', user?.id],
+    queryFn: async () => {
+      const [jobsRes, appsRes, interviewsRes, profileRes, recentRes] = await Promise.all([
+        supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('status', 'active'),
+        supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('job_postings.company_id', user!.id).gte('submitted_at', weekAgo),
+        supabase.from('interview_bookings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('slot_date', today),
+        supabase.from('company_profiles').select('company_name, trust_score').eq('id', user!.id).maybeSingle(),
+        supabase.from('job_applications')
+          .select('id, pipeline_stage, email_opened_at, submitted_at, job_postings(title), candidate_profiles(full_name, avatar_url)')
+          .eq('job_postings.company_id', user!.id)
+          .order('submitted_at', { ascending: false })
+          .limit(5),
+      ])
+
+      const hasJobs = (jobsRes.count ?? 0) > 0
+
+      return {
+        activeJobs: jobsRes.count ?? 0,
+        newApplicationsThisWeek: appsRes.count ?? 0,
+        interviewsToday: interviewsRes.count ?? 0,
+        profileViews: 0,
+        trustScore: (profileRes.data as any)?.trust_score ?? 0,
+        companyName: (profileRes.data as any)?.company_name ?? 'Your Company',
+        recentApplications: (recentRes.data as unknown as RecentApplication[]) ?? [],
+        hasJobs,
+      }
+    },
+    enabled: !!user?.id,
+    refetchInterval: 60_000,
+  })
+
+  const trustScore = stats?.trustScore ?? 0
+  const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  const statCards = [
+    { label: 'Active Jobs', value: stats?.activeJobs ?? 0, color: '#FF6240' },
+    { label: 'New This Week', value: stats?.newApplicationsThisWeek ?? 0, color: '#0DD4C3' },
+    { label: 'Interviews Today', value: stats?.interviewsToday ?? 0, color: '#F59E0B' },
+    { label: 'Profile Views', value: stats?.profileViews ?? 0, color: '#A78BFA' },
+  ]
+
   return (
     <SafeAreaView className="flex-1 bg-surface">
-      <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
-        <Text className="text-slate-400 text-sm mb-1">Company Dashboard</Text>
-        <Text className="text-white text-2xl font-bold mb-6">Overview</Text>
-
-        <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-2xl p-4">
-            <Text className="text-slate-400 text-xs mb-1">Active Jobs</Text>
-            <Text className="text-white font-bold text-2xl">0</Text>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#64748B', fontSize: 13 }}>{greeting}</Text>
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>
+              {isLoading ? '...' : stats?.companyName}
+            </Text>
           </View>
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-2xl p-4">
-            <Text className="text-slate-400 text-xs mb-1">Total Applicants</Text>
-            <Text className="text-white font-bold text-2xl">0</Text>
-          </View>
+          <Pressable
+            onPress={() => router.push('/(company)/notifications' as any)}
+            style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}
+            className="active:opacity-70"
+          >
+            <BellIcon />
+          </Pressable>
         </View>
 
-        <View className="flex-row gap-3 mb-6">
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-2xl p-4">
-            <Text className="text-slate-400 text-xs mb-1">Interviews Today</Text>
-            <Text className="text-white font-bold text-2xl">0</Text>
+        <Animated.View entering={FadeInDown.delay(50).duration(350)} className="px-5 mb-5">
+          <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 }}>Trust Score</Text>
+              <Text style={{ color: trustColor, fontSize: 18, fontWeight: '800' }}>{trustScore}/100</Text>
+            </View>
+            <View style={{ height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden' }}>
+              <View style={{ height: '100%', width: `${trustScore}%`, backgroundColor: trustColor, borderRadius: 3 }} />
+            </View>
+            <Text style={{ color: '#475569', fontSize: 11, marginTop: 6 }}>
+              {trustScore >= 80 ? 'Excellent — candidates trust your listings' : trustScore >= 50 ? 'Good — complete verification to boost further' : 'Complete verification to unlock more features'}
+            </Text>
           </View>
-          <View className="flex-1 bg-surface-card border border-surface-border rounded-2xl p-4">
-            <Text className="text-slate-400 text-xs mb-1">Profile Views</Text>
-            <Text className="text-white font-bold text-2xl">0</Text>
-          </View>
-        </View>
+        </Animated.View>
 
-        <Text className="text-white font-semibold text-lg mb-3">Recent activity</Text>
-        <View className="bg-surface-card border border-surface-border rounded-2xl p-6 items-center">
-          <Text className="text-slate-400 text-sm text-center">
-            No activity yet. Post your first job to get started.
-          </Text>
-        </View>
+        <Animated.View entering={FadeInDown.delay(100).duration(350)} className="px-5 mb-5">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {statCards.map((card) => (
+              <View
+                key={card.label}
+                style={{ flex: 1, minWidth: '46%', backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}
+              >
+                <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '500', marginBottom: 8 }}>{card.label}</Text>
+                <Text style={{ color: card.color, fontSize: 28, fontWeight: '800' }}>{isLoading ? '-' : card.value}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(150).duration(350)} className="px-5 mb-5">
+          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Quick actions</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable
+              onPress={() => router.push('/(company)/jobs/post' as any)}
+              style={{ flex: 1, backgroundColor: '#FF624015', borderRadius: 14, borderWidth: 1, borderColor: '#FF624030', padding: 14, alignItems: 'center', gap: 8 }}
+              className="active:opacity-70"
+            >
+              <BriefcaseIcon />
+              <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>Post Job</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(company)/applicants' as any)}
+              style={{ flex: 1, backgroundColor: '#0DD4C315', borderRadius: 14, borderWidth: 1, borderColor: '#0DD4C330', padding: 14, alignItems: 'center', gap: 8 }}
+              className="active:opacity-70"
+            >
+              <PeopleIcon />
+              <Text style={{ color: '#0DD4C3', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>View ATS</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(company)/candidates/browse' as any)}
+              style={{ flex: 1, backgroundColor: '#A78BFA15', borderRadius: 14, borderWidth: 1, borderColor: '#A78BFA30', padding: 14, alignItems: 'center', gap: 8 }}
+              className="active:opacity-70"
+            >
+              <SearchIcon />
+              <Text style={{ color: '#A78BFA', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>Browse</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).duration(350)} className="px-5">
+          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Recent applications</Text>
+
+          {!stats?.hasJobs ? (
+            <EmptyJobsState />
+          ) : stats?.recentApplications.length === 0 ? (
+            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
+              <Text style={{ color: '#64748B', fontSize: 13 }}>No applications yet</Text>
+            </View>
+          ) : (
+            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', paddingHorizontal: 16 }}>
+              {stats.recentApplications.map((item, index) => (
+                <ApplicationRow key={item.id} item={item} index={index} />
+              ))}
+              <Pressable
+                onPress={() => router.push('/(company)/applicants' as any)}
+                style={{ paddingVertical: 14, alignItems: 'center' }}
+                className="active:opacity-70"
+              >
+                <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>View all applicants</Text>
+              </Pressable>
+            </View>
+          )}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   )

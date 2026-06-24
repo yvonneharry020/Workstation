@@ -7,14 +7,15 @@ export default function CompanyLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1E293B',
-          borderTopColor: '#334155',
+          backgroundColor: '#0D0C14',
+          borderTopColor: '#1E1B2E',
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          height: 68,
+          paddingBottom: 10,
+          paddingTop: 6,
         },
-        tabBarActiveTintColor: '#6366F1',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarActiveTintColor: '#FF6240',
+        tabBarInactiveTintColor: '#475569',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
@@ -26,7 +27,7 @@ export default function CompanyLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -49,6 +50,15 @@ export default function CompanyLayout() {
         }}
       />
       <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Alerts',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
@@ -57,6 +67,34 @@ export default function CompanyLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen name="analytics" options={{ href: null }} />
+      <Tabs.Screen name="billing" options={{ href: null }} />
+      <Tabs.Screen name="team" options={{ href: null }} />
+
+      <Tabs.Screen name="jobs/post" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/index" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/edit" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/ats" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/kanban" options={{ href: null }} />
+
+      <Tabs.Screen name="candidates/[id]" options={{ href: null }} />
+      <Tabs.Screen name="candidates/shortlisted" options={{ href: null }} />
+      <Tabs.Screen name="candidates/browse" options={{ href: null }} />
+      <Tabs.Screen name="candidates/saved" options={{ href: null }} />
+
+      <Tabs.Screen name="email/compose" options={{ href: null }} />
+      <Tabs.Screen name="email/templates" options={{ href: null }} />
+      <Tabs.Screen name="email/history" options={{ href: null }} />
+
+      <Tabs.Screen name="interviews/schedule" options={{ href: null }} />
+      <Tabs.Screen name="interviews/calendar" options={{ href: null }} />
+      <Tabs.Screen name="interviews/notes/[id]" options={{ href: null }} />
+
+      <Tabs.Screen name="badges/issue" options={{ href: null }} />
+      <Tabs.Screen name="badges/history" options={{ href: null }} />
+
+      <Tabs.Screen name="profile/edit" options={{ href: null }} />
     </Tabs>
   )
 }
