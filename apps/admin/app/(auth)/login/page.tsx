@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState, useRef } from 'react'
+import { useTransition, useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { loginAction, type LoginState } from '@/lib/auth-actions'
@@ -51,7 +51,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
   missing_code: 'Invalid authentication link.',
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams()
   const callbackError = searchParams.get('error')
   const [state, setState] = useState<LoginState>({})
@@ -208,5 +208,13 @@ export default function LoginPage() {
         <p className="text-xs">Session encrypted · Access logged · Brute-force protected</p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
