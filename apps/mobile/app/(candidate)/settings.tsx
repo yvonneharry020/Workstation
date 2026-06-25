@@ -12,6 +12,7 @@ import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { logEvent } from '@/lib/audit'
 
 interface NotifPrefs {
   push_profile_viewed: boolean
@@ -183,6 +184,7 @@ export default function SettingsScreen() {
         text: 'Log out',
         style: 'destructive',
         onPress: async () => {
+          logEvent({ event: 'user.logout', app: 'candidate_app' })
           await supabase.auth.signOut()
           router.replace('/(auth)/login')
         },
@@ -204,6 +206,7 @@ export default function SettingsScreen() {
               .from('candidate_profiles')
               .update({ is_open_to_work: false })
               .eq('id', user!.id)
+            logEvent({ event: 'user.account_deleted', app: 'candidate_app', severity: 'warning', metadata: { type: 'deactivation' } })
             Alert.alert('Account deactivated', 'Your profile is now hidden from employers.')
           },
         },
@@ -321,6 +324,23 @@ export default function SettingsScreen() {
         {isSavingPrefs ? (
           <Text style={{ color: '#64748B', fontSize: 12, textAlign: 'center', marginTop: 8 }}>Saving preferences…</Text>
         ) : null}
+
+        {/* Support */}
+        <SectionHeader title="Help & Support" />
+        <View style={{
+          backgroundColor: '#ffffff08',
+          borderWidth: 1,
+          borderColor: '#1E1B2E',
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          overflow: 'hidden',
+          marginBottom: 16,
+        }}>
+          <ActionRow
+            label="Chat with Support"
+            onPress={() => router.push('/(candidate)/support-chat')}
+          />
+        </View>
 
         {/* Danger zone */}
         <SectionHeader title="Danger Zone" />

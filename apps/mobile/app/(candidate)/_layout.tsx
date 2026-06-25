@@ -61,6 +61,7 @@ export default function CandidateLayout() {
       <Tabs.Screen name="profile-views" options={{ href: null }} />
       <Tabs.Screen name="badges" options={{ href: null }} />
       <Tabs.Screen name="portfolio" options={{ href: null }} />
+      <Tabs.Screen name="support-chat" options={{ href: null }} />
     </Tabs>
   )
 }

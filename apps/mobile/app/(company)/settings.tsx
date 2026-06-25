@@ -13,6 +13,7 @@ import Svg, { Path } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { logEvent } from '@/lib/audit'
 
 interface CompanyProfile {
   company_name: string | null
@@ -179,6 +180,7 @@ export default function SettingsScreen() {
         text: 'Sign out',
         style: 'destructive',
         onPress: async () => {
+          logEvent({ event: 'user.logout', app: 'company_app' })
           await supabase.auth.signOut()
           reset()
           router.replace('/')
@@ -348,6 +350,16 @@ export default function SettingsScreen() {
                 </Svg>
               }
               onPress={() => router.push('/(company)/billing')}
+            />
+          </SectionCard>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+          <SectionHeader label="Help & Support" />
+          <SectionCard>
+            <SettingRow
+              label="Chat with Support"
+              onPress={() => router.push('/(company)/support-chat')}
             />
           </SectionCard>
         </Animated.View>

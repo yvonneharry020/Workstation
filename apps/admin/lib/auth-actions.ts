@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createClient } from './supabase/server'
 import { checkRateLimit } from './rate-limiter'
 import { validatePassword } from './password-validator'
+import { logAdminEvent } from './audit'
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
@@ -71,9 +72,23 @@ export async function loginAction(
   })
 
   if (error) {
-    // Generic message — never reveal whether the email exists or the password is wrong
+    void logAdminEvent({
+      event: 'admin.login_failed',
+      actorEmail: parsed.data.email,
+      actorType: 'admin',
+      severity: 'warning',
+      metadata: { ip },
+    })
     return { error: 'Invalid credentials. Check your email and password.' }
   }
+
+  void logAdminEvent({
+    event: 'admin.login',
+    actorEmail: parsed.data.email,
+    actorType: 'admin',
+    severity: 'info',
+    metadata: { ip },
+  })
 
   redirect('/dashboard')
 }
@@ -174,6 +189,13 @@ export async function resetPasswordAction(
 
   // Sign out all other active sessions for this account
   await supabase.auth.signOut({ scope: 'others' })
+
+  void logAdminEvent({
+    event: 'admin.password_changed',
+    actorType: 'admin',
+    severity: 'warning',
+    metadata: { ip },
+  })
 
   return { success: true }
 }

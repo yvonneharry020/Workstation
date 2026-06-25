@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, ScrollView, Alert } from 'react-native'
+import { View, Text, TextInput, Pressable, ScrollView } from 'react-native'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { loginSchema, type LoginSchema } from '@workstation/validators'
 import { supabase } from '@/lib/supabase'
+import { logEvent } from '@/lib/audit'
 
 function GoogleIcon() {
   return (
@@ -52,20 +53,34 @@ function EyeIcon({ visible }: { visible: boolean }) {
 export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginSchema>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
   const onSubmit = async (data: LoginSchema) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    })
-    if (error) {
-      Alert.alert('Sign in failed', error.message)
+    setAuthError(null)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+      if (error) {
+        logEvent({ event: 'user.login_failed', app: 'candidate_app', severity: 'warning', metadata: { email: data.email } })
+        setAuthError(error.message || 'Sign in failed. Please try again.')
+        return
+      }
+      // App type is determined by what profile the user has — log generically as candidate_app
+      logEvent({ event: 'user.login', app: 'candidate_app', metadata: { email: data.email } })
+      router.replace('/')
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'An unexpected error occurred')
     }
   }
 
@@ -191,6 +206,12 @@ export default function LoginScreen() {
         >
           <Text className="text-primary-400 text-sm text-right">Forgot password?</Text>
         </Pressable>
+
+        {authError && (
+          <View className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-4">
+            <Text className="text-red-400 text-sm text-center">{authError}</Text>
+          </View>
+        )}
 
         <Pressable
           onPress={handleSubmit(onSubmit)}
