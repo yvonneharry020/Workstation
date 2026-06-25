@@ -62,7 +62,7 @@ export default function LiveChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in_progress' | 'resolved'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'unread' | 'open' | 'resolved'>('all')
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -187,7 +187,9 @@ export default function LiveChatPage() {
   }
 
   const filteredThreads = threads.filter(t => {
-    if (statusFilter !== 'all' && t.status !== statusFilter) return false
+    if (statusFilter === 'unread' && t.unread_admin <= 0) return false
+    if (statusFilter === 'open' && t.status !== 'open' && t.status !== 'in_progress') return false
+    if (statusFilter === 'resolved' && t.status !== 'resolved') return false
     if (search) {
       const q = search.toLowerCase()
       return t.user_name.toLowerCase().includes(q) || t.user_email.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q)
@@ -214,10 +216,20 @@ export default function LiveChatPage() {
                 className="w-full bg-surface-elevated border border-surface-border rounded-lg pl-8 pr-3 py-2 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none" />
             </div>
             <div className="flex gap-1.5">
-              {(['all','open','in_progress','resolved'] as const).map(s => (
-                <button key={s} onClick={() => setStatusFilter(s)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-colors ${statusFilter === s ? 'bg-admin-500 text-white' : 'bg-surface-elevated text-text-secondary hover:text-text-primary'}`}>
-                  {s === 'in_progress' ? 'Active' : s}
+              {([
+                { key: 'all',      label: 'All' },
+                { key: 'unread',   label: 'Unread' },
+                { key: 'open',     label: 'Open' },
+                { key: 'resolved', label: 'Resolved' },
+              ] as const).map(({ key, label }) => (
+                <button key={key} onClick={() => setStatusFilter(key)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${statusFilter === key ? 'bg-admin-500 text-white' : 'bg-surface-elevated text-text-secondary hover:text-text-primary'}`}>
+                  {label}
+                  {key === 'unread' && totalUnread > 0 && (
+                    <span className={`ml-1.5 text-[9px] font-bold rounded-full px-1 py-0.5 ${statusFilter === 'unread' ? 'bg-white/20 text-white' : 'bg-error/20 text-error'}`}>
+                      {totalUnread}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -255,8 +267,14 @@ export default function LiveChatPage() {
                   <p className="text-[11px] text-text-muted truncate">{t.last_message ?? 'No messages yet'}</p>
                   <div className="mt-2 flex items-center gap-2">
                     <span className={`text-[9px] font-semibold uppercase tracking-wider border px-1.5 py-0.5 rounded font-mono ${STATUS_STYLES[t.status]}`}>
-                      {t.status === 'in_progress' ? 'Active' : t.status}
+                      Open
                     </span>
+                    {t.status === 'in_progress' && (
+                      <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-trust-mid-bg text-trust-mid border border-trust-mid-border font-mono uppercase tracking-wider">
+                        <span className="w-1 h-1 rounded-full bg-trust-mid animate-pulse inline-block" />
+                        Active
+                      </span>
+                    )}
                     {t.assigned_to && <span className="text-[9px] text-admin-400 truncate">{t.assigned_to}</span>}
                   </div>
                 </button>
@@ -288,9 +306,19 @@ export default function LiveChatPage() {
                   <p className="text-xs text-text-secondary">{selected.user_email} · {selected.subject}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider border px-2 py-0.5 rounded font-mono ${STATUS_STYLES[selected.status]}`}>
-                    {selected.status === 'in_progress' ? 'Active' : selected.status}
-                  </span>
+                  {selected.status !== 'resolved' && (
+                    <span className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider border px-2 py-0.5 rounded font-mono ${STATUS_STYLES[selected.status]}`}>
+                      {selected.status === 'in_progress' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-trust-mid animate-pulse inline-block" />
+                      )}
+                      {selected.status === 'in_progress' ? 'Active' : 'Open'}
+                    </span>
+                  )}
+                  {selected.status === 'resolved' && (
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider border px-2 py-0.5 rounded font-mono ${STATUS_STYLES.resolved}`}>
+                      Resolved
+                    </span>
+                  )}
                   {selected.status !== 'resolved' && (
                     <button onClick={handleResolve}
                       className="px-3 py-1.5 rounded-lg bg-trust-high-bg text-trust-high border border-trust-high-border text-xs font-semibold hover:bg-green-900/30 transition-colors">
