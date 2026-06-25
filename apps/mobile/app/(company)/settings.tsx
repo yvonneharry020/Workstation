@@ -361,6 +361,11 @@ export default function SettingsScreen() {
               label="Chat with Support"
               onPress={() => router.push('/(company)/support-chat')}
             />
+            <Divider />
+            <SettingRow
+              label="My Support Tickets"
+              onPress={() => router.push('/(company)/support-ticket')}
+            />
           </SectionCard>
         </Animated.View>
 

@@ -69,6 +69,7 @@ export default function CompanyLayout() {
       />
 
       <Tabs.Screen name="support-chat" options={{ href: null }} />
+      <Tabs.Screen name="support-ticket" options={{ href: null }} />
       <Tabs.Screen name="analytics" options={{ href: null }} />
       <Tabs.Screen name="billing" options={{ href: null }} />
       <Tabs.Screen name="team" options={{ href: null }} />

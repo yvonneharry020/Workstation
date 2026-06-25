@@ -340,6 +340,10 @@ export default function SettingsScreen() {
             label="Chat with Support"
             onPress={() => router.push('/(candidate)/support-chat')}
           />
+          <ActionRow
+            label="My Support Tickets"
+            onPress={() => router.push('/(candidate)/support-ticket')}
+          />
         </View>
 
         {/* Danger zone */}
