@@ -19,7 +19,7 @@ const OPS_NAV = [
     label: 'Support',
     items: [
       { href: '/ops/support', label: 'Support & Tickets', icon: <TicketIcon /> },
-      { href: '/ops/sla', label: 'SLA Monitor', icon: <TimerIcon /> },
+      { href: '/ops/sla-monitor', label: 'SLA Monitor', icon: <TimerIcon /> },
     ],
   },
   {

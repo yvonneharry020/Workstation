@@ -78,7 +78,7 @@ export default function OpsDashboardPage() {
 
   const quickActions = [
     { label: 'Verification Queue', href: '/ops/verifications', desc: 'Review pending users' },
-    { label: 'SLA Monitor', href: '/ops/sla', desc: 'Check response times' },
+    { label: 'SLA Monitor', href: '/ops/sla-monitor', desc: 'Check response times' },
     { label: 'Announcements', href: '/ops/announcements', desc: 'Broadcast messages' },
     { label: 'Badge Management', href: '/ops/badges', desc: 'Issue or revoke badges' },
   ]
