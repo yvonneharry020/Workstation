@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ChevronLeft, Sun, Moon, Code2, DollarSign, Users2, LayoutDashboard } from 'lucide-react'
+import { useTheme } from '@/components/providers/ThemeProvider'
 
 interface NavItem {
   href: string
@@ -22,88 +24,117 @@ interface DeptSidebarProps {
   isSuperAdmin?: boolean
 }
 
-const COLOR_MAP = {
+const ACCENT = {
   tech: {
-    accent400: '#60A5FA',
-    active: 'bg-blue-900/50 text-blue-300',
-    activeIcon: 'text-blue-400',
-    hoverBg: 'hover:bg-surface-elevated hover:text-text-primary',
-    badge: 'bg-red-500/20 text-red-400 border-red-500/30',
-    dot: 'bg-tech-500',
-    logoBg: 'bg-tech-500',
+    gradient:   'from-cyan-500 to-blue-600',
+    activeText: 'text-cyan-400',
+    activeBg:   'rgba(6,182,212,0.1)',
+    activeBorder:'#06B6D4',
+    roleText:   'text-cyan-400',
+    logoIcon:   <Code2 size={14} color="white" strokeWidth={2.5} />,
   },
   finance: {
-    accent400: '#34D399',
-    active: 'bg-emerald-900/50 text-emerald-300',
-    activeIcon: 'text-emerald-400',
-    hoverBg: 'hover:bg-surface-elevated hover:text-text-primary',
-    badge: 'bg-red-500/20 text-red-400 border-red-500/30',
-    dot: 'bg-finance-500',
-    logoBg: 'bg-finance-500',
+    gradient:   'from-emerald-500 to-teal-600',
+    activeText: 'text-emerald-400',
+    activeBg:   'rgba(16,185,129,0.1)',
+    activeBorder:'#10B981',
+    roleText:   'text-emerald-400',
+    logoIcon:   <DollarSign size={14} color="white" strokeWidth={2.5} />,
   },
   ops: {
-    accent400: '#FB923C',
-    active: 'bg-orange-900/50 text-orange-300',
-    activeIcon: 'text-orange-400',
-    hoverBg: 'hover:bg-surface-elevated hover:text-text-primary',
-    badge: 'bg-red-500/20 text-red-400 border-red-500/30',
-    dot: 'bg-ops-500',
-    logoBg: 'bg-ops-500',
+    gradient:   'from-amber-500 to-orange-600',
+    activeText: 'text-amber-400',
+    activeBg:   'rgba(245,158,11,0.1)',
+    activeBorder:'#F59E0B',
+    roleText:   'text-amber-400',
+    logoIcon:   <Users2 size={14} color="white" strokeWidth={2.5} />,
   },
 }
 
-const ROOM_ICONS: Record<string, React.ReactNode> = {
-  tech: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-    </svg>
-  ),
-  finance: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-    </svg>
-  ),
-  ops: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-}
-
-export default function DeptSidebar({ color, roomLabel, navGroups, isSuperAdmin = false }: DeptSidebarProps) {
+export default function DeptSidebar({
+  color,
+  roomLabel,
+  navGroups,
+  isSuperAdmin = false,
+}: DeptSidebarProps) {
   const pathname = usePathname()
-  const c = COLOR_MAP[color]
+  const { theme, toggle } = useTheme()
+  const a = ACCENT[color]
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-surface-card border-r border-surface-border flex flex-col h-screen sticky top-0">
-      <div className="px-5 py-5 border-b border-surface-border">
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg ${c.logoBg} flex items-center justify-center flex-shrink-0`}>
-            {ROOM_ICONS[color]}
-          </div>
-          <div>
-            <p className="text-sm font-semibold font-display text-text-primary leading-none">Workstation</p>
-            <p className="text-[10px] font-mono uppercase tracking-wider mt-0.5" style={{ color: c.accent400 }}>{roomLabel}</p>
-          </div>
+    <aside
+      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+      className="w-64 flex-shrink-0 flex flex-col h-screen sticky top-0 border-r"
+    >
+      {/* Logo / room header */}
+      <div
+        style={{ borderColor: 'var(--border)' }}
+        className="px-5 h-[60px] flex items-center gap-3 border-b flex-shrink-0"
+      >
+        <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${a.gradient}
+          flex items-center justify-center shadow-md flex-shrink-0`}>
+          {a.logoIcon}
+        </div>
+        <div>
+          <p className="text-[14px] font-bold font-display leading-none tracking-tight"
+            style={{ color: 'var(--tx-1)' }}>
+            Workstation
+          </p>
+          <p className={`text-[10px] font-mono uppercase tracking-[0.12em] mt-1 ${a.roleText}`}>
+            {roomLabel}
+          </p>
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3">
         {navGroups.map((group) => (
-          <div key={group.label}>
-            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider px-2 mb-2">{group.label}</p>
+          <div key={group.label} className="mb-4">
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.1em] px-3 mb-1.5"
+              style={{ color: 'var(--tx-3)' }}
+            >
+              {group.label}
+            </p>
             <ul className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
                   <li key={item.href}>
-                    <Link href={item.href} className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isActive ? c.active : `text-text-secondary ${c.hoverBg}`}`}>
-                      <div className="flex items-center gap-3">
-                        <span className={isActive ? c.activeIcon : 'text-text-muted'}>{item.icon}</span>
+                    <Link
+                      href={item.href}
+                      className={`group flex items-center justify-between px-3 py-[7px] rounded-lg
+                        text-[13px] font-medium transition-all duration-150
+                        ${isActive ? 'border-l-2 pl-[10px]' : 'border-l-2 border-transparent pl-[10px]'}`}
+                      style={{
+                        borderColor:      isActive ? a.activeBorder : undefined,
+                        backgroundColor:  isActive ? a.activeBg : undefined,
+                        color: isActive ? a.activeBorder : 'var(--tx-2)',
+                      }}
+                      onMouseEnter={e => {
+                        if (!isActive) {
+                          ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+                          ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!isActive) {
+                          ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
+                          ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-2)'
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span style={{ color: isActive ? a.activeBorder : 'var(--tx-3)' }}>
+                          {item.icon}
+                        </span>
                         <span>{item.label}</span>
                       </div>
                       {item.badge !== undefined && item.badge > 0 && (
-                        <span className={`text-[10px] font-mono font-bold border rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-tight ${c.badge}`}>
+                        <span className="text-[10px] font-bold bg-rose-500/15 text-rose-400
+                          border border-rose-500/30 rounded-full px-1.5 min-w-[18px]
+                          text-center leading-[18px] flex-shrink-0">
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
                       )}
@@ -116,19 +147,61 @@ export default function DeptSidebar({ color, roomLabel, navGroups, isSuperAdmin 
         ))}
       </nav>
 
-      {isSuperAdmin && (
-        <div className="px-3 py-3 border-t border-surface-border">
-          <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Back to Admin
+      {/* Footer dock */}
+      <div
+        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)' }}
+        className="px-4 py-3.5 border-t flex-shrink-0 space-y-2"
+      >
+        {isSuperAdmin && (
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px]
+              font-medium transition-all duration-150"
+            style={{ color: 'var(--tx-3)' }}
+            onMouseEnter={e => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
+            }}
+            onMouseLeave={e => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-3)'
+            }}
+          >
+            <ChevronLeft size={13} />
+            <span>Back to Admin</span>
           </Link>
-        </div>
-      )}
+        )}
 
-      <div className="px-5 py-3 border-t border-surface-border">
-        <div className="flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full ${c.dot}`} />
-          <span className="text-[10px] text-text-muted font-mono">{roomLabel.toUpperCase()}</span>
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${a.gradient}
+            flex items-center justify-center flex-shrink-0 shadow-sm`}>
+            <span className="text-white text-[11px] font-bold">YH</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold leading-none truncate" style={{ color: 'var(--tx-1)' }}>
+              Yvonne Harry
+            </p>
+            <p className={`text-[11px] font-medium leading-none mt-1 ${a.roleText}`}>
+              {roomLabel}
+            </p>
+          </div>
+          <button
+            onClick={toggle}
+            className="w-7 h-7 rounded-lg flex items-center justify-center
+              transition-all duration-150 flex-shrink-0"
+            style={{ color: 'var(--tx-3)' }}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            onMouseEnter={e => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
+            }}
+            onMouseLeave={e => {
+              ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
+              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-3)'
+            }}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
         </div>
       </div>
     </aside>

@@ -18,7 +18,9 @@ const OPS_NAV = [
   {
     label: 'Support',
     items: [
-      { href: '/ops/support', label: 'Support & Tickets', icon: <TicketIcon /> },
+      { href: '/ops/chat', label: 'Live Chat', icon: <ChatIcon /> },
+      { href: '/ops/tickets', label: 'Support Tickets', icon: <TicketIcon /> },
+      { href: '/ops/escalations', label: 'Escalation Queue', icon: <AlertIcon /> },
       { href: '/ops/sla-monitor', label: 'SLA Monitor', icon: <TimerIcon /> },
     ],
   },
@@ -34,6 +36,12 @@ const OPS_NAV = [
     items: [
       { href: '/ops/users', label: 'User Management', icon: <UsersIcon /> },
       { href: '/ops/announcements', label: 'Announcements', icon: <BellIcon /> },
+    ],
+  },
+  {
+    label: 'Internal',
+    items: [
+      { href: '/ops/staff-comms', label: '# general', icon: <CommsIcon /> },
     ],
   },
 ]
@@ -62,8 +70,17 @@ function BadgeIcon() {
 function UsersIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
 }
+function ChatIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+}
+function AlertIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+}
 function BellIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+}
+function CommsIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
 }
 
 export default function OpsLayout({ children }: { children: React.ReactNode }) {

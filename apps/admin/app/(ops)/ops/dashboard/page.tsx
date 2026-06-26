@@ -3,37 +3,109 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts'
+import {
+  ShieldCheck, TicketCheck, MessageSquare, Briefcase,
+  ArrowRight, TrendingUp, Clock, CheckCircle, AlertTriangle,
+  Activity, ChevronRight,
+} from 'lucide-react'
 
 interface Stats {
   pendingVerifications: number
   openTickets: number
-  flaggedContent: number
+  unreadChats: number
   pendingJobs: number
-  openAnnouncements: number
+  resolvedTickets: number
+  inProgressTickets: number
 }
 
-interface AuditEntry {
-  id: string
-  event: string
-  created_at: string
-  actor_email: string | null
-  severity: string
-  actor_type: string | null
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div
+      style={{
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border-strong)',
+        boxShadow: 'var(--shadow-md)',
+      }}
+      className="rounded-xl px-3 py-2.5 text-[12px]"
+    >
+      <p className="font-semibold mb-0.5" style={{ color: 'var(--tx-2)' }}>{label}</p>
+      <p className="font-bold text-[14px] text-amber-400">{payload[0].value} items</p>
+    </div>
+  )
 }
 
-function timeDiff(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60_000) return 'just now'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-  return `${Math.floor(diff / 86_400_000)}d ago`
+function buildRange(n: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (n - 1 - i))
+    return { date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), items: 0 }
+  })
+}
+
+interface StatCardProps {
+  label: string
+  value: number
+  sub: string
+  icon: React.ReactNode
+  href: string
+  urgent?: boolean
+  iconBg: string
+  iconColor: string
+}
+
+function StatCard({ label, value, sub, icon, href, urgent, iconBg, iconColor }: StatCardProps) {
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200 group"
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        border: `1px solid ${urgent ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+        boxShadow: 'var(--shadow-card)',
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLElement
+        el.style.borderColor = 'rgba(245,158,11,0.5)'
+        el.style.boxShadow = 'var(--shadow-md)'
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLElement
+        el.style.borderColor = urgent ? 'rgba(245,158,11,0.3)' : 'var(--border)'
+        el.style.boxShadow = 'var(--shadow-card)'
+      }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: iconBg }}>
+          <span style={{ color: iconColor }}>{icon}</span>
+        </div>
+        <ArrowRight size={14} style={{ color: 'var(--tx-3)' }}
+          className="group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+      </div>
+      <div>
+        <p className="text-[28px] font-bold font-display leading-none tracking-tight"
+          style={{ color: urgent ? '#FBBF24' : 'var(--tx-1)' }}>
+          {value}
+        </p>
+        <p className="text-[12px] font-semibold mt-1.5" style={{ color: 'var(--tx-2)' }}>{label}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: 'var(--tx-3)' }}>{sub}</p>
+      </div>
+    </Link>
+  )
 }
 
 export default function OpsDashboardPage() {
   const supabase = createClient()
-  const [stats, setStats] = useState<Stats>({ pendingVerifications: 0, openTickets: 0, flaggedContent: 0, pendingJobs: 0, openAnnouncements: 0 })
-  const [recentActivity, setRecentActivity] = useState<AuditEntry[]>([])
+  const [stats, setStats] = useState<Stats>({
+    pendingVerifications: 0, openTickets: 0, unreadChats: 0,
+    pendingJobs: 0, resolvedTickets: 0, inProgressTickets: 0,
+  })
   const [loading, setLoading] = useState(true)
+  const [ticketTrend, setTicketTrend] = useState(buildRange(10))
 
   useEffect(() => { void load() }, [])
 
@@ -41,105 +113,215 @@ export default function OpsDashboardPage() {
     const [
       { count: candCount },
       { count: compCount },
-      { count: ticketCount },
+      { count: ticketNew },
+      { count: ticketProg },
+      { count: ticketRes },
       { count: jobCount },
-      { data: activityData },
+      { data: chatData },
+      { data: ticketDates },
     ] = await Promise.all([
       supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
       supabase.from('companies').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
       supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'sent'),
+      supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
+      supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
       supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('audit_logs').select('id,event,created_at,actor_email,severity,actor_type').order('created_at', { ascending: false }).limit(10),
+      supabase.from('chat_threads').select('unread_admin').gt('unread_admin', 0),
+      supabase.from('support_tickets').select('created_at')
+        .gte('created_at', new Date(Date.now() - 10 * 86_400_000).toISOString()),
     ])
+
+    const pts = buildRange(10)
+    for (const t of ticketDates ?? []) {
+      const day = new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      const found = pts.find(p => p.date === day)
+      if (found) found.items++
+    }
+    setTicketTrend(pts)
+
     setStats({
       pendingVerifications: (candCount ?? 0) + (compCount ?? 0),
-      openTickets: ticketCount ?? 0,
-      flaggedContent: 0,
+      openTickets: (ticketNew ?? 0) + (ticketProg ?? 0),
+      unreadChats: (chatData ?? []).reduce((s: number, t: { unread_admin: number }) => s + (t.unread_admin ?? 0), 0),
       pendingJobs: jobCount ?? 0,
-      openAnnouncements: 0,
+      resolvedTickets: ticketRes ?? 0,
+      inProgressTickets: ticketProg ?? 0,
     })
-    setRecentActivity((activityData ?? []) as AuditEntry[])
     setLoading(false)
   }
 
-  const SEVERITY_COLORS: Record<string, string> = {
-    critical: 'text-red-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400',
+  const quickActions = [
+    { label: 'Live Chat',          href: '/ops/chat',          desc: 'Reply to user messages',     Icon: MessageSquare },
+    { label: 'Support Tickets',    href: '/ops/tickets',       desc: 'Manage open tickets',        Icon: TicketCheck },
+    { label: 'Escalation Queue',   href: '/ops/escalations',   desc: 'Handle raised issues',       Icon: AlertTriangle },
+    { label: 'Verification Queue', href: '/ops/verifications', desc: 'Review pending users',       Icon: ShieldCheck },
+    { label: 'SLA Monitor',        href: '/ops/sla-monitor',   desc: 'Check response times',       Icon: Clock },
+    { label: 'Badge Management',   href: '/ops/badges',        desc: 'Issue or revoke badges',     Icon: CheckCircle },
+  ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 rounded-full border-2 border-amber-500/30 border-t-amber-500 animate-spin" />
+      </div>
+    )
   }
 
-  const statCards = [
-    { label: 'Pending Verifications', value: stats.pendingVerifications, href: '/ops/verifications', icon: '🛡️', urgent: stats.pendingVerifications > 10 },
-    { label: 'Open Tickets', value: stats.openTickets, href: '/ops/support', icon: '🎫', urgent: stats.openTickets > 5 },
-    { label: 'Pending Job Posts', value: stats.pendingJobs, href: '/ops/jobs', icon: '💼', urgent: false },
-    { label: 'Active Users Today', value: recentActivity.length, href: '/ops/users', icon: '👥', urgent: false },
-  ]
-
-  const quickActions = [
-    { label: 'Verification Queue', href: '/ops/verifications', desc: 'Review pending users' },
-    { label: 'SLA Monitor', href: '/ops/sla-monitor', desc: 'Check response times' },
-    { label: 'Announcements', href: '/ops/announcements', desc: 'Broadcast messages' },
-    { label: 'Badge Management', href: '/ops/badges', desc: 'Issue or revoke badges' },
-  ]
-
   return (
-    <div className="flex flex-col">
-      <div className="px-8 py-6 border-b border-surface-border">
-        <h1 className="text-xl font-semibold font-display text-text-primary">Management Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-0.5">Operations overview — verifications, support, moderation, and trust & safety.</p>
+    <div className="flex flex-col min-h-full">
+      {/* Page header */}
+      <div className="px-8 py-6 border-b flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[22px] font-bold font-display tracking-tight" style={{ color: 'var(--tx-1)' }}>
+              Management Dashboard
+            </h1>
+            <p className="text-[13px] mt-0.5" style={{ color: 'var(--tx-2)' }}>
+              Operations overview — verifications, support, moderation & trust
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px]"
+            style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--tx-3)' }}>
+            <Activity size={12} />
+            <span>Live</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          </div>
+        </div>
       </div>
 
-      <div className="px-8 py-6 max-w-6xl space-y-6">
-        {loading ? <div className="text-text-muted text-sm">Loading…</div> : (
-          <>
-            <div className="grid grid-cols-4 gap-4">
-              {statCards.map(c => (
-                <Link key={c.label} href={c.href} className={`bg-surface-card border rounded-xl p-5 hover:border-ops-500/40 transition-colors group ${c.urgent ? 'border-orange-800/40' : 'border-surface-border'}`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xl">{c.icon}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted group-hover:text-ops-400 transition-colors"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <div className="px-8 py-7 space-y-6 flex-1">
+
+        {/* KPI cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Pending Verifications"
+            value={stats.pendingVerifications}
+            sub="Candidates + companies"
+            icon={<ShieldCheck size={18} />}
+            href="/ops/verifications"
+            urgent={stats.pendingVerifications > 10}
+            iconBg="rgba(245,158,11,0.12)"
+            iconColor="#FBBF24"
+          />
+          <StatCard
+            label="Open Tickets"
+            value={stats.openTickets}
+            sub={`${stats.inProgressTickets} in progress`}
+            icon={<TicketCheck size={18} />}
+            href="/ops/tickets"
+            urgent={stats.openTickets > 5}
+            iconBg="rgba(99,102,241,0.12)"
+            iconColor="#818CF8"
+          />
+          <StatCard
+            label="Unread Chats"
+            value={stats.unreadChats}
+            sub="Messages needing response"
+            icon={<MessageSquare size={18} />}
+            href="/ops/chat"
+            urgent={stats.unreadChats > 3}
+            iconBg="rgba(6,182,212,0.12)"
+            iconColor="#22D3EE"
+          />
+          <StatCard
+            label="Pending Job Posts"
+            value={stats.pendingJobs}
+            sub="Jobs awaiting review"
+            icon={<Briefcase size={18} />}
+            href="/ops/jobs"
+            iconBg="rgba(16,185,129,0.12)"
+            iconColor="#34D399"
+          />
+        </div>
+
+        {/* Chart + Resolved stat */}
+        <div className="grid grid-cols-3 gap-5">
+          <div
+            className="col-span-2 rounded-2xl p-5"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-[14px] font-semibold" style={{ color: 'var(--tx-1)' }}>Ticket Volume</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--tx-3)' }}>Tickets created — last 10 days</p>
+              </div>
+              <span className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
+                <TrendingUp size={12} />{stats.resolvedTickets} resolved total
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={ticketTrend} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="opsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--tx-3)', fontFamily: 'var(--font-mono)' }}
+                  tickLine={false} axisLine={false} interval={1} />
+                <YAxis hide />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }} />
+                <Area type="monotone" dataKey="items" stroke="#F59E0B" strokeWidth={2}
+                  fill="url(#opsGrad)" dot={false}
+                  activeDot={{ r: 5, fill: '#F59E0B', stroke: 'var(--bg-card)', strokeWidth: 2 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {[
+              { label: 'Resolved Tickets', value: stats.resolvedTickets, color: 'text-emerald-400', bg: 'rgba(16,185,129,0.1)' },
+              { label: 'In Progress',      value: stats.inProgressTickets, color: 'text-amber-400',  bg: 'rgba(245,158,11,0.1)' },
+              { label: 'Unread Chats',     value: stats.unreadChats,      color: 'text-rose-400',   bg: 'rgba(239,68,68,0.1)' },
+            ].map(s => (
+              <div key={s.label} className="rounded-2xl p-4 flex-1 flex flex-col justify-between"
+                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tx-3)' }}>{s.label}</p>
+                <p className={`text-[32px] font-bold font-mono ${s.color}`}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick access grid */}
+        <div
+          className="rounded-2xl p-5"
+          style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+        >
+          <p className="text-[14px] font-semibold mb-4" style={{ color: 'var(--tx-1)' }}>Quick Access</p>
+          <div className="grid grid-cols-3 gap-2.5">
+            {quickActions.map(qa => (
+              <Link
+                key={qa.href}
+                href={qa.href}
+                className="flex items-center justify-between px-4 py-3 rounded-xl border
+                  border-transparent transition-all duration-150 group"
+                style={{ backgroundColor: 'var(--bg-elevated)' }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'rgba(245,158,11,0.35)'
+                  el.style.backgroundColor = 'rgba(245,158,11,0.05)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.borderColor = 'transparent'
+                  el.style.backgroundColor = 'var(--bg-elevated)'
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <qa.Icon size={14} className="text-amber-400 flex-shrink-0" />
+                  <div>
+                    <p className="text-[13px] font-medium" style={{ color: 'var(--tx-1)' }}>{qa.label}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--tx-3)' }}>{qa.desc}</p>
                   </div>
-                  <div className={`text-3xl font-bold font-display ${c.urgent ? 'text-orange-400' : 'text-text-primary'}`}>{c.value}</div>
-                  <div className="text-xs text-text-muted mt-1">{c.label}</div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 bg-surface-card border border-surface-border rounded-xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm font-semibold text-text-primary">Recent Activity</p>
                 </div>
-                <ul className="divide-y divide-surface-border">
-                  {recentActivity.map(e => (
-                    <li key={e.id} className="py-2.5 flex items-center gap-3">
-                      <span className={`text-[10px] font-bold uppercase w-12 flex-shrink-0 ${SEVERITY_COLORS[e.severity] ?? 'text-text-muted'}`}>{e.severity}</span>
-                      <span className="text-xs text-text-secondary flex-1 font-mono truncate">{e.event}</span>
-                      <span className="text-[10px] text-text-muted flex-shrink-0">{e.actor_email ?? e.actor_type ?? 'system'}</span>
-                      <span className="text-[10px] text-text-muted flex-shrink-0">{timeDiff(e.created_at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <ChevronRight size={12} style={{ color: 'var(--tx-3)' }} />
+              </Link>
+            ))}
+          </div>
+        </div>
 
-              <div className="bg-surface-card border border-surface-border rounded-xl p-5">
-                <p className="text-sm font-semibold text-text-primary mb-4">Quick Actions</p>
-                <div className="space-y-2">
-                  {quickActions.map(qa => (
-                    <Link key={qa.href} href={qa.href} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-surface-elevated hover:bg-ops-900/20 hover:border-ops-800/30 border border-transparent transition-colors group">
-                      <div>
-                        <p className="text-sm text-text-primary group-hover:text-ops-300 transition-colors">{qa.label}</p>
-                        <p className="text-[10px] text-text-muted">{qa.desc}</p>
-                      </div>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted flex-shrink-0"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   )

@@ -20,15 +20,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       .maybeSingle()
 
     if (staffMember?.is_active) {
+      // Check if staff has completed onboarding profile
+      const { data: profile } = await supabase
+        .from('staff_profiles')
+        .select('profile_complete')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!profile?.profile_complete) {
+        redirect('/staff-profile')
+      }
+
       if (staffMember.department === 'technical') redirect('/tech/dashboard')
       if (staffMember.department === 'accounting') redirect('/finance/dashboard')
       if (staffMember.department === 'management') redirect('/ops/dashboard')
     }
   }
 
+  const { count: adminInboxCount } = await supabase
+    .from('support_tickets')
+    .select('*', { count: 'exact', head: true })
+    .eq('department', 'Admin')
+    .not('status', 'in', '("resolved","closed")')
+
   return (
     <div className="flex min-h-screen">
-      <Sidebar pendingCandidates={23} pendingCompanies={8} flaggedItems={14} openTickets={2} badgeDisputes={2} />
+      <Sidebar pendingCandidates={23} pendingCompanies={8} flaggedItems={14} badgeDisputes={2} adminInboxCount={adminInboxCount ?? 0} />
       <div className="flex-1 min-w-0 overflow-auto flex flex-col">
         <DeptSwitcher />
         <main className="flex-1">{children}</main>
