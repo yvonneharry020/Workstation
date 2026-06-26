@@ -30,6 +30,9 @@ interface Message {
   sender_name: string
   content: string
   is_read: boolean
+  attachment_url: string | null
+  attachment_type: 'image' | 'file' | null
+  attachment_name: string | null
 }
 
 const STATUS_STYLES = {
@@ -338,9 +341,46 @@ export default function LiveChatPage() {
                   return (
                     <div key={msg.id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[70%] ${isAdmin ? 'items-end' : 'items-start'} flex flex-col`}>
-                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isAdmin ? 'bg-admin-500 text-white rounded-br-sm' : 'bg-surface-elevated border border-surface-border text-text-primary rounded-bl-sm'}`}>
-                          {msg.content}
-                        </div>
+                        {msg.attachment_type === 'image' && msg.attachment_url ? (
+                          <div className="flex flex-col gap-1.5">
+                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={msg.attachment_url}
+                                alt={msg.attachment_name ?? 'Attachment'}
+                                className={`rounded-xl max-w-[260px] max-h-[200px] object-cover border ${isAdmin ? 'border-admin-400/30' : 'border-surface-border'}`}
+                              />
+                              <span className={`text-[10px] mt-0.5 block ${isAdmin ? 'text-white/50' : 'text-text-muted'}`}>Click to open</span>
+                            </a>
+                            {msg.content && (
+                              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isAdmin ? 'bg-admin-500 text-white rounded-br-sm' : 'bg-surface-elevated border border-surface-border text-text-primary rounded-bl-sm'}`}>
+                                {msg.content}
+                              </div>
+                            )}
+                          </div>
+                        ) : msg.attachment_type === 'file' && msg.attachment_url ? (
+                          <a
+                            href={msg.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-opacity hover:opacity-80 ${isAdmin ? 'bg-admin-600 border-admin-400/30' : 'bg-surface-elevated border-surface-border'}`}
+                          >
+                            <svg className={`w-5 h-5 flex-shrink-0 ${isAdmin ? 'text-white/70' : 'text-text-muted'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                              <path d="M14 2v6h6"/>
+                            </svg>
+                            <span className={`text-sm font-medium truncate max-w-[160px] ${isAdmin ? 'text-white' : 'text-text-primary'}`}>
+                              {msg.attachment_name ?? 'File'}
+                            </span>
+                            <svg className={`w-4 h-4 flex-shrink-0 ${isAdmin ? 'text-white/60' : 'text-admin-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                          </a>
+                        ) : (
+                          <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isAdmin ? 'bg-admin-500 text-white rounded-br-sm' : 'bg-surface-elevated border border-surface-border text-text-primary rounded-bl-sm'}`}>
+                            {msg.content}
+                          </div>
+                        )}
                         <div className={`flex items-center gap-1.5 mt-1 ${isAdmin ? 'flex-row-reverse' : ''}`}>
                           <span className="text-[10px] text-text-muted font-semibold">{msg.sender_name}</span>
                           <span className="text-[10px] text-text-muted font-mono">{formatMsgTime(msg.created_at)}</span>

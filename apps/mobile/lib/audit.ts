@@ -17,6 +17,7 @@ export type AuditEvent =
   | 'candidate.cv_updated'
   | 'candidate.support_chat_started'
   | 'candidate.support_message_sent'
+  | 'candidate.support_attachment_sent'
   // Company
   | 'company.profile_updated'
   | 'company.job_posted'
@@ -26,6 +27,7 @@ export type AuditEvent =
   | 'company.candidate_shortlisted'
   | 'company.support_chat_started'
   | 'company.support_message_sent'
+  | 'company.support_attachment_sent'
 
 export type AuditApp = 'candidate_app' | 'company_app'
 

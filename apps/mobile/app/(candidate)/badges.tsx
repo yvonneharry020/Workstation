@@ -6,12 +6,11 @@ import {
   RefreshControl,
 } from 'react-native'
 import { useState } from 'react'
-import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { useQuery } from '@tanstack/react-query'
-import Svg, { Path, Circle } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -139,21 +138,11 @@ function BadgeCard({ badge }: { badge: Badge }) {
         </View>
       )}
 
-      <View className="flex-row items-center justify-between pt-2" style={{ borderTopWidth: 1, borderTopColor: '#1E1B2E' }}>
+      <View className="flex-row items-center pt-2" style={{ borderTopWidth: 1, borderTopColor: '#1E1B2E' }}>
         <View className="flex-row items-center gap-1">
           <ShieldIcon />
           <Text style={{ color: '#0DD4C3', fontSize: 11, fontWeight: '600' }}>Cryptographically verified</Text>
         </View>
-
-        {badge.status === 'active' && (
-          <Pressable
-            onPress={() => router.push(`/(candidate)/disputes/${badge.id}` as Parameters<typeof router.push>[0])}
-            style={{ borderWidth: 1, borderColor: '#FF6240', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}
-            className="active:opacity-70"
-          >
-            <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Dispute</Text>
-          </Pressable>
-        )}
       </View>
     </Animated.View>
   )

@@ -2,11 +2,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  Linking, ActionSheetIOS,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
+import * as DocumentPicker from 'expo-document-picker'
+import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { logEvent } from '@/lib/audit'
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024
 
 interface Message {
   id: string
@@ -16,6 +23,9 @@ interface Message {
   sender_name: string
   content: string
   is_read: boolean
+  attachment_url: string | null
+  attachment_type: 'image' | 'file' | null
+  attachment_name: string | null
 }
 
 interface Thread {
@@ -35,11 +45,95 @@ function formatTime(iso: string) {
   })
 }
 
+function BackIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M19 12H5M12 5l-7 7 7 7" />
+    </Svg>
+  )
+}
+
+function PaperclipIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    </Svg>
+  )
+}
+
+function FileIcon() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <Path d="M14 2v6h6" />
+    </Svg>
+  )
+}
+
+function DownloadIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+    </Svg>
+  )
+}
+
+function SendIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
+    </Svg>
+  )
+}
+
+function ImageBubble({ url, isUser }: { url: string; isUser: boolean }) {
+  return (
+    <TouchableOpacity onPress={() => Linking.openURL(url)} activeOpacity={0.85}>
+      <Image
+        source={{ uri: url }}
+        style={{
+          width: 200, height: 150, borderRadius: 12,
+          borderWidth: 1,
+          borderColor: isUser ? 'rgba(255,255,255,0.15)' : '#E5E7EB',
+        }}
+        contentFit="cover"
+      />
+      <Text style={{ color: isUser ? 'rgba(255,255,255,0.6)' : '#9CA3AF', fontSize: 10, marginTop: 3 }}>
+        Tap to view full size
+      </Text>
+    </TouchableOpacity>
+  )
+}
+
+function FileBubble({ name, url, isUser }: { name: string; url: string; isUser: boolean }) {
+  return (
+    <TouchableOpacity
+      onPress={() => Linking.openURL(url)}
+      activeOpacity={0.8}
+      style={{
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        backgroundColor: isUser ? 'rgba(255,255,255,0.15)' : '#F3F4F6',
+        borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: isUser ? 'rgba(255,255,255,0.2)' : '#E5E7EB',
+        maxWidth: 220,
+      }}
+    >
+      <FileIcon />
+      <Text style={{ color: isUser ? '#fff' : '#374151', fontSize: 13, flex: 1 }} numberOfLines={2}>
+        {name}
+      </Text>
+      <DownloadIcon />
+    </TouchableOpacity>
+  )
+}
+
 export default function CompanySupportChatScreen() {
   const [thread, setThread] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
   const listRef = useRef<FlatList>(null)
 
@@ -112,6 +206,105 @@ export default function CompanySupportChatScreen() {
     return () => { void supabase.removeChannel(channel) }
   }, [thread])
 
+  async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file') {
+    if (!thread) return
+    setUploading(true)
+    try {
+      const resp = await fetch(uri)
+      const blob = await resp.blob()
+      if (blob.size > MAX_FILE_BYTES) {
+        Alert.alert('File too large', 'Please send files under 10 MB.')
+        return
+      }
+      const path = `${thread.id}/${Date.now()}-${filename}`
+      const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(path, blob, { contentType: mimeType })
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(path)
+
+      const { data: { user } } = await supabase.auth.getUser()
+      const profile = await supabase.from('company_profiles').select('company_name').eq('user_id', user?.id ?? '').maybeSingle()
+      const name = profile?.data?.company_name ?? user?.email?.split('@')[0] ?? 'Company'
+
+      await supabase.from('chat_messages').insert({
+        thread_id: thread.id,
+        sender_id: user?.id ?? null,
+        sender_type: 'user',
+        sender_name: name,
+        content: '',
+        is_read: false,
+        attachment_url: urlData.publicUrl,
+        attachment_type: type,
+        attachment_name: filename,
+      })
+
+      await supabase.from('chat_threads').update({
+        last_message: type === 'image' ? '📷 Image' : `📎 ${filename}`,
+        last_message_at: new Date().toISOString(),
+        unread_admin: 1,
+      }).eq('id', thread.id)
+
+      logEvent({ event: 'company.support_attachment_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
+    } catch {
+      Alert.alert('Upload failed', 'Could not send the file. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photo library in Settings.')
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: false,
+    })
+    if (result.canceled || !result.assets[0]) return
+    const asset = result.assets[0]
+    const filename = asset.fileName ?? `image-${Date.now()}.jpg`
+    const mime = asset.mimeType ?? 'image/jpeg'
+    await uploadAndSend(asset.uri, mime, filename, 'image')
+  }
+
+  async function pickFile() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain'],
+      multiple: false,
+    })
+    if (result.canceled || !result.assets[0]) return
+    const asset = result.assets[0]
+    await uploadAndSend(asset.uri, asset.mimeType ?? 'application/octet-stream', asset.name, 'file')
+  }
+
+  function openAttachmentPicker() {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancel', 'Send Image', 'Send File (PDF, Word, Excel)'], cancelButtonIndex: 0 },
+        (idx) => {
+          if (idx === 1) void pickImage()
+          if (idx === 2) void pickFile()
+        },
+      )
+    } else {
+      Alert.alert('Attach', 'What would you like to send?', [
+        { text: 'Image from gallery', onPress: () => void pickImage() },
+        { text: 'File (PDF, Word, Excel)', onPress: () => void pickFile() },
+        { text: 'Cancel', style: 'cancel' },
+      ])
+    }
+  }
+
   async function sendMessage() {
     if (!input.trim() || !thread || sending) return
     const content = input.trim()
@@ -129,6 +322,9 @@ export default function CompanySupportChatScreen() {
       sender_name: name,
       content,
       is_read: false,
+      attachment_url: null,
+      attachment_type: null,
+      attachment_name: null,
     })
 
     if (!error) {
@@ -157,10 +353,9 @@ export default function CompanySupportChatScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      {/* Header */}
       <View className="px-4 py-3 border-b border-gray-100 flex-row items-center gap-3">
         <TouchableOpacity onPress={() => router.back()} className="w-9 h-9 items-center justify-center rounded-full bg-gray-100">
-          <Text className="text-gray-600 text-lg">←</Text>
+          <BackIcon />
         </TouchableOpacity>
         <View className="flex-1">
           <Text className="text-sm font-bold text-gray-900">Workstation Support</Text>
@@ -186,7 +381,9 @@ export default function CompanySupportChatScreen() {
             <View className="py-12 items-center">
               <Text className="text-4xl mb-3">💼</Text>
               <Text className="text-base font-semibold text-gray-800 mb-1">How can we help?</Text>
-              <Text className="text-sm text-gray-500 text-center px-8">Send a message and our support team will respond shortly.</Text>
+              <Text className="text-sm text-gray-500 text-center px-8">
+                Send a message and our support team will respond shortly. You can also attach images or files as evidence.
+              </Text>
             </View>
           }
           renderItem={({ item }) => {
@@ -201,9 +398,24 @@ export default function CompanySupportChatScreen() {
                     <Text className="text-[10px] text-gray-500 font-semibold">{item.sender_name}</Text>
                   </View>
                 )}
-                <View className={`max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
-                  <Text className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
-                </View>
+
+                {item.attachment_type === 'image' && item.attachment_url ? (
+                  <View className={`${isUser ? 'items-end' : 'items-start'}`}>
+                    <ImageBubble url={item.attachment_url} isUser={isUser} />
+                    {item.content ? (
+                      <View className={`mt-1.5 max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
+                        <Text className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : item.attachment_type === 'file' && item.attachment_url ? (
+                  <FileBubble name={item.attachment_name ?? 'File'} url={item.attachment_url} isUser={isUser} />
+                ) : (
+                  <View className={`max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
+                    <Text className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
+                  </View>
+                )}
+
                 <Text className="text-[10px] text-gray-400 mt-1 px-1">{formatTime(item.created_at)}</Text>
               </View>
             )
@@ -211,6 +423,19 @@ export default function CompanySupportChatScreen() {
         />
 
         <View className="px-4 py-3 border-t border-gray-100 flex-row items-end gap-2">
+          <TouchableOpacity
+            onPress={openAttachmentPicker}
+            disabled={uploading}
+            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-0.5"
+            style={{ opacity: uploading ? 0.5 : 1 }}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color="#9CA3AF" />
+            ) : (
+              <PaperclipIcon />
+            )}
+          </TouchableOpacity>
+
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -221,6 +446,7 @@ export default function CompanySupportChatScreen() {
             className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 max-h-28"
             style={{ lineHeight: 20 }}
           />
+
           <TouchableOpacity
             onPress={sendMessage}
             disabled={!input.trim() || sending}
@@ -229,7 +455,7 @@ export default function CompanySupportChatScreen() {
             {sending ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text className={`text-base ${!input.trim() ? 'text-gray-400' : 'text-white'}`}>↑</Text>
+              <SendIcon />
             )}
           </TouchableOpacity>
         </View>
