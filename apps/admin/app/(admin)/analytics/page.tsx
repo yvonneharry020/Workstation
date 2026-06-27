@@ -1,572 +1,470 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { Users, Building2, Shield, Activity, Download } from 'lucide-react'
 import {
-  ComposedChart, AreaChart, BarChart,
-  Area, Bar, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
+  ComposedChart, AreaChart, BarChart, Area, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import {
-  TrendingUp, TrendingDown, Users, Building2,
-  Shield, AlertTriangle, Download, Activity,
-} from 'lucide-react'
+  ALL_DATA, filterByRange, filterByMonth, aggregateData, computeStats,
+  computeHealthScore, generateInsights,
+  GEO_DATA, ACQUISITION_FUNNEL, SUBSCRIPTION_TIERS, REJECTION_REASONS,
+} from './data'
+import {
+  ChartTooltip, KpiCard, ChartCard, LegendDot, InsightCard,
+  MonthPicker, DateRangePicker, TICK,
+} from './components'
 
-// ─── 30-day platform data ──────────────────────────────────────────
-const FULL_DATA = [
-  { date: 'Jun 1',  candidates: 42,  companies: 6,  applications: 278, passRate: 72, fraudFlags: 3, activeUsers: 847  },
-  { date: 'Jun 2',  candidates: 38,  companies: 5,  applications: 241, passRate: 74, fraudFlags: 2, activeUsers: 792  },
-  { date: 'Jun 3',  candidates: 55,  companies: 8,  applications: 312, passRate: 71, fraudFlags: 4, activeUsers: 901  },
-  { date: 'Jun 4',  candidates: 67,  companies: 9,  applications: 340, passRate: 75, fraudFlags: 3, activeUsers: 956  },
-  { date: 'Jun 5',  candidates: 72,  companies: 11, applications: 361, passRate: 78, fraudFlags: 5, activeUsers: 1024 },
-  { date: 'Jun 6',  candidates: 61,  companies: 10, applications: 290, passRate: 73, fraudFlags: 2, activeUsers: 978  },
-  { date: 'Jun 7',  candidates: 48,  companies: 7,  applications: 215, passRate: 80, fraudFlags: 1, activeUsers: 834  },
-  { date: 'Jun 8',  candidates: 59,  companies: 9,  applications: 305, passRate: 76, fraudFlags: 3, activeUsers: 912  },
-  { date: 'Jun 9',  candidates: 71,  companies: 12, applications: 378, passRate: 79, fraudFlags: 4, activeUsers: 1045 },
-  { date: 'Jun 10', candidates: 83,  companies: 14, applications: 421, passRate: 82, fraudFlags: 2, activeUsers: 1121 },
-  { date: 'Jun 11', candidates: 92,  companies: 15, applications: 456, passRate: 81, fraudFlags: 6, activeUsers: 1198 },
-  { date: 'Jun 12', candidates: 78,  companies: 13, applications: 394, passRate: 77, fraudFlags: 3, activeUsers: 1087 },
-  { date: 'Jun 13', candidates: 65,  companies: 10, applications: 319, passRate: 74, fraudFlags: 2, activeUsers: 987  },
-  { date: 'Jun 14', candidates: 54,  companies: 8,  applications: 267, passRate: 79, fraudFlags: 1, activeUsers: 893  },
-  { date: 'Jun 15', candidates: 89,  companies: 15, applications: 462, passRate: 83, fraudFlags: 4, activeUsers: 1234 },
-  { date: 'Jun 16', candidates: 104, companies: 18, applications: 498, passRate: 85, fraudFlags: 3, activeUsers: 1312 },
-  { date: 'Jun 17', candidates: 117, companies: 20, applications: 541, passRate: 84, fraudFlags: 5, activeUsers: 1401 },
-  { date: 'Jun 18', candidates: 98,  companies: 17, applications: 487, passRate: 82, fraudFlags: 4, activeUsers: 1289 },
-  { date: 'Jun 19', candidates: 86,  companies: 14, applications: 413, passRate: 80, fraudFlags: 2, activeUsers: 1178 },
-  { date: 'Jun 20', candidates: 134, companies: 22, applications: 612, passRate: 87, fraudFlags: 7, activeUsers: 1567 },
-  { date: 'Jun 21', candidates: 121, companies: 19, applications: 578, passRate: 85, fraudFlags: 5, activeUsers: 1489 },
-  { date: 'Jun 22', candidates: 108, companies: 17, applications: 521, passRate: 83, fraudFlags: 3, activeUsers: 1398 },
-  { date: 'Jun 23', candidates: 91,  companies: 15, applications: 442, passRate: 81, fraudFlags: 4, activeUsers: 1267 },
-  { date: 'Jun 24', candidates: 115, companies: 19, applications: 537, passRate: 84, fraudFlags: 6, activeUsers: 1445 },
-  { date: 'Jun 25', candidates: 129, companies: 21, applications: 589, passRate: 86, fraudFlags: 4, activeUsers: 1523 },
-  { date: 'Jun 26', candidates: 97,  companies: 16, applications: 461, passRate: 82, fraudFlags: 3, activeUsers: 1312 },
-  { date: 'Jun 27', candidates: 143, companies: 24, applications: 634, passRate: 88, fraudFlags: 5, activeUsers: 1634 },
-  { date: 'Jun 28', candidates: 138, companies: 23, applications: 618, passRate: 87, fraudFlags: 4, activeUsers: 1598 },
-  { date: 'Jun 29', candidates: 152, companies: 26, applications: 671, passRate: 89, fraudFlags: 3, activeUsers: 1723 },
-  { date: 'Jun 30', candidates: 167, companies: 28, applications: 712, passRate: 91, fraudFlags: 2, activeUsers: 1842 },
-]
-
-const TRUST_BUCKETS = [
-  { range: '81–100', label: 'Excellent', count: 514, color: '#10B981' },
-  { range: '61–80',  label: 'Good',      count: 778, color: '#6366F1' },
-  { range: '41–60',  label: 'Moderate',  count: 349, color: '#F59E0B' },
-  { range: '21–40',  label: 'Low',       count: 147, color: '#EF4444' },
-  { range: '0–20',   label: 'Critical',  count: 54,  color: '#991B1B' },
-]
-const TRUST_TOTAL = TRUST_BUCKETS.reduce((s, b) => s + b.count, 0)
-
-const VERIF_FUNNEL = [
-  { stage: 'Submitted',  count: 1842, pct: 100   },
-  { stage: 'NIN Verified', count: 1654, pct: 89.8 },
-  { stage: 'Liveness',   count: 1428, pct: 77.5 },
-  { stage: 'Docs Passed',count: 1289, pct: 70.0 },
-  { stage: 'Approved',   count: 1164, pct: 63.2 },
-]
-
-const RANGES = { '7D': 7, '30D': 30 } as const
-type Range = keyof typeof RANGES
-
-// ─── Shared axis tick style — SVG supports CSS vars ───────────────
-const TICK = { fill: 'var(--tx-3)', fontSize: 10, fontFamily: 'var(--font-mono)' }
-
-// ─── Custom tooltip ───────────────────────────────────────────────
-function ChartTooltip({ active, payload, label }: {
-  active?: boolean
-  payload?: Array<{ name: string; value: number; color: string; unit?: string }>
-  label?: string
-}) {
-  if (!active || !payload?.length) return null
+// ─── SVG gradient defs ────────────────────────────────────────────────────────
+function Defs() {
   return (
-    <div style={{
-      backgroundColor: 'var(--bg-card)',
-      border: '1px solid var(--border-strong)',
-      borderRadius: 10,
-      padding: '12px 14px',
-      boxShadow: 'var(--shadow-md)',
-      minWidth: 148,
-    }}>
-      <p style={{ color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--font-mono)', marginBottom: 8 }}>{label}</p>
-      {payload.map((p) => (
-        <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 20, alignItems: 'center', marginBottom: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: p.color, flexShrink: 0 }} />
-            <span style={{ color: 'var(--tx-2)', fontSize: 11 }}>{p.name}</span>
-          </div>
-          <span style={{ color: 'var(--tx-1)', fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-            {typeof p.value === 'number' ? p.value.toLocaleString() : p.value}{p.unit ?? ''}
-          </span>
-        </div>
-      ))}
+    <defs>
+      <linearGradient id="gIndigo"  x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%"  stopColor="#6366F1" stopOpacity={0.25} />
+        <stop offset="95%" stopColor="#6366F1" stopOpacity={0.01} />
+      </linearGradient>
+      <linearGradient id="gCyan"    x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%"  stopColor="#06B6D4" stopOpacity={0.25} />
+        <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.01} />
+      </linearGradient>
+      <linearGradient id="gEmerald" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%"  stopColor="#10B981" stopOpacity={0.22} />
+        <stop offset="95%" stopColor="#10B981" stopOpacity={0.01} />
+      </linearGradient>
+      <linearGradient id="gAmber"   x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%"  stopColor="#F59E0B" stopOpacity={0.22} />
+        <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.01} />
+      </linearGradient>
+      <linearGradient id="gViolet"  x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%"  stopColor="#8B5CF6" stopOpacity={0.22} />
+        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.01} />
+      </linearGradient>
+    </defs>
+  )
+}
+
+const healthColor = (s: number) =>
+  s >= 85 ? '#6366F1' : s >= 70 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444'
+
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div style={{ backgroundColor: 'var(--bg-elevated)', borderRadius: 10, padding: '13px 16px', flex: 1 }}>
+      <p style={{ color: 'var(--tx-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</p>
+      <p style={{ color: 'var(--tx-1)', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{value}</p>
+      {sub && <p style={{ color: 'var(--tx-3)', fontSize: 10, marginTop: 3 }}>{sub}</p>}
     </div>
   )
 }
 
-// ─── KPI card ─────────────────────────────────────────────────────
-function KpiCard({ label, value, delta, sub, Icon, color }: {
-  label: string; value: string; delta: number; sub: string
-  Icon: React.ElementType; color: string
-}) {
-  const up = delta >= 0
-  return (
-    <div style={{
-      backgroundColor: 'var(--bg-card)',
-      border: '1px solid var(--border)',
-      borderRadius: 14,
-      padding: '20px 22px',
-      boxShadow: 'var(--shadow-card)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
-        <p style={{ color: 'var(--tx-3)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</p>
-        <div style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={15} color={color} />
-        </div>
-      </div>
-      <p style={{ color: 'var(--tx-1)', fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', marginBottom: 8 }}>{value}</p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        {up ? <TrendingUp size={11} color="#10B981" /> : <TrendingDown size={11} color="#EF4444" />}
-        <span style={{ color: up ? '#10B981' : '#EF4444', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-          {up ? '+' : ''}{delta.toFixed(1)}%
-        </span>
-        <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{sub}</span>
-      </div>
-    </div>
-  )
-}
+type FilterMode = 'quick' | 'month' | 'range'
 
-// ─── Chart section wrapper ─────────────────────────────────────────
-function ChartCard({ title, sub, children, right }: {
-  title: string; sub: string; children: React.ReactNode; right?: React.ReactNode
-}) {
-  return (
-    <div style={{
-      backgroundColor: 'var(--bg-card)',
-      border: '1px solid var(--border)',
-      borderRadius: 16,
-      padding: '24px 24px 16px',
-      boxShadow: 'var(--shadow-card)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>{title}</h2>
-          <p style={{ color: 'var(--tx-3)', fontSize: 11, marginTop: 3 }}>{sub}</p>
-        </div>
-        {right}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-// ─── Legend dot ───────────────────────────────────────────────────
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{ width: 10, height: 2, borderRadius: 2, backgroundColor: color }} />
-      <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{label}</span>
-    </div>
-  )
-}
-
-// ─── Page ─────────────────────────────────────────────────────────
 export default function AnalyticsPage() {
-  const [range, setRange] = useState<Range>('30D')
+  const [mode,        setMode]        = useState<FilterMode>('quick')
+  const [quickDays,   setQuickDays]   = useState(30)
+  const [monthFilter, setMonthFilter] = useState<{ year: number; month: number } | null>(null)
+  const [rangeFilter, setRangeFilter] = useState<{ start: Date; end: Date } | null>(null)
+  const [tableLimit,  setTableLimit]  = useState(30)
 
-  const data = useMemo(() => FULL_DATA.slice(-RANGES[range]), [range])
+  const rawData = useMemo(() => {
+    if (mode === 'month' && monthFilter) return filterByMonth(monthFilter.year, monthFilter.month)
+    if (mode === 'range' && rangeFilter)  return filterByRange(rangeFilter.start, rangeFilter.end)
+    const last  = ALL_DATA[ALL_DATA.length - 1].dateObj
+    const start = new Date(last); start.setDate(start.getDate() - (quickDays - 1))
+    return filterByRange(start, last)
+  }, [mode, monthFilter, rangeFilter, quickDays])
 
-  const totals = useMemo(() => {
-    const candidates  = data.reduce((s, d) => s + d.candidates, 0)
-    const companies   = data.reduce((s, d) => s + d.companies, 0)
-    const applications = data.reduce((s, d) => s + d.applications, 0)
-    const avgPass     = data.reduce((s, d) => s + d.passRate, 0) / data.length
-    const avgFraud    = data.reduce((s, d) => s + d.fraudFlags, 0) / data.length
-    const totalFlags  = data.reduce((s, d) => s + d.fraudFlags, 0)
-    return { candidates, companies, applications, avgPass, avgFraud, totalFlags }
-  }, [data])
+  const chartData = useMemo(() => aggregateData(rawData), [rawData])
 
-  const handleExport = () => {
-    const rows = [
-      ['Date', 'Candidates', 'Companies', 'Applications', 'Pass Rate (%)', 'Fraud Flags', 'Active Users'],
-      ...data.map(r => [r.date, r.candidates, r.companies, r.applications, r.passRate, r.fraudFlags, r.activeUsers]),
-    ]
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
-      download: `analytics-${range.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`,
-    })
-    a.click()
-  }
+  const prevData = useMemo(() => {
+    if (!rawData.length) return []
+    const firstDate = rawData[0].dateObj
+    const prevEnd   = new Date(firstDate); prevEnd.setDate(prevEnd.getDate() - 1)
+    const prevStart = new Date(prevEnd);   prevStart.setDate(prevStart.getDate() - rawData.length + 1)
+    return filterByRange(prevStart, prevEnd)
+  }, [rawData])
 
-  const tickInterval = Math.floor(data.length / 6)
+  const stats       = useMemo(() => computeStats(rawData, prevData),  [rawData, prevData])
+  const healthScore = useMemo(() => computeHealthScore(stats),         [stats])
+  const insights    = useMemo(() => generateInsights(rawData, stats),  [rawData, stats])
+
+  const applyMonth = (y: number, m: number) => { setMonthFilter({ year: y, month: m }); setMode('month') }
+  const applyRange = (s: Date, e: Date)      => { setRangeFilter({ start: s, end: e });  setMode('range') }
+  const clearMonth = ()                       => { setMonthFilter(null); setMode('quick') }
+  const clearRange = ()                       => { setRangeFilter(null); setMode('quick') }
+
+  const fmtM = (n: number) => `₦${(n / 1_000_000).toFixed(1)}M`
+  const hc   = healthColor(healthScore)
+
+  const tableData = useMemo(() => [...chartData].reverse().slice(0, tableLimit), [chartData, tableLimit])
+
+  const avgResH = rawData.length
+    ? Math.round(rawData.reduce((s, d) => s + d.avgResolutionHours, 0) / rawData.length)
+    : 0
 
   return (
-    <div className="flex flex-col min-h-full" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--tx-1)' }}>
+    <div style={{ padding: '28px 32px', maxWidth: 1420, margin: '0 auto' }}>
 
-      {/* ── Header ── */}
-      <div
-        className="sticky top-0 z-20 backdrop-blur-sm border-b flex items-center justify-between px-8 py-4"
-        style={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)' }}
-      >
+      {/* ─── Filter bar ─────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ color: 'var(--tx-1)', fontSize: 18, fontWeight: 600 }}>Platform Analytics</h1>
-          <p style={{ color: 'var(--tx-2)', fontSize: 12, marginTop: 2 }}>
-            Growth, verification health &amp; platform trust — live interactive charts
+          <h1 style={{ color: 'var(--tx-1)', fontSize: 20, fontWeight: 700 }}>Platform Analytics</h1>
+          <p style={{ color: 'var(--tx-3)', fontSize: 12, marginTop: 3 }}>
+            {rawData.length} day{rawData.length !== 1 ? 's' : ''} · {chartData.length} data point{chartData.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', borderRadius: 8, border: '1px solid var(--border)', overflow: 'hidden' }}>
-            {(Object.keys(RANGES) as Range[]).map(r => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  backgroundColor: range === r ? '#6366F1' : 'var(--bg-card)',
-                  color: range === r ? '#fff' : 'var(--tx-2)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={handleExport}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-              fontSize: 11, fontWeight: 600, borderRadius: 8,
-              backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-              color: 'var(--tx-2)', cursor: 'pointer',
-            }}
-          >
-            <Download size={12} />
-            Export CSV
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {([7, 30, 90] as const).map(d => (
+            <button key={d}
+              onClick={() => { setQuickDays(d); setMode('quick'); setMonthFilter(null); setRangeFilter(null) }}
+              style={{
+                padding: '7px 13px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                border: `1px solid ${mode === 'quick' && quickDays === d ? '#6366F1' : 'var(--border)'}`,
+                backgroundColor: mode === 'quick' && quickDays === d ? 'rgba(99,102,241,0.12)' : 'var(--bg-card)',
+                color: mode === 'quick' && quickDays === d ? '#6366F1' : 'var(--tx-2)',
+              }}>
+              {d}D
+            </button>
+          ))}
+          <div style={{ width: 1, height: 24, backgroundColor: 'var(--border)' }} />
+          <MonthPicker
+            value={mode === 'month' ? monthFilter : null}
+            onChange={applyMonth} onClear={clearMonth}
+          />
+          <DateRangePicker
+            value={mode === 'range' ? rangeFilter : null}
+            onChange={applyRange} onClear={clearRange}
+          />
+          <button style={{
+            padding: '7px 13px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--tx-2)',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <Download size={12} /> Export
           </button>
         </div>
       </div>
 
-      <div className="px-8 py-6 space-y-6">
-
-        {/* ── KPI Strip ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            label="Candidates"
-            value={totals.candidates.toLocaleString()}
-            delta={12.4} sub="vs prev period"
-            Icon={Users} color="#6366F1"
-          />
-          <KpiCard
-            label="Companies"
-            value={totals.companies.toLocaleString()}
-            delta={8.7} sub="vs prev period"
-            Icon={Building2} color="#06B6D4"
-          />
-          <KpiCard
-            label="Avg Pass Rate"
-            value={`${totals.avgPass.toFixed(1)}%`}
-            delta={3.2} sub="vs prev period"
-            Icon={Shield} color="#10B981"
-          />
-          <KpiCard
-            label="Fraud / Day"
-            value={totals.avgFraud.toFixed(1)}
-            delta={-14.3} sub="vs prev period"
-            Icon={AlertTriangle} color="#EF4444"
-          />
+      {/* ─── Health Score + Insights ─────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, marginBottom: 16 }}>
+        <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <p style={{ color: 'var(--tx-3)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Platform Health</p>
+          <div style={{ width: 100, height: 100, borderRadius: '50%', border: `6px solid ${hc}`, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${hc}12` }}>
+            <span style={{ color: hc, fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{healthScore}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: hc }} />
+            <span style={{ color: hc, fontSize: 12, fontWeight: 600 }}>
+              {healthScore >= 85 ? 'Excellent' : healthScore >= 70 ? 'Good' : healthScore >= 50 ? 'Fair' : 'Needs attention'}
+            </span>
+          </div>
+          <p style={{ color: 'var(--tx-3)', fontSize: 10, textAlign: 'center' }}>Pass · Fraud · SLA · Growth</p>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flex: 1 }}>
+            {insights.slice(0, 2).map((ins, i) => <InsightCard key={i} insight={ins} />)}
+          </div>
+          <div style={{ display: 'flex', gap: 10, flex: 1 }}>
+            {insights.slice(2, 4).map((ins, i) => <InsightCard key={i} insight={ins} />)}
+          </div>
+        </div>
+      </div>
 
-        {/* ── Main chart: User Growth ── */}
-        <ChartCard
-          title="User Growth"
-          sub="Daily candidate and company registrations — hover any point for full detail"
-          right={
-            <div style={{ display: 'flex', gap: 16 }}>
-              <LegendDot color="#6366F1" label="Candidates" />
-              <LegendDot color="#10B981" label="Companies" />
-            </div>
-          }
-        >
-          <ResponsiveContainer width="100%" height={260}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-              <defs>
-                <linearGradient id="gCandidates" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#6366F1" stopOpacity={0.28} />
-                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="gCompanies" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#10B981" stopOpacity={0.22} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
+      {/* ─── KPI Strip ──────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 16 }}>
+        <KpiCard label="Candidates" value={stats.totalCandidates.toLocaleString()} delta={stats.candidateDelta} sub="vs prev period" Icon={Users}     color="#6366F1" />
+        <KpiCard label="Companies"  value={stats.totalCompanies.toLocaleString()}  delta={stats.companyDelta}   sub="vs prev period" Icon={Building2} color="#06B6D4" />
+        <KpiCard label="Pass Rate"  value={`${stats.avgPassRate}%`}                delta={stats.passDelta}      sub="avg in period"  Icon={Shield}    color="#10B981" />
+        <KpiCard label="Revenue"    value={fmtM(stats.totalRevenueNGN)}            delta={stats.revenueDelta}   sub="vs prev period" Icon={Activity}  color="#F59E0B" />
+      </div>
+
+      {/* ─── User Growth ────────────────────────────────────────── */}
+      <div style={{ marginBottom: 16 }}>
+        <ChartCard title="Candidate & Company Growth" sub="New registrations over the selected period"
+          right={<div style={{ display: 'flex', gap: 14 }}><LegendDot color="#6366F1" label="Candidates" /><LegendDot color="#06B6D4" label="Companies" /></div>}>
+          <ResponsiveContainer width="100%" height={240}>
+            <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
-              <YAxis tick={TICK} axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis yAxisId="l" tick={TICK} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="r" orientation="right" tick={TICK} tickLine={false} axisLine={false} />
               <Tooltip content={<ChartTooltip />} />
-              <Area
-                type="monotone" dataKey="candidates" name="Candidates"
-                fill="url(#gCandidates)" stroke="#6366F1" strokeWidth={2}
-                dot={false} activeDot={{ r: 5, fill: '#6366F1', strokeWidth: 0 }}
-              />
-              <Area
-                type="monotone" dataKey="companies" name="Companies"
-                fill="url(#gCompanies)" stroke="#10B981" strokeWidth={2}
-                dot={false} activeDot={{ r: 5, fill: '#10B981', strokeWidth: 0 }}
-              />
+              <Area yAxisId="l" type="monotone" dataKey="candidates" name="Candidates" stroke="#6366F1" strokeWidth={2} fill="url(#gIndigo)"  dot={false} />
+              <Area yAxisId="r" type="monotone" dataKey="companies"  name="Companies"  stroke="#06B6D4" strokeWidth={2} fill="url(#gCyan)"    dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
+      </div>
 
-        {/* ── Row 2: Applications + Pass Rate ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          <ChartCard
-            title="Daily Applications"
-            sub={`${totals.applications.toLocaleString()} submissions in period`}
-          >
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                <defs>
-                  <linearGradient id="gApps" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#F59E0B" stopOpacity={0.28} />
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
-                <YAxis tick={TICK} axisLine={false} tickLine={false} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area
-                  type="monotone" dataKey="applications" name="Applications"
-                  fill="url(#gApps)" stroke="#F59E0B" strokeWidth={2}
-                  dot={false} activeDot={{ r: 5, fill: '#F59E0B', strokeWidth: 0 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard
-            title="Verification Pass Rate"
-            sub="Daily % — reference line shows period average"
-          >
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                <defs>
-                  <linearGradient id="gPass" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#06B6D4" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
-                <YAxis tick={TICK} axisLine={false} tickLine={false} domain={[60, 100]} />
-                <ReferenceLine
-                  y={Math.round(totals.avgPass)}
-                  stroke="#6366F1" strokeDasharray="4 3" strokeOpacity={0.5}
-                  label={{ value: `avg ${Math.round(totals.avgPass)}%`, fill: '#6366F1', fontSize: 9, fontFamily: 'var(--font-mono)' }}
-                />
-                <Tooltip content={<ChartTooltip />} />
-                <Area
-                  type="monotone" dataKey="passRate" name="Pass Rate" unit="%"
-                  fill="url(#gPass)" stroke="#06B6D4" strokeWidth={2}
-                  dot={false} activeDot={{ r: 5, fill: '#06B6D4', strokeWidth: 0 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ── Row 3: Trust buckets + Verification funnel ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          {/* Trust Score Distribution */}
-          <div style={{
-            backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-card)',
-          }}>
-            <h2 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>Trust Score Distribution</h2>
-            <p style={{ color: 'var(--tx-3)', fontSize: 11, marginTop: 3, marginBottom: 22 }}>
-              All {TRUST_TOTAL.toLocaleString()} candidates ranked by composite trust score
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {TRUST_BUCKETS.map(b => {
-                const pct = Math.round((b.count / TRUST_TOTAL) * 100)
-                return (
-                  <div key={b.range}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: b.color, fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, minWidth: 44 }}>{b.range}</span>
-                        <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{b.label}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <span style={{ color: 'var(--tx-2)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{b.count.toLocaleString()}</span>
-                        <span style={{ color: 'var(--tx-1)', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, minWidth: 30, textAlign: 'right' }}>{pct}%</span>
-                      </div>
-                    </div>
-                    <div style={{ height: 7, borderRadius: 4, backgroundColor: 'var(--bg-elevated)' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, backgroundColor: b.color, borderRadius: 4, transition: 'width 0.5s ease' }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+      {/* ─── Acquisition Funnel + Geographic ────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Acquisition Funnel" sub="Conversion rate at each onboarding stage">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {ACQUISITION_FUNNEL.map((s, i) => (
+              <div key={s.stage}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ color: 'var(--tx-2)', fontSize: 11 }}>{s.stage}</span>
+                  <span style={{ color: 'var(--tx-1)', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                    {s.pct}% · {s.count.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ height: 7, borderRadius: 4, backgroundColor: 'var(--bg-elevated)' }}>
+                  <div style={{ height: '100%', width: `${s.pct}%`, borderRadius: 4, backgroundColor: ['#6366F1','#8B5CF6','#06B6D4','#10B981','#F59E0B','#EF4444'][i] }} />
+                </div>
+              </div>
+            ))}
           </div>
+        </ChartCard>
 
-          {/* Verification Funnel */}
-          <ChartCard
-            title="Verification Funnel"
-            sub="Stage-by-stage drop-off — hover each bar for conversion rate"
-          >
-            <ResponsiveContainer width="100%" height={218}>
-              <BarChart
-                data={VERIF_FUNNEL}
-                layout="vertical"
-                margin={{ top: 0, right: 20, bottom: 0, left: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" tick={TICK} axisLine={false} tickLine={false} domain={[0, 2000]} />
-                <YAxis type="category" dataKey="stage" tick={{ ...TICK, fontSize: 10 }} axisLine={false} tickLine={false} width={72} />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null
-                    const row = payload[0].payload as typeof VERIF_FUNNEL[0]
-                    return (
-                      <div style={{
-                        backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-strong)',
-                        borderRadius: 10, padding: '11px 14px', boxShadow: 'var(--shadow-md)',
-                      }}>
-                        <p style={{ color: 'var(--tx-3)', fontSize: 11, marginBottom: 6 }}>{label}</p>
-                        <p style={{ color: 'var(--tx-1)', fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                          {row.count.toLocaleString()} users
-                        </p>
-                        <p style={{ color: '#6366F1', fontSize: 11, fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                          {row.pct}% of total submitted
-                        </p>
-                      </div>
-                    )
-                  }}
-                />
-                <Bar dataKey="count" name="Users" radius={[0, 5, 5, 0]} maxBarSize={24}>
-                  {VERIF_FUNNEL.map((_, i) => (
-                    <Cell key={i} fill={`rgba(99,102,241,${1 - i * 0.16})`} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ── Fraud Detection chart ── */}
-        <ChartCard
-          title="Fraud Detection Events"
-          sub="AI-flagged submissions per day — red spikes indicate active fraud attempts"
-          right={
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 8, backgroundColor: 'rgba(239,68,68,0.08)',
-            }}>
-              <AlertTriangle size={12} color="#EF4444" />
-              <span style={{ color: '#EF4444', fontSize: 11, fontWeight: 600 }}>
-                {totals.totalFlags} total flags
-              </span>
-            </div>
-          }
-        >
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
-              <YAxis tick={TICK} axisLine={false} tickLine={false} />
-              <ReferenceLine
-                y={Math.round(totals.avgFraud)}
-                stroke="rgba(239,68,68,0.4)" strokeDasharray="4 3"
-                label={{ value: `avg ${totals.avgFraud.toFixed(1)}`, fill: '#EF4444', fontSize: 9, fontFamily: 'var(--font-mono)' }}
-              />
+        <ChartCard title="Geographic Distribution" sub="Candidate registrations by Nigerian city">
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={GEO_DATA} layout="vertical" margin={{ top: 0, right: 40, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+              <XAxis type="number" tick={TICK} tickLine={false} axisLine={false} />
+              <YAxis type="category" dataKey="city" tick={TICK} tickLine={false} axisLine={false} width={90} />
               <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="fraudFlags" name="Fraud Flags" radius={[4, 4, 0, 0]} maxBarSize={18}>
-                {data.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill={d.fraudFlags >= 6 ? '#EF4444' : d.fraudFlags >= 4 ? '#F59E0B' : '#6366F1'}
-                  />
+              <Bar dataKey="count" name="Candidates" radius={[0, 4, 4, 0]}>
+                {GEO_DATA.map((_, i) => (
+                  <Cell key={i} fill={['#6366F1','#8B5CF6','#06B6D4','#10B981','#F59E0B','#EF4444','#EC4899'][i]} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-            <LegendDot color="#EF4444" label="High (≥6)" />
-            <LegendDot color="#F59E0B" label="Elevated (4–5)" />
-            <LegendDot color="#6366F1" label="Normal (≤3)" />
+        </ChartCard>
+      </div>
+
+      {/* ─── DAU Engagement + Job Market ────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Active User Engagement" sub="Daily active users across the period"
+          right={
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ color: 'var(--tx-1)', fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{stats.avgActiveUsers.toLocaleString()}</p>
+              <p style={{ color: 'var(--tx-3)', fontSize: 10 }}>avg DAU</p>
+            </div>
+          }>
+          <ResponsiveContainer width="100%" height={170}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={TICK} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="activeUsers" name="Active Users" stroke="#8B5CF6" strokeWidth={2} fill="url(#gViolet)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Job Market Health" sub="Applications volume and jobs activity"
+          right={<div style={{ display: 'flex', gap: 14 }}><LegendDot color="#6366F1" label="Applications" /><LegendDot color="#10B981" label="Jobs Posted" /></div>}>
+          <ResponsiveContainer width="100%" height={130}>
+            <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis yAxisId="l" tick={TICK} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="r" orientation="right" tick={TICK} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area yAxisId="l" type="monotone" dataKey="applications" name="Applications" stroke="#6366F1" strokeWidth={2} fill="url(#gIndigo)"  dot={false} />
+              <Area yAxisId="r" type="monotone" dataKey="jobsPosted"   name="Jobs Posted"  stroke="#10B981" strokeWidth={2} fill="url(#gEmerald)" dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <Stat label="Applications"  value={stats.totalApplications.toLocaleString()} />
+            <Stat label="Jobs Posted"   value={stats.totalJobsPosted.toLocaleString()} />
+            <Stat label="Fill Rate"     value={`${stats.fillRate}%`} sub="jobs filled" />
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* ─── Verification + Badge Economy ───────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Verification Pass Rate" sub="Daily pass rate · 80% target line">
+          <ResponsiveContainer width="100%" height={150}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={TICK} tickLine={false} axisLine={false} domain={[0, 100]} />
+              <Tooltip content={<ChartTooltip />} />
+              <ReferenceLine y={80} stroke="#F59E0B" strokeDasharray="4 3"
+                label={{ value: 'Target 80%', position: 'insideTopRight', fill: '#F59E0B', fontSize: 10 }} />
+              <Area type="monotone" dataKey="passRate" name="Pass Rate" unit="%" stroke="#10B981" strokeWidth={2} fill="url(#gEmerald)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12, marginBottom: 14 }}>
+            <Stat label="Avg Pass Rate"  value={`${stats.avgPassRate}%`} />
+            <Stat label="Avg Verif Time" value={`${stats.avgVerifHours}h`} sub="to decision" />
+          </div>
+          <p style={{ color: 'var(--tx-2)', fontSize: 11, fontWeight: 600, marginBottom: 8 }}>Rejection breakdown</p>
+          {REJECTION_REASONS.map(r => (
+            <div key={r.reason} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div style={{ width: 7, height: 7, borderRadius: 2, backgroundColor: r.color }} />
+                <span style={{ color: 'var(--tx-2)', fontSize: 11 }}>{r.reason}</span>
+              </div>
+              <span style={{ color: 'var(--tx-1)', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{r.count}</span>
+            </div>
+          ))}
+        </ChartCard>
+
+        <ChartCard title="Badge & Trust Economy" sub="Badges issued, disputed, and revoked"
+          right={<div style={{ display: 'flex', gap: 12 }}><LegendDot color="#6366F1" label="Issued" /><LegendDot color="#F59E0B" label="Disputed" /></div>}>
+          <ResponsiveContainer width="100%" height={150}>
+            <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis yAxisId="l" tick={TICK} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="r" orientation="right" tick={TICK} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area yAxisId="l" type="monotone" dataKey="badgesIssued"   name="Issued"   stroke="#6366F1" strokeWidth={2} fill="url(#gIndigo)" dot={false} />
+              <Area yAxisId="r" type="monotone" dataKey="badgesDisputed" name="Disputed" stroke="#F59E0B" strokeWidth={2} fill="url(#gAmber)"  dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <Stat label="Issued"   value={stats.totalBadgesIssued.toLocaleString()} />
+            <Stat label="Disputed" value={stats.totalBadgesDisputed.toLocaleString()} sub={`${stats.disputeRate}% rate`} />
+            <Stat label="Revoked"  value={stats.totalBadgesRevoked.toLocaleString()} />
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* ─── Revenue + Support Health ───────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Revenue Snapshot" sub="NGN revenue trend over the period">
+          <ResponsiveContainer width="100%" height={150}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={TICK} tickLine={false} axisLine={false} tickFormatter={v => `₦${(v / 1_000_000).toFixed(0)}M`} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="revenueNGN" name="Revenue" stroke="#F59E0B" strokeWidth={2} fill="url(#gAmber)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <Stat label="Total Revenue" value={fmtM(stats.totalRevenueNGN)} sub="in period" />
+            <div style={{ flex: 1, backgroundColor: 'var(--bg-elevated)', borderRadius: 10, padding: '13px 16px' }}>
+              <p style={{ color: 'var(--tx-3)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Subscriptions</p>
+              {SUBSCRIPTION_TIERS.map(t => (
+                <div key={t.tier} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: 2, backgroundColor: t.color }} />
+                    <span style={{ color: 'var(--tx-2)', fontSize: 10 }}>{t.tier}</span>
+                  </div>
+                  <span style={{ color: 'var(--tx-1)', fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{t.count}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </ChartCard>
 
-        {/* ── Period Breakdown Table ── */}
-        <div style={{
-          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 16, overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '16px 24px', borderBottom: '1px solid var(--border)',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <h3 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>Period Breakdown</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Activity size={12} color="var(--tx-3)" />
-              <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{data.length} days shown (newest first)</span>
-            </div>
+        <ChartCard title="Support & Operational Health" sub="Ticket volume and SLA compliance">
+          <ResponsiveContainer width="100%" height={150}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <Defs />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={TICK} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area type="monotone" dataKey="ticketsOpened" name="Opened" stroke="#F59E0B" strokeWidth={2} fill="url(#gAmber)"   dot={false} />
+              <Area type="monotone" dataKey="ticketsClosed" name="Closed" stroke="#10B981" strokeWidth={2} fill="url(#gEmerald)" dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <Stat label="Total Tickets"  value={stats.totalTickets.toLocaleString()} />
+            <Stat label="SLA Compliance" value={`${stats.avgSlaCompliance}%`} sub="avg in period" />
+            <Stat label="Avg Resolution" value={`${avgResH}h`} />
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Date', 'Candidates', 'Companies', 'Applications', 'Pass Rate', 'Fraud Flags', 'Active Users'].map(h => (
-                    <th key={h} style={{
-                      textAlign: 'left', padding: '10px 20px',
-                      fontSize: 10, fontWeight: 700, color: 'var(--tx-3)',
-                      textTransform: 'uppercase', letterSpacing: '0.1em',
-                    }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...data].reverse().map((row, i, arr) => (
-                  <tr
-                    key={row.date}
-                    style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
-                  >
-                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--tx-2)' }}>{row.date}</td>
-                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#6366F1', fontWeight: 600 }}>{row.candidates}</td>
-                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#10B981', fontWeight: 600 }}>{row.companies}</td>
-                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#F59E0B', fontWeight: 600 }}>{row.applications.toLocaleString()}</td>
-                    <td style={{ padding: '11px 20px' }}>
-                      <span style={{
-                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700,
-                        color: row.passRate >= 85 ? '#10B981' : row.passRate >= 75 ? '#06B6D4' : row.passRate >= 65 ? '#F59E0B' : '#EF4444',
-                      }}>
-                        {row.passRate}%
-                      </span>
-                    </td>
-                    <td style={{ padding: '11px 20px' }}>
-                      <span style={{
-                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700,
-                        color: row.fraudFlags >= 6 ? '#EF4444' : row.fraudFlags >= 4 ? '#F59E0B' : 'var(--tx-2)',
-                      }}>
-                        {row.fraudFlags}
-                      </span>
-                    </td>
-                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--tx-2)' }}>{row.activeUsers.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        </ChartCard>
       </div>
+
+      {/* ─── Trust Distribution + Fraud ─────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <ChartCard title="Trust Score Distribution" sub="All-time candidate trust score brackets">
+          {[
+            { label: '90–100', pct: 28, color: '#10B981' },
+            { label: '75–89',  pct: 34, color: '#6366F1' },
+            { label: '60–74',  pct: 22, color: '#06B6D4' },
+            { label: '40–59',  pct: 11, color: '#F59E0B' },
+            { label: '<40',    pct:  5, color: '#EF4444' },
+          ].map(b => (
+            <div key={b.label} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ color: 'var(--tx-2)', fontSize: 11 }}>Score {b.label}</span>
+                <span style={{ color: 'var(--tx-1)', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{b.pct}%</span>
+              </div>
+              <div style={{ height: 8, borderRadius: 4, backgroundColor: 'var(--bg-elevated)' }}>
+                <div style={{ height: '100%', width: `${b.pct}%`, borderRadius: 4, backgroundColor: b.color }} />
+              </div>
+            </div>
+          ))}
+        </ChartCard>
+
+        <ChartCard title="Fraud & Security Events" sub="Fraud flags per period · red = spike above 7"
+          right={<div style={{ display: 'flex', gap: 14 }}><LegendDot color="#6366F1" label="Normal" /><LegendDot color="#EF4444" label="Spike" /></div>}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" tick={TICK} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={TICK} tickLine={false} axisLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Bar dataKey="fraudFlags" name="Fraud Flags" radius={[3, 3, 0, 0]}>
+                {chartData.map((d, i) => (
+                  <Cell key={i} fill={d.fraudFlags > 7 ? '#EF4444' : d.fraudFlags > 4 ? '#F59E0B' : '#6366F1'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+            <Stat label="Total Flags" value={stats.totalFraudFlags.toLocaleString()} />
+            <Stat label="Avg / Day"   value={`${stats.avgFraudPerDay}`} />
+            <Stat label="Blocked IPs" value={rawData.reduce((s, d) => s + d.blockedIPs, 0).toLocaleString()} />
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* ─── Period Breakdown Table ──────────────────────────────── */}
+      <ChartCard title="Period Breakdown" sub={`Most recent ${tableData.length} of ${chartData.length} data points`}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ fontSize: 11, fontFamily: 'var(--font-mono)', width: '100%' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                {['Period','Candidates','Companies','Applications','Pass Rate','Badges','Revenue','Fraud','SLA'].map(h => (
+                  <th key={h} style={{ color: 'var(--tx-3)', fontWeight: 700, textAlign: 'left', padding: '8px 14px 8px 0', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableData.map((r, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}>
+                  <td style={{ color: 'var(--tx-2)', padding: '8px 14px 8px 0', whiteSpace: 'nowrap' }}>{r.label}</td>
+                  <td style={{ color: 'var(--tx-1)', fontWeight: 700, padding: '8px 14px 8px 0' }}>{r.candidates.toLocaleString()}</td>
+                  <td style={{ color: 'var(--tx-1)', padding: '8px 14px 8px 0' }}>{r.companies.toLocaleString()}</td>
+                  <td style={{ color: 'var(--tx-1)', padding: '8px 14px 8px 0' }}>{r.applications.toLocaleString()}</td>
+                  <td style={{ color: r.passRate >= 80 ? '#10B981' : '#F59E0B', fontWeight: 700, padding: '8px 14px 8px 0' }}>{r.passRate}%</td>
+                  <td style={{ color: 'var(--tx-1)', padding: '8px 14px 8px 0' }}>{r.badgesIssued.toLocaleString()}</td>
+                  <td style={{ color: 'var(--tx-1)', padding: '8px 14px 8px 0' }}>₦{(r.revenueNGN / 1_000_000).toFixed(1)}M</td>
+                  <td style={{ color: r.fraudFlags > 7 ? '#EF4444' : 'var(--tx-1)', fontWeight: r.fraudFlags > 7 ? 700 : 400, padding: '8px 14px 8px 0' }}>{r.fraudFlags}</td>
+                  <td style={{ color: r.slaCompliance >= 90 ? '#10B981' : '#F59E0B', fontWeight: 700, padding: '8px 14px 8px 0' }}>{r.slaCompliance}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {chartData.length > tableLimit && (
+          <button onClick={() => setTableLimit(l => l + 30)}
+            style={{ marginTop: 14, padding: '7px 16px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid var(--border)', backgroundColor: 'var(--bg-elevated)', color: 'var(--tx-2)' }}>
+            Load more ({chartData.length - tableLimit} remaining)
+          </button>
+        )}
+      </ChartCard>
+
+      <div style={{ height: 40 }} />
     </div>
   )
 }
