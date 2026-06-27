@@ -1,202 +1,571 @@
 'use client'
 
-import { useState } from 'react'
-import TopBar from '@/components/layout/TopBar'
-import { MOCK_STATS, MOCK_REGISTRATION_TREND } from '@/lib/mock-data'
+import { useState, useMemo } from 'react'
+import {
+  ComposedChart, AreaChart, BarChart,
+  Area, Bar, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, ReferenceLine,
+} from 'recharts'
+import {
+  TrendingUp, TrendingDown, Users, Building2,
+  Shield, AlertTriangle, Download, Activity,
+} from 'lucide-react'
 
-const VERIFICATION_PASS_RATES = [72, 68, 74, 81, 79, 83]
-const FRAUD_FLAG_RATES = [4.2, 3.8, 5.1, 3.4, 4.9, 3.1]
-const APP_VOLUMES = [312, 287, 341, 398, 421, 519]
+// ─── 30-day platform data ──────────────────────────────────────────
+const FULL_DATA = [
+  { date: 'Jun 1',  candidates: 42,  companies: 6,  applications: 278, passRate: 72, fraudFlags: 3, activeUsers: 847  },
+  { date: 'Jun 2',  candidates: 38,  companies: 5,  applications: 241, passRate: 74, fraudFlags: 2, activeUsers: 792  },
+  { date: 'Jun 3',  candidates: 55,  companies: 8,  applications: 312, passRate: 71, fraudFlags: 4, activeUsers: 901  },
+  { date: 'Jun 4',  candidates: 67,  companies: 9,  applications: 340, passRate: 75, fraudFlags: 3, activeUsers: 956  },
+  { date: 'Jun 5',  candidates: 72,  companies: 11, applications: 361, passRate: 78, fraudFlags: 5, activeUsers: 1024 },
+  { date: 'Jun 6',  candidates: 61,  companies: 10, applications: 290, passRate: 73, fraudFlags: 2, activeUsers: 978  },
+  { date: 'Jun 7',  candidates: 48,  companies: 7,  applications: 215, passRate: 80, fraudFlags: 1, activeUsers: 834  },
+  { date: 'Jun 8',  candidates: 59,  companies: 9,  applications: 305, passRate: 76, fraudFlags: 3, activeUsers: 912  },
+  { date: 'Jun 9',  candidates: 71,  companies: 12, applications: 378, passRate: 79, fraudFlags: 4, activeUsers: 1045 },
+  { date: 'Jun 10', candidates: 83,  companies: 14, applications: 421, passRate: 82, fraudFlags: 2, activeUsers: 1121 },
+  { date: 'Jun 11', candidates: 92,  companies: 15, applications: 456, passRate: 81, fraudFlags: 6, activeUsers: 1198 },
+  { date: 'Jun 12', candidates: 78,  companies: 13, applications: 394, passRate: 77, fraudFlags: 3, activeUsers: 1087 },
+  { date: 'Jun 13', candidates: 65,  companies: 10, applications: 319, passRate: 74, fraudFlags: 2, activeUsers: 987  },
+  { date: 'Jun 14', candidates: 54,  companies: 8,  applications: 267, passRate: 79, fraudFlags: 1, activeUsers: 893  },
+  { date: 'Jun 15', candidates: 89,  companies: 15, applications: 462, passRate: 83, fraudFlags: 4, activeUsers: 1234 },
+  { date: 'Jun 16', candidates: 104, companies: 18, applications: 498, passRate: 85, fraudFlags: 3, activeUsers: 1312 },
+  { date: 'Jun 17', candidates: 117, companies: 20, applications: 541, passRate: 84, fraudFlags: 5, activeUsers: 1401 },
+  { date: 'Jun 18', candidates: 98,  companies: 17, applications: 487, passRate: 82, fraudFlags: 4, activeUsers: 1289 },
+  { date: 'Jun 19', candidates: 86,  companies: 14, applications: 413, passRate: 80, fraudFlags: 2, activeUsers: 1178 },
+  { date: 'Jun 20', candidates: 134, companies: 22, applications: 612, passRate: 87, fraudFlags: 7, activeUsers: 1567 },
+  { date: 'Jun 21', candidates: 121, companies: 19, applications: 578, passRate: 85, fraudFlags: 5, activeUsers: 1489 },
+  { date: 'Jun 22', candidates: 108, companies: 17, applications: 521, passRate: 83, fraudFlags: 3, activeUsers: 1398 },
+  { date: 'Jun 23', candidates: 91,  companies: 15, applications: 442, passRate: 81, fraudFlags: 4, activeUsers: 1267 },
+  { date: 'Jun 24', candidates: 115, companies: 19, applications: 537, passRate: 84, fraudFlags: 6, activeUsers: 1445 },
+  { date: 'Jun 25', candidates: 129, companies: 21, applications: 589, passRate: 86, fraudFlags: 4, activeUsers: 1523 },
+  { date: 'Jun 26', candidates: 97,  companies: 16, applications: 461, passRate: 82, fraudFlags: 3, activeUsers: 1312 },
+  { date: 'Jun 27', candidates: 143, companies: 24, applications: 634, passRate: 88, fraudFlags: 5, activeUsers: 1634 },
+  { date: 'Jun 28', candidates: 138, companies: 23, applications: 618, passRate: 87, fraudFlags: 4, activeUsers: 1598 },
+  { date: 'Jun 29', candidates: 152, companies: 26, applications: 671, passRate: 89, fraudFlags: 3, activeUsers: 1723 },
+  { date: 'Jun 30', candidates: 167, companies: 28, applications: 712, passRate: 91, fraudFlags: 2, activeUsers: 1842 },
+]
 
-function AreaChart({
-  data,
-  color,
-  label,
-  unit = '',
-}: {
-  data: number[]
-  color: string
-  label: string
-  unit?: string
+const TRUST_BUCKETS = [
+  { range: '81–100', label: 'Excellent', count: 514, color: '#10B981' },
+  { range: '61–80',  label: 'Good',      count: 778, color: '#6366F1' },
+  { range: '41–60',  label: 'Moderate',  count: 349, color: '#F59E0B' },
+  { range: '21–40',  label: 'Low',       count: 147, color: '#EF4444' },
+  { range: '0–20',   label: 'Critical',  count: 54,  color: '#991B1B' },
+]
+const TRUST_TOTAL = TRUST_BUCKETS.reduce((s, b) => s + b.count, 0)
+
+const VERIF_FUNNEL = [
+  { stage: 'Submitted',  count: 1842, pct: 100   },
+  { stage: 'NIN Verified', count: 1654, pct: 89.8 },
+  { stage: 'Liveness',   count: 1428, pct: 77.5 },
+  { stage: 'Docs Passed',count: 1289, pct: 70.0 },
+  { stage: 'Approved',   count: 1164, pct: 63.2 },
+]
+
+const RANGES = { '7D': 7, '30D': 30 } as const
+type Range = keyof typeof RANGES
+
+// ─── Shared axis tick style — SVG supports CSS vars ───────────────
+const TICK = { fill: 'var(--tx-3)', fontSize: 10, fontFamily: 'var(--font-mono)' }
+
+// ─── Custom tooltip ───────────────────────────────────────────────
+function ChartTooltip({ active, payload, label }: {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string; unit?: string }>
+  label?: string
 }) {
-  const max = Math.max(...data)
-  const min = Math.min(...data)
-  const range = max - min || 1
-  const W = 280
-  const H = 60
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * W
-    const y = H - ((v - min) / range) * (H - 8) - 4
-    return { x, y }
-  })
-  const polyline = pts.map((p) => `${p.x},${p.y}`).join(' ')
-  const areaPath = `M${pts[0].x},${pts[0].y} ${pts.map((p) => `L${p.x},${p.y}`).join(' ')} L${pts[pts.length - 1].x},${H} L${pts[0].x},${H} Z`
-
+  if (!active || !payload?.length) return null
   return (
-    <div className="bg-surface-card rounded-xl border border-surface-border p-5">
-      <div className="flex items-end justify-between mb-3">
+    <div style={{
+      backgroundColor: 'var(--bg-card)',
+      border: '1px solid var(--border-strong)',
+      borderRadius: 10,
+      padding: '12px 14px',
+      boxShadow: 'var(--shadow-md)',
+      minWidth: 148,
+    }}>
+      <p style={{ color: 'var(--tx-3)', fontSize: 11, fontFamily: 'var(--font-mono)', marginBottom: 8 }}>{label}</p>
+      {payload.map((p) => (
+        <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 20, alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: p.color, flexShrink: 0 }} />
+            <span style={{ color: 'var(--tx-2)', fontSize: 11 }}>{p.name}</span>
+          </div>
+          <span style={{ color: 'var(--tx-1)', fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+            {typeof p.value === 'number' ? p.value.toLocaleString() : p.value}{p.unit ?? ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── KPI card ─────────────────────────────────────────────────────
+function KpiCard({ label, value, delta, sub, Icon, color }: {
+  label: string; value: string; delta: number; sub: string
+  Icon: React.ElementType; color: string
+}) {
+  const up = delta >= 0
+  return (
+    <div style={{
+      backgroundColor: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: 14,
+      padding: '20px 22px',
+      boxShadow: 'var(--shadow-card)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+        <p style={{ color: 'var(--tx-3)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{label}</p>
+        <div style={{ width: 34, height: 34, borderRadius: 9, backgroundColor: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={15} color={color} />
+        </div>
+      </div>
+      <p style={{ color: 'var(--tx-1)', fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-mono)', marginBottom: 8 }}>{value}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+        {up ? <TrendingUp size={11} color="#10B981" /> : <TrendingDown size={11} color="#EF4444" />}
+        <span style={{ color: up ? '#10B981' : '#EF4444', fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+          {up ? '+' : ''}{delta.toFixed(1)}%
+        </span>
+        <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{sub}</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Chart section wrapper ─────────────────────────────────────────
+function ChartCard({ title, sub, children, right }: {
+  title: string; sub: string; children: React.ReactNode; right?: React.ReactNode
+}) {
+  return (
+    <div style={{
+      backgroundColor: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: 16,
+      padding: '24px 24px 16px',
+      boxShadow: 'var(--shadow-card)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <p className="text-xs text-text-secondary">{label}</p>
-          <p className="text-2xl font-mono font-bold text-text-primary mt-0.5">
-            {data[data.length - 1]}{unit}
-          </p>
+          <h2 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>{title}</h2>
+          <p style={{ color: 'var(--tx-3)', fontSize: 11, marginTop: 3 }}>{sub}</p>
         </div>
-        <div className="flex items-center gap-1 text-xs font-mono">
-          {data[data.length - 1] > data[data.length - 2] ? (
-            <span className="text-trust-high">▲ {Math.abs(data[data.length - 1] - data[data.length - 2]).toFixed(1)}{unit}</span>
-          ) : (
-            <span className="text-trust-low">▼ {Math.abs(data[data.length - 1] - data[data.length - 2]).toFixed(1)}{unit}</span>
-          )}
-        </div>
+        {right}
       </div>
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-        <path d={areaPath} fill={`url(#grad-${label})`} />
-        <polyline points={polyline} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Last point dot */}
-        <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="3" fill={color} />
-      </svg>
-      <div className="flex justify-between mt-1">
-        {MOCK_REGISTRATION_TREND.map((r) => (
-          <span key={r.date} className="text-[9px] text-text-muted font-mono">{r.date.split(' ')[0]}</span>
-        ))}
-      </div>
+      {children}
     </div>
   )
 }
 
-function BigStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+// ─── Legend dot ───────────────────────────────────────────────────
+function LegendDot({ color, label }: { color: string; label: string }) {
   return (
-    <div className="bg-surface-card rounded-xl border border-surface-border p-5">
-      <p className="text-xs text-text-secondary uppercase tracking-wider font-medium mb-2">{label}</p>
-      <p className={`text-3xl font-mono font-bold ${color ?? 'text-text-primary'}`}>{value}</p>
-      {sub && <p className="text-xs text-text-muted mt-1.5">{sub}</p>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ width: 10, height: 2, borderRadius: 2, backgroundColor: color }} />
+      <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{label}</span>
     </div>
   )
 }
 
+// ─── Page ─────────────────────────────────────────────────────────
 export default function AnalyticsPage() {
-  const [dateRange, setDateRange] = useState('7d')
+  const [range, setRange] = useState<Range>('30D')
+
+  const data = useMemo(() => FULL_DATA.slice(-RANGES[range]), [range])
+
+  const totals = useMemo(() => {
+    const candidates  = data.reduce((s, d) => s + d.candidates, 0)
+    const companies   = data.reduce((s, d) => s + d.companies, 0)
+    const applications = data.reduce((s, d) => s + d.applications, 0)
+    const avgPass     = data.reduce((s, d) => s + d.passRate, 0) / data.length
+    const avgFraud    = data.reduce((s, d) => s + d.fraudFlags, 0) / data.length
+    const totalFlags  = data.reduce((s, d) => s + d.fraudFlags, 0)
+    return { candidates, companies, applications, avgPass, avgFraud, totalFlags }
+  }, [data])
 
   const handleExport = () => {
-    const csv = [
-      ['Date', 'Candidates', 'Companies', 'Verif Pass Rate (%)', 'Fraud Flag Rate (%)', 'Applications'],
-      ...MOCK_REGISTRATION_TREND.map((r, i) => [
-        r.date,
-        r.candidates,
-        r.companies,
-        VERIFICATION_PASS_RATES[i],
-        FRAUD_FLAG_RATES[i],
-        APP_VOLUMES[i],
-      ]),
+    const rows = [
+      ['Date', 'Candidates', 'Companies', 'Applications', 'Pass Rate (%)', 'Fraud Flags', 'Active Users'],
+      ...data.map(r => [r.date, r.candidates, r.companies, r.applications, r.passRate, r.fraudFlags, r.activeUsers]),
     ]
-      .map((row) => row.join(','))
-      .join('\n')
-
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `workstation-analytics-${new Date().toISOString().slice(0, 10)}.csv`
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
+      download: `analytics-${range.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`,
+    })
     a.click()
-    URL.revokeObjectURL(url)
   }
 
+  const tickInterval = Math.floor(data.length / 6)
+
   return (
-    <div className="flex flex-col min-h-full">
-      <TopBar
-        title="Platform Analytics"
-        subtitle="Registration trends, verification pass rates, and fraud detection metrics"
-        actions={
-          <div className="flex items-center gap-3">
-            <div className="flex bg-surface-elevated rounded-lg border border-surface-border overflow-hidden">
-              {['7d', '14d', '30d'].map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setDateRange(r)}
-                  className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    dateRange === r ? 'bg-admin-500 text-white' : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-elevated border border-surface-border text-text-secondary hover:text-text-primary text-xs font-semibold transition-colors"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Export CSV
-            </button>
+    <div className="flex flex-col min-h-full" style={{ backgroundColor: 'var(--bg-base)', color: 'var(--tx-1)' }}>
+
+      {/* ── Header ── */}
+      <div
+        className="sticky top-0 z-20 backdrop-blur-sm border-b flex items-center justify-between px-8 py-4"
+        style={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)' }}
+      >
+        <div>
+          <h1 style={{ color: 'var(--tx-1)', fontSize: 18, fontWeight: 600 }}>Platform Analytics</h1>
+          <p style={{ color: 'var(--tx-2)', fontSize: 12, marginTop: 2 }}>
+            Growth, verification health &amp; platform trust — live interactive charts
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', borderRadius: 8, border: '1px solid var(--border)', overflow: 'hidden' }}>
+            {(Object.keys(RANGES) as Range[]).map(r => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  backgroundColor: range === r ? '#6366F1' : 'var(--bg-card)',
+                  color: range === r ? '#fff' : 'var(--tx-2)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {r}
+              </button>
+            ))}
           </div>
-        }
-      />
+          <button
+            onClick={handleExport}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
+              fontSize: 11, fontWeight: 600, borderRadius: 8,
+              backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+              color: 'var(--tx-2)', cursor: 'pointer',
+            }}
+          >
+            <Download size={12} />
+            Export CSV
+          </button>
+        </div>
+      </div>
 
       <div className="px-8 py-6 space-y-6">
-        {/* Top KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <BigStat label="Total Candidates" value={MOCK_STATS.totalCandidates.toLocaleString()} sub="All-time" />
-          <BigStat label="Total Companies" value={MOCK_STATS.totalCompanies.toLocaleString()} sub="All-time" />
-          <BigStat label="Avg Pass Rate" value={`${Math.round(VERIFICATION_PASS_RATES.reduce((a, b) => a + b) / VERIFICATION_PASS_RATES.length)}%`} sub="Verification success" color="text-teal-500" />
-          <BigStat label="Avg Fraud Flag Rate" value={`${(FRAUD_FLAG_RATES.reduce((a, b) => a + b) / FRAUD_FLAG_RATES.length).toFixed(1)}%`} sub="AI-flagged submissions" color="text-error" />
+
+        {/* ── KPI Strip ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            label="Candidates"
+            value={totals.candidates.toLocaleString()}
+            delta={12.4} sub="vs prev period"
+            Icon={Users} color="#6366F1"
+          />
+          <KpiCard
+            label="Companies"
+            value={totals.companies.toLocaleString()}
+            delta={8.7} sub="vs prev period"
+            Icon={Building2} color="#06B6D4"
+          />
+          <KpiCard
+            label="Avg Pass Rate"
+            value={`${totals.avgPass.toFixed(1)}%`}
+            delta={3.2} sub="vs prev period"
+            Icon={Shield} color="#10B981"
+          />
+          <KpiCard
+            label="Fraud / Day"
+            value={totals.avgFraud.toFixed(1)}
+            delta={-14.3} sub="vs prev period"
+            Icon={AlertTriangle} color="#EF4444"
+          />
         </div>
 
-        {/* Charts row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <AreaChart data={MOCK_REGISTRATION_TREND.map((r) => r.candidates)} color="#A855F7" label="Candidate Registrations" />
-          <AreaChart data={MOCK_REGISTRATION_TREND.map((r) => r.companies)} color="#0DD4C3" label="Company Registrations" />
-          <AreaChart data={APP_VOLUMES} color="#FF6240" label="Applications Submitted" />
-        </div>
+        {/* ── Main chart: User Growth ── */}
+        <ChartCard
+          title="User Growth"
+          sub="Daily candidate and company registrations — hover any point for full detail"
+          right={
+            <div style={{ display: 'flex', gap: 16 }}>
+              <LegendDot color="#6366F1" label="Candidates" />
+              <LegendDot color="#10B981" label="Companies" />
+            </div>
+          }
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+              <defs>
+                <linearGradient id="gCandidates" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#6366F1" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="gCompanies" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#10B981" stopOpacity={0.22} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
+              <YAxis tick={TICK} axisLine={false} tickLine={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Area
+                type="monotone" dataKey="candidates" name="Candidates"
+                fill="url(#gCandidates)" stroke="#6366F1" strokeWidth={2}
+                dot={false} activeDot={{ r: 5, fill: '#6366F1', strokeWidth: 0 }}
+              />
+              <Area
+                type="monotone" dataKey="companies" name="Companies"
+                fill="url(#gCompanies)" stroke="#10B981" strokeWidth={2}
+                dot={false} activeDot={{ r: 5, fill: '#10B981', strokeWidth: 0 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        {/* Charts row 2 */}
+        {/* ── Row 2: Applications + Pass Rate ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <AreaChart data={VERIFICATION_PASS_RATES} color="#22C55E" label="Verification Pass Rate" unit="%" />
-          <AreaChart data={FRAUD_FLAG_RATES} color="#EF4444" label="Fraud Flag Rate" unit="%" />
+
+          <ChartCard
+            title="Daily Applications"
+            sub={`${totals.applications.toLocaleString()} submissions in period`}
+          >
+            <ResponsiveContainer width="100%" height={190}>
+              <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                <defs>
+                  <linearGradient id="gApps" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#F59E0B" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
+                <YAxis tick={TICK} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                  type="monotone" dataKey="applications" name="Applications"
+                  fill="url(#gApps)" stroke="#F59E0B" strokeWidth={2}
+                  dot={false} activeDot={{ r: 5, fill: '#F59E0B', strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard
+            title="Verification Pass Rate"
+            sub="Daily % — reference line shows period average"
+          >
+            <ResponsiveContainer width="100%" height={190}>
+              <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+                <defs>
+                  <linearGradient id="gPass" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#06B6D4" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
+                <YAxis tick={TICK} axisLine={false} tickLine={false} domain={[60, 100]} />
+                <ReferenceLine
+                  y={Math.round(totals.avgPass)}
+                  stroke="#6366F1" strokeDasharray="4 3" strokeOpacity={0.5}
+                  label={{ value: `avg ${Math.round(totals.avgPass)}%`, fill: '#6366F1', fontSize: 9, fontFamily: 'var(--font-mono)' }}
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                  type="monotone" dataKey="passRate" name="Pass Rate" unit="%"
+                  fill="url(#gPass)" stroke="#06B6D4" strokeWidth={2}
+                  dot={false} activeDot={{ r: 5, fill: '#06B6D4', strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
 
-        {/* Data table */}
-        <div className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
-          <div className="px-5 py-4 border-b border-surface-border">
-            <h3 className="text-sm font-semibold text-text-primary">Period Breakdown</h3>
+        {/* ── Row 3: Trust buckets + Verification funnel ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          {/* Trust Score Distribution */}
+          <div style={{
+            backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 16, padding: 24, boxShadow: 'var(--shadow-card)',
+          }}>
+            <h2 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>Trust Score Distribution</h2>
+            <p style={{ color: 'var(--tx-3)', fontSize: 11, marginTop: 3, marginBottom: 22 }}>
+              All {TRUST_TOTAL.toLocaleString()} candidates ranked by composite trust score
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {TRUST_BUCKETS.map(b => {
+                const pct = Math.round((b.count / TRUST_TOTAL) * 100)
+                return (
+                  <div key={b.range}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ color: b.color, fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, minWidth: 44 }}>{b.range}</span>
+                        <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{b.label}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <span style={{ color: 'var(--tx-2)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{b.count.toLocaleString()}</span>
+                        <span style={{ color: 'var(--tx-1)', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, minWidth: 30, textAlign: 'right' }}>{pct}%</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 7, borderRadius: 4, backgroundColor: 'var(--bg-elevated)' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, backgroundColor: b.color, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          <table>
-            <thead>
-              <tr className="border-b border-surface-border">
-                {['Date', 'Candidates', 'Companies', 'Verif Pass', 'Fraud Rate', 'Applications'].map((h) => (
-                  <th key={h} className="text-left text-[10px] font-semibold text-text-muted uppercase tracking-wider px-5 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_REGISTRATION_TREND.map((row, i) => (
-                <tr key={row.date} className="border-b border-surface-border/50 last:border-0 hover:bg-surface-elevated/30 transition-colors">
-                  <td className="px-5 py-3 text-xs font-mono text-text-secondary">{row.date}</td>
-                  <td className="px-5 py-3 text-xs font-mono text-admin-300">{row.candidates}</td>
-                  <td className="px-5 py-3 text-xs font-mono text-teal-400">{row.companies}</td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs font-mono font-bold ${VERIFICATION_PASS_RATES[i] >= 75 ? 'text-trust-high' : 'text-trust-mid'}`}>
-                      {VERIFICATION_PASS_RATES[i]}%
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`text-xs font-mono font-bold ${FRAUD_FLAG_RATES[i] >= 4 ? 'text-trust-low' : 'text-text-secondary'}`}>
-                      {FRAUD_FLAG_RATES[i]}%
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-xs font-mono text-text-secondary">{APP_VOLUMES[i]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+          {/* Verification Funnel */}
+          <ChartCard
+            title="Verification Funnel"
+            sub="Stage-by-stage drop-off — hover each bar for conversion rate"
+          >
+            <ResponsiveContainer width="100%" height={218}>
+              <BarChart
+                data={VERIF_FUNNEL}
+                layout="vertical"
+                margin={{ top: 0, right: 20, bottom: 0, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                <XAxis type="number" tick={TICK} axisLine={false} tickLine={false} domain={[0, 2000]} />
+                <YAxis type="category" dataKey="stage" tick={{ ...TICK, fontSize: 10 }} axisLine={false} tickLine={false} width={72} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null
+                    const row = payload[0].payload as typeof VERIF_FUNNEL[0]
+                    return (
+                      <div style={{
+                        backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-strong)',
+                        borderRadius: 10, padding: '11px 14px', boxShadow: 'var(--shadow-md)',
+                      }}>
+                        <p style={{ color: 'var(--tx-3)', fontSize: 11, marginBottom: 6 }}>{label}</p>
+                        <p style={{ color: 'var(--tx-1)', fontSize: 14, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                          {row.count.toLocaleString()} users
+                        </p>
+                        <p style={{ color: '#6366F1', fontSize: 11, fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                          {row.pct}% of total submitted
+                        </p>
+                      </div>
+                    )
+                  }}
+                />
+                <Bar dataKey="count" name="Users" radius={[0, 5, 5, 0]} maxBarSize={24}>
+                  {VERIF_FUNNEL.map((_, i) => (
+                    <Cell key={i} fill={`rgba(99,102,241,${1 - i * 0.16})`} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
+
+        {/* ── Fraud Detection chart ── */}
+        <ChartCard
+          title="Fraud Detection Events"
+          sub="AI-flagged submissions per day — red spikes indicate active fraud attempts"
+          right={
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8, backgroundColor: 'rgba(239,68,68,0.08)',
+            }}>
+              <AlertTriangle size={12} color="#EF4444" />
+              <span style={{ color: '#EF4444', fontSize: 11, fontWeight: 600 }}>
+                {totals.totalFlags} total flags
+              </span>
+            </div>
+          }
+        >
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="date" tick={TICK} axisLine={false} tickLine={false} interval={tickInterval} />
+              <YAxis tick={TICK} axisLine={false} tickLine={false} />
+              <ReferenceLine
+                y={Math.round(totals.avgFraud)}
+                stroke="rgba(239,68,68,0.4)" strokeDasharray="4 3"
+                label={{ value: `avg ${totals.avgFraud.toFixed(1)}`, fill: '#EF4444', fontSize: 9, fontFamily: 'var(--font-mono)' }}
+              />
+              <Tooltip content={<ChartTooltip />} />
+              <Bar dataKey="fraudFlags" name="Fraud Flags" radius={[4, 4, 0, 0]} maxBarSize={18}>
+                {data.map((d, i) => (
+                  <Cell
+                    key={i}
+                    fill={d.fraudFlags >= 6 ? '#EF4444' : d.fraudFlags >= 4 ? '#F59E0B' : '#6366F1'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+            <LegendDot color="#EF4444" label="High (≥6)" />
+            <LegendDot color="#F59E0B" label="Elevated (4–5)" />
+            <LegendDot color="#6366F1" label="Normal (≤3)" />
+          </div>
+        </ChartCard>
+
+        {/* ── Period Breakdown Table ── */}
+        <div style={{
+          backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 16, overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '16px 24px', borderBottom: '1px solid var(--border)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <h3 style={{ color: 'var(--tx-1)', fontSize: 13, fontWeight: 600 }}>Period Breakdown</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Activity size={12} color="var(--tx-3)" />
+              <span style={{ color: 'var(--tx-3)', fontSize: 11 }}>{data.length} days shown (newest first)</span>
+            </div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  {['Date', 'Candidates', 'Companies', 'Applications', 'Pass Rate', 'Fraud Flags', 'Active Users'].map(h => (
+                    <th key={h} style={{
+                      textAlign: 'left', padding: '10px 20px',
+                      fontSize: 10, fontWeight: 700, color: 'var(--tx-3)',
+                      textTransform: 'uppercase', letterSpacing: '0.1em',
+                    }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[...data].reverse().map((row, i, arr) => (
+                  <tr
+                    key={row.date}
+                    style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
+                  >
+                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--tx-2)' }}>{row.date}</td>
+                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#6366F1', fontWeight: 600 }}>{row.candidates}</td>
+                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#10B981', fontWeight: 600 }}>{row.companies}</td>
+                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: '#F59E0B', fontWeight: 600 }}>{row.applications.toLocaleString()}</td>
+                    <td style={{ padding: '11px 20px' }}>
+                      <span style={{
+                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700,
+                        color: row.passRate >= 85 ? '#10B981' : row.passRate >= 75 ? '#06B6D4' : row.passRate >= 65 ? '#F59E0B' : '#EF4444',
+                      }}>
+                        {row.passRate}%
+                      </span>
+                    </td>
+                    <td style={{ padding: '11px 20px' }}>
+                      <span style={{
+                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700,
+                        color: row.fraudFlags >= 6 ? '#EF4444' : row.fraudFlags >= 4 ? '#F59E0B' : 'var(--tx-2)',
+                      }}>
+                        {row.fraudFlags}
+                      </span>
+                    </td>
+                    <td style={{ padding: '11px 20px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--tx-2)' }}>{row.activeUsers.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   )
