@@ -8,12 +8,20 @@ interface TopBarProps {
 
 export default function TopBar({ title, subtitle, actions }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-20 bg-surface-base/90 backdrop-blur-sm border-b border-surface-border px-8 py-4">
+    <header
+      className="sticky top-0 z-20 backdrop-blur-sm border-b px-8 py-4"
+      style={{ backgroundColor: 'var(--bg-base)', borderColor: 'var(--border)' }}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold font-display text-text-primary">{title}</h1>
+          <h1
+            className="text-xl font-semibold font-display"
+            style={{ color: 'var(--tx-1)' }}
+          >
+            {title}
+          </h1>
           {subtitle && (
-            <p className="text-sm text-text-secondary mt-0.5">{subtitle}</p>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--tx-2)' }}>{subtitle}</p>
           )}
         </div>
         {actions && <div className="flex items-center gap-3">{actions}</div>}

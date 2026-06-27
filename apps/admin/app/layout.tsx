@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${inter.variable} ${jakarta.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="bg-surface-base text-text-body antialiased">
+      <body className="antialiased">
         <ThemeProvider defaultTheme={theme}>{children}</ThemeProvider>
       </body>
     </html>

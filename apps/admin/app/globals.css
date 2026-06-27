@@ -83,6 +83,83 @@ html, body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* ─── Light mode overrides for Tailwind semantic classes ─────────────────────
+   Tailwind compiles semantic token classes with hardcoded dark RGB values at
+   build time. These selectors (specificity 0,2,0) beat the compiled Tailwind
+   class rules (0,1,0) and restore correct CSS-variable-driven values.
+   This fixes every page that uses bg-surface-*, text-text-*, border-surface-*
+   without needing to touch each file individually.
+── */
+
+[data-theme="light"] body,
+[data-theme="light"] .bg-surface-base {
+  background-color: var(--bg-base);
+}
+
+[data-theme="light"] .bg-surface-card {
+  background-color: var(--bg-card);
+}
+
+[data-theme="light"] .bg-surface-elevated,
+[data-theme="light"] .hover\:bg-surface-elevated:hover {
+  background-color: var(--bg-elevated);
+}
+
+[data-theme="light"] .bg-surface-muted,
+[data-theme="light"] .hover\:bg-surface-muted:hover {
+  background-color: var(--bg-surface);
+}
+
+[data-theme="light"] .bg-surface-border {
+  background-color: var(--border);
+}
+
+[data-theme="light"] .border-surface-border,
+[data-theme="light"] .hover\:border-surface-border:hover {
+  border-color: var(--border);
+}
+
+[data-theme="light"] .border-surface-border-strong {
+  border-color: var(--border-strong);
+}
+
+[data-theme="light"] .text-text-primary,
+[data-theme="light"] .text-text-body,
+[data-theme="light"] .hover\:text-text-primary:hover {
+  color: var(--tx-1);
+}
+
+[data-theme="light"] .text-text-secondary,
+[data-theme="light"] .hover\:text-text-secondary:hover {
+  color: var(--tx-2);
+}
+
+[data-theme="light"] .text-text-muted,
+[data-theme="light"] .text-text-disabled,
+[data-theme="light"] .placeholder\:text-text-muted::placeholder {
+  color: var(--tx-3);
+}
+
+/* Dividers / horizontal rules that use surface border */
+[data-theme="light"] .divide-surface-border > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border);
+}
+
+/* Opacity-modifier variants (e.g. bg-surface-base/90) — Tailwind generates
+   separate classes for these so the exact-name selectors above don't cover them */
+[data-theme="light"] [class*="bg-surface-base"] {
+  background-color: var(--bg-base);
+}
+[data-theme="light"] [class*="bg-surface-card"] {
+  background-color: var(--bg-card);
+}
+[data-theme="light"] [class*="bg-surface-muted"] {
+  background-color: var(--bg-surface);
+}
+[data-theme="light"] [class*="bg-surface-elevated"] {
+  background-color: var(--bg-elevated);
+}
+
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 5px;
