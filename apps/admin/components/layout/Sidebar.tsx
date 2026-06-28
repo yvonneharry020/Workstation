@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShieldCheck, Building2, Flag, Briefcase,
   Users, Award, Bell, TicketCheck, Inbox, MessageSquare,
   BarChart3, ScrollText, UserCog, Settings2, Sun, Moon,
-  Layers,
+  Layers, Shield, BookOpen, PlayCircle,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 
@@ -89,6 +89,14 @@ export default function Sidebar({
         { href: '/audit-log', label: 'Audit Log',    icon: <ScrollText  size={15} /> },
         { href: '/staff',     label: 'Staff',        icon: <UserCog     size={15} /> },
         { href: '/config',    label: 'System Config', icon: <Settings2  size={15} /> },
+      ],
+    },
+    {
+      label: 'Content & Compliance',
+      items: [
+        { href: '/compliance',     label: 'NDPR Compliance',  icon: <Shield      size={15} /> },
+        { href: '/knowledge-base', label: 'Knowledge Base',   icon: <BookOpen    size={15} /> },
+        { href: '/tutorials',      label: 'Tutorials',        icon: <PlayCircle  size={15} /> },
       ],
     },
   ]

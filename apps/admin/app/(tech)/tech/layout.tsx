@@ -40,6 +40,8 @@ const TECH_NAV = [
       { href: '/tech/performance', label: 'Performance', icon: <SpeedIcon /> },
       { href: '/tech/queues', label: 'Job Queues', icon: <QueueIcon /> },
       { href: '/tech/rate-limits', label: 'Rate Limits', icon: <ThrottleIcon /> },
+      { href: '/tech/storage', label: 'Storage Manager', icon: <StorageIcon /> },
+      { href: '/tech/crash-logs', label: 'Crash Logs', icon: <BugIcon /> },
     ],
   },
   {
@@ -124,6 +126,12 @@ function QueueIcon() {
 }
 function ThrottleIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+}
+function StorageIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+}
+function BugIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>
 }
 
 export default function TechLayout({ children }: { children: React.ReactNode }) {

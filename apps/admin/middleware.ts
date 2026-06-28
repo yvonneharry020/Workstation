@@ -1,14 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Routes that do not require authentication
 const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password']
-const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon']
+const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized']
+
+const ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
+  { prefix: '/finance/', allowed: ['superadmin', 'finance'] },
+  { prefix: '/tech/',    allowed: ['superadmin', 'tech'] },
+  { prefix: '/ops/',     allowed: ['superadmin', 'ops'] },
+]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Pass through static assets and auth callback immediately
   if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) {
     return NextResponse.next({ request })
   }
@@ -34,30 +38,43 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // CRITICAL: getUser() is the only secure way to validate the session.
-  // Never use getSession() for auth checks — it can be spoofed.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))
 
-  // Redirect unauthenticated users to login
   if (!user && !isAuthRoute) {
     const loginUrl = new URL('/login', request.url)
-    if (pathname !== '/') {
-      loginUrl.searchParams.set('next', pathname)
-    }
+    if (pathname !== '/') loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect already-authenticated users away from login/forgot-password
-  // but NOT from reset-password (they may be in a recovery flow)
   if (user && (pathname.startsWith('/login') || pathname.startsWith('/forgot-password'))) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Add security headers to every response
+  // RBAC: check room-based roles for department routes
+  if (user) {
+    const roomRule = ROOM_ROLES.find(r => pathname.startsWith(r.prefix))
+    if (roomRule) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+
+        const role = profile?.role as string | undefined
+
+        if (role && !roomRule.allowed.includes(role)) {
+          return NextResponse.redirect(new URL('/unauthorized', request.url))
+        }
+        // Fail open: if no profile or DB error, allow access
+      } catch {
+        // Fail open on any DB error
+      }
+    }
+  }
+
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')

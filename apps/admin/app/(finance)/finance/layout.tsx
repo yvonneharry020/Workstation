@@ -14,6 +14,7 @@ const FINANCE_NAV = [
       { href: '/finance/subscriptions', label: 'Subscriptions', icon: <SubscriptionIcon /> },
       { href: '/finance/transactions', label: 'Transactions', icon: <TransactionIcon /> },
       { href: '/finance/invoices', label: 'Invoices', icon: <InvoiceIcon /> },
+      { href: '/finance/referrals', label: 'Referrals & Promos', icon: <ReferralIcon /> },
     ],
   },
   {
@@ -25,6 +26,8 @@ const FINANCE_NAV = [
       { href: '/finance/churn', label: 'Churn Analysis', icon: <ChurnIcon /> },
       { href: '/finance/aging', label: 'AR Aging', icon: <AgingIcon /> },
       { href: '/finance/forecasting', label: 'Forecasting', icon: <ForecastIcon /> },
+      { href: '/finance/budget', label: 'Budget vs Actuals', icon: <BudgetIcon /> },
+      { href: '/finance/board-report', label: 'Board Report', icon: <BoardIcon /> },
     ],
   },
   {
@@ -103,6 +106,15 @@ function VatIcon() {
 }
 function GatewayIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+}
+function BudgetIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+}
+function BoardIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+}
+function ReferralIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
 }
 
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
