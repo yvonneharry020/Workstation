@@ -1,255 +1,195 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
-import { MOCK_COMPANY_QUEUE } from '@/lib/mock-data'
 
-type ScanStatus = 'passed' | 'flagged' | 'pending'
-
-interface RejectModal {
-  companyId: string
-  companyName: string
+interface Company {
+  id: string
+  user_id: string
+  name: string
+  email: string
+  verification_status: string
+  industry: string | null
+  created_at: string
+  status: string
+  website: string | null
 }
 
-function CheckIcon({ pass }: { pass: boolean }) {
-  return pass ? (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0DD4C3" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  ) : (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
+type FilterTab = 'all' | 'pending' | 'under_review' | 'verified' | 'rejected'
+
+const CARD_STYLE = {
+  backgroundColor: 'var(--bg-card)',
+  border: '1px solid var(--border)',
+  borderRadius: '16px',
+  boxShadow: 'var(--shadow-card)',
 }
 
-function DocBadge({ status }: { status: ScanStatus }) {
-  const map = {
-    passed: 'bg-trust-high-bg text-trust-high border-trust-high-border',
-    flagged: 'bg-trust-low-bg text-trust-low border-trust-low-border',
-    pending: 'bg-trust-mid-bg text-trust-mid border-trust-mid-border',
-  }
+const VERIF_PILL: Record<string, { text: string; bg: string; border: string }> = {
+  verified:     { text: '#34D399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.3)' },
+  pending:      { text: '#FBBF24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
+  rejected:     { text: '#F87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)' },
+  under_review: { text: '#38BDF8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.3)' },
+}
+
+function StatusPill({ value }: { value: string }) {
+  const s = VERIF_PILL[value] ?? VERIF_PILL['pending']
   return (
-    <span className={`text-[10px] font-semibold uppercase tracking-wider border px-1.5 py-0.5 rounded font-mono ${map[status]}`}>
-      {status}
+    <span style={{ color: s.text, backgroundColor: s.bg, border: `1px solid ${s.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      {value.replace('_', ' ')}
     </span>
   )
 }
 
-function formatTime(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
-
-const COMPANY_SIZES: Record<string, string> = {
-  '1_10': '1–10 employees',
-  '11_50': '11–50 employees',
-  '51_200': '51–200 employees',
-  '201_500': '201–500 employees',
-  '501_plus': '501+ employees',
-}
-
-const REJECT_REASONS = [
-  'RC number mismatch — not found in CAC registry',
-  'Director NIN does not match stated identity',
-  'CAC certificate appears tampered',
-  'Address proof insufficient or expired',
-  'Company flagged in EFCC business watchlist',
-]
 
 export default function CompanyVerificationPage() {
-  const [queue, setQueue] = useState(MOCK_COMPANY_QUEUE)
-  const [expanded, setExpanded] = useState<string | null>(null)
-  const [rejectModal, setRejectModal] = useState<RejectModal | null>(null)
-  const [rejectedReasons, setRejectedReasons] = useState<string[]>([])
-  const [rejectNote, setRejectNote] = useState('')
+  const supabase = createClient()
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<FilterTab>('pending')
+  const [acting, setActing] = useState<string | null>(null)
 
-  const handleApprove = (id: string) => setQueue((prev) => prev.filter((c) => c.id !== id))
-  const handleRequestInfo = (id: string) => setQueue((prev) => prev.filter((c) => c.id !== id))
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('companies')
+      .select('id,user_id,name,email,verification_status,industry,created_at,status,website')
+      .order('created_at', { ascending: false })
+    if (!error) setCompanies((data ?? []) as Company[])
+    setLoading(false)
+  }, [supabase])
 
-  const handleReject = () => {
-    if (!rejectModal || rejectedReasons.length === 0) return
-    setQueue((prev) => prev.filter((c) => c.id !== rejectModal.companyId))
-    setRejectModal(null)
-    setRejectedReasons([])
-    setRejectNote('')
+  useEffect(() => { void load() }, [load])
+
+  async function updateVerification(id: string, status: 'verified' | 'under_review' | 'rejected') {
+    setActing(id)
+    setCompanies(prev => prev.map(c => c.id === id ? { ...c, verification_status: status } : c))
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('companies').update({ verification_status: status }).eq('id', id)
+    await supabase.from('audit_logs').insert({
+      event: `admin.company_verification_${status}`,
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: id,
+      target_type: 'company',
+      severity: 'info',
+      app: 'admin_panel',
+    })
+    setActing(null)
   }
 
-  const toggleReason = (r: string) => {
-    setRejectedReasons((prev) => prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r])
-  }
+  const filtered = filter === 'all' ? companies : companies.filter(c => c.verification_status === filter)
+
+  const pending = companies.filter(c => c.verification_status === 'pending').length
+  const underReview = companies.filter(c => c.verification_status === 'under_review').length
+  const verified = companies.filter(c => c.verification_status === 'verified').length
+  const rejected = companies.filter(c => c.verification_status === 'rejected').length
+  const total = companies.length
+  const approvalRate = total > 0 ? Math.round((verified / total) * 100) : 0
+
+  const TABS: { key: FilterTab; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: total },
+    { key: 'pending', label: 'Pending', count: pending },
+    { key: 'under_review', label: 'Under Review', count: underReview },
+    { key: 'verified', label: 'Verified', count: verified },
+    { key: 'rejected', label: 'Rejected', count: rejected },
+  ]
 
   return (
-    <div className="flex flex-col min-h-full">
-      <TopBar
-        title="Company Verification Queue"
-        subtitle={`${queue.length} pending · sorted by submission time`}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <TopBar title="Company Verification" subtitle={`${pending} pending review · ${total} total companies`} />
 
-      <div className="px-8 py-6 space-y-3">
-        {queue.length === 0 && (
-          <div className="text-center py-24 text-text-secondary">
-            <svg className="w-12 h-12 mx-auto mb-3 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <p className="text-sm">All companies reviewed for this session.</p>
-          </div>
-        )}
-
-        {queue.map((company) => {
-          const isExpanded = expanded === company.id
-          return (
-            <div key={company.id} className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
-              <button
-                onClick={() => setExpanded(isExpanded ? null : company.id)}
-                className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-surface-elevated/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-admin-900 border border-admin-700 flex items-center justify-center flex-shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C084FC" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-text-primary">{company.name}</p>
-                    <p className="text-xs text-text-secondary font-mono">{company.rcNumber} · {company.industry}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                      <CheckIcon pass={company.cacMatch} />
-                      <span className="text-xs text-text-secondary">CAC</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckIcon pass={company.directorNinMatch} />
-                      <span className="text-xs text-text-secondary">Director NIN</span>
-                    </div>
-                    <DocBadge status={company.docScan} />
-                  </div>
-
-                  <span className="text-xs text-text-muted font-mono min-w-[120px] text-right">
-                    {formatTime(company.submittedAt)}
-                  </span>
-
-                  <svg
-                    width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </button>
-
-              {isExpanded && (
-                <div className="border-t border-surface-border px-6 py-5">
-                  <div className="grid grid-cols-2 gap-6 mb-5">
-                    <div className="space-y-2.5">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-text-secondary">Email</span>
-                        <span className="text-text-primary">{company.email}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-text-secondary">Company size</span>
-                        <span className="text-text-primary">{COMPANY_SIZES[company.size] ?? company.size}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-text-secondary">Documents</span>
-                        <span className="text-text-primary">{company.documents.length} uploaded</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-secondary mb-2">Uploaded files</p>
-                      <div className="space-y-1">
-                        {company.documents.map((doc) => (
-                          <div key={doc} className="flex items-center gap-2 text-xs text-text-secondary bg-surface-elevated rounded-lg px-3 py-2">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
-                            {doc}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-3 border-t border-surface-border">
-                    <button
-                      onClick={() => handleApprove(company.id)}
-                      className="flex-1 py-2.5 rounded-lg bg-teal-500 hover:bg-teal-600 text-surface-base text-sm font-semibold transition-colors"
-                    >
-                      Approve Company
-                    </button>
-                    <button
-                      onClick={() => setRejectModal({ companyId: company.id, companyName: company.name })}
-                      className="flex-1 py-2.5 rounded-lg bg-error/15 hover:bg-error/25 text-error border border-error/30 text-sm font-semibold transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleRequestInfo(company.id)}
-                      className="flex-1 py-2.5 rounded-lg bg-surface-muted hover:bg-surface-elevated text-text-secondary text-sm font-semibold transition-colors"
-                    >
-                      Request More Info
-                    </button>
-                  </div>
-                </div>
-              )}
+      <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {[
+            { label: 'Pending Review', value: pending, color: '#FBBF24' },
+            { label: 'Under Review', value: underReview, color: '#38BDF8' },
+            { label: 'Verified', value: verified, color: '#34D399' },
+            { label: 'Approval Rate', value: `${approvalRate}%`, color: '#A78BFA' },
+          ].map(stat => (
+            <div key={stat.label} style={{ ...CARD_STYLE, padding: '20px 24px' }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: stat.color, margin: 0, fontFamily: 'var(--font-display)' }}>{stat.value}</p>
+              <p style={{ fontSize: 12, color: 'var(--tx-3)', margin: '4px 0 0' }}>{stat.label}</p>
             </div>
-          )
-        })}
-      </div>
-
-      {rejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated rounded-2xl border border-surface-border w-full max-w-md p-6 space-y-5">
-            <div>
-              <h3 className="text-base font-semibold font-display text-text-primary">Reject Company</h3>
-              <p className="text-sm text-text-secondary mt-1">{rejectModal.companyName}</p>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-2">Select rejection reasons (required)</p>
-              <div className="space-y-2">
-                {REJECT_REASONS.map((r) => (
-                  <label key={r} className="flex items-start gap-3 cursor-pointer">
-                    <input type="checkbox" checked={rejectedReasons.includes(r)} onChange={() => toggleReason(r)} className="mt-0.5 accent-admin-500" />
-                    <span className="text-sm text-text-secondary">{r}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-2">Additional note (optional)</p>
-              <textarea
-                value={rejectNote}
-                onChange={(e) => setRejectNote(e.target.value)}
-                placeholder="Any additional context..."
-                rows={3}
-                className="w-full bg-surface-muted border border-surface-border rounded-lg px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none resize-none"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={() => { setRejectModal(null); setRejectedReasons([]); setRejectNote('') }}
-                className="flex-1 py-2.5 rounded-lg bg-surface-muted text-text-secondary text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleReject}
-                disabled={rejectedReasons.length === 0}
-                className="flex-1 py-2.5 rounded-lg bg-error hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-              >
-                Confirm Rejection
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      )}
+
+        {/* Filter tabs */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setFilter(t.key)} style={{
+              padding: '7px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid var(--border)', transition: 'all 0.15s',
+              backgroundColor: filter === t.key ? '#6366F1' : 'var(--bg-elevated)',
+              color: filter === t.key ? '#fff' : 'var(--tx-2)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              {t.label}
+              <span style={{ backgroundColor: filter === t.key ? 'rgba(255,255,255,0.2)' : 'var(--bg-surface)', borderRadius: 99, padding: '1px 8px', fontSize: 11 }}>{t.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div style={{ ...CARD_STYLE, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
+                {['Company', 'Industry', 'Website', 'Email', 'Registered', 'Status', 'Actions'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '11px 20px', fontSize: 10, fontWeight: 600, color: 'var(--tx-3)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}><td colSpan={7} style={{ padding: '16px 20px' }}><div style={{ height: 14, backgroundColor: 'var(--bg-elevated)', borderRadius: 6, width: '60%' }} /></td></tr>
+              ))}
+              {!loading && filtered.map(c => (
+                <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                  <td style={{ padding: '14px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.name.slice(0, 2).toUpperCase()}</span>
+                      </div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.name}</p>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-2)' }}>{c.industry ?? '—'}</td>
+                  <td style={{ padding: '14px 20px', fontSize: 12 }}>
+                    {c.website ? <a href={c.website} target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'none', fontSize: 12 }}>{c.website.replace(/^https?:\/\//, '').slice(0, 30)}</a> : '—'}
+                  </td>
+                  <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-3)' }}>{c.email}</td>
+                  <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-3)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(c.created_at)}</td>
+                  <td style={{ padding: '14px 20px' }}><StatusPill value={c.verification_status} /></td>
+                  <td style={{ padding: '14px 20px' }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {c.verification_status !== 'verified' && (
+                        <button onClick={() => updateVerification(c.id, 'verified')} disabled={acting === c.id} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(52,211,153,0.15)', color: '#34D399', opacity: acting === c.id ? 0.6 : 1 }}>Approve</button>
+                      )}
+                      {c.verification_status !== 'under_review' && (
+                        <button onClick={() => updateVerification(c.id, 'under_review')} disabled={acting === c.id} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(56,189,248,0.15)', color: '#38BDF8', opacity: acting === c.id ? 0.6 : 1 }}>Review</button>
+                      )}
+                      {c.verification_status !== 'rejected' && (
+                        <button onClick={() => updateVerification(c.id, 'rejected')} disabled={acting === c.id} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(239,68,68,0.15)', color: '#F87171', opacity: acting === c.id ? 0.6 : 1 }}>Reject</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--tx-3)', fontSize: 13 }}>No companies in this category.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

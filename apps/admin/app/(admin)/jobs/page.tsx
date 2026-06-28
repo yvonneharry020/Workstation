@@ -1,217 +1,247 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
-import { MOCK_JOB_POSTS } from '@/lib/mock-data'
 
-type JobStatus = 'active' | 'flagged' | 'removed'
-type JobFilter = 'all' | 'flagged' | 'active'
-type JobAction = 'clear' | 'remove' | 'warn' | 'ban_company'
-
-interface Job {
+interface JobPosting {
   id: string
   title: string
-  company: string
-  status: JobStatus
-  postedAt: string
-  applications: number
-  category: string
-  flagReason: string | null
-  confidence: number | null
+  company_id: string
+  description: string | null
+  status: string
+  location: string | null
+  type: string | null
+  created_at: string
+  salary_min: number | null
+  salary_max: number | null
+  requirements: string | null
 }
 
-function StatusBadge({ status }: { status: JobStatus }) {
-  const map = {
-    active: 'bg-trust-high-bg text-trust-high border-trust-high-border',
-    flagged: 'bg-trust-low-bg text-trust-low border-trust-low-border',
-    removed: 'bg-surface-muted text-text-muted border-surface-border',
-  }
-  return (
-    <span className={`text-[10px] font-semibold uppercase tracking-wider border px-1.5 py-0.5 rounded font-mono ${map[status]}`}>
-      {status}
-    </span>
-  )
+type TabFilter = 'pending' | 'active' | 'all' | 'rejected'
+
+const CARD_STYLE = {
+  backgroundColor: 'var(--bg-card)',
+  border: '1px solid var(--border)',
+  borderRadius: '16px',
+  boxShadow: 'var(--shadow-card)',
+}
+
+const STATUS_PILL: Record<string, { text: string; bg: string; border: string }> = {
+  pending:  { text: '#FBBF24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
+  active:   { text: '#34D399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.3)' },
+  rejected: { text: '#F87171', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(239,68,68,0.3)' },
+  expired:  { text: '#9CA3AF', bg: 'rgba(156,163,175,0.1)', border: 'rgba(156,163,175,0.3)' },
+  closed:   { text: '#9CA3AF', bg: 'rgba(156,163,175,0.1)', border: 'rgba(156,163,175,0.3)' },
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  full_time: 'Full-time',
+  part_time: 'Part-time',
+  contract: 'Contract',
+  remote: 'Remote',
+}
+
+function StatusPill({ value }: { value: string }) {
+  const s = STATUS_PILL[value] ?? STATUS_PILL['pending']
+  return <span style={{ color: s.text, backgroundColor: s.bg, border: `1px solid ${s.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, fontFamily: 'monospace', textTransform: 'uppercase' }}>{value}</span>
+}
+
+function fmtNGN(amount: number | null) {
+  if (!amount) return '—'
+  return '₦' + amount.toLocaleString('en-NG')
 }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-interface ActionModal {
-  jobId: string
-  jobTitle: string
-  action: JobAction
-}
-
-const ACTION_DETAILS: Record<JobAction, { label: string; desc: string }> = {
-  clear: { label: 'Clear Flag', desc: 'Remove the AI flag. The job post will continue to show as active.' },
-  remove: { label: 'Remove Post', desc: 'Permanently remove this job post. A notification will be sent to the company.' },
-  warn: { label: 'Warn Company', desc: 'Send an official platform warning to the company account.' },
-  ban_company: { label: 'Ban Company', desc: 'Immediately suspend the company account and remove all their listings.' },
-}
-
-export default function JobModerationPage() {
-  const [jobs, setJobs] = useState<Job[]>(MOCK_JOB_POSTS)
-  const [filter, setFilter] = useState<JobFilter>('all')
+export default function JobsModerationPage() {
+  const supabase = createClient()
+  const [jobs, setJobs] = useState<JobPosting[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<TabFilter>('pending')
   const [search, setSearch] = useState('')
+  const [acting, setActing] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [actionModal, setActionModal] = useState<ActionModal | null>(null)
-  const [note, setNote] = useState('')
 
-  const filtered = jobs.filter((j) => {
-    const matchesFilter = filter === 'all' || j.status === filter
-    const matchesSearch =
-      j.title.toLowerCase().includes(search.toLowerCase()) ||
-      j.company.toLowerCase().includes(search.toLowerCase())
-    return matchesFilter && matchesSearch
-  })
+  const load = useCallback(async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('job_postings')
+      .select('id,title,company_id,description,status,location,type,created_at,salary_min,salary_max,requirements')
+      .order('created_at', { ascending: false })
+    if (!error) setJobs((data ?? []) as JobPosting[])
+    setLoading(false)
+  }, [supabase])
 
-  const handleAction = () => {
-    if (!actionModal) return
-    if (actionModal.action === 'clear') {
-      setJobs((prev) => prev.map((j) => j.id === actionModal.jobId ? { ...j, status: 'active' as JobStatus, flagReason: null, confidence: null } : j))
-    } else if (actionModal.action === 'remove') {
-      setJobs((prev) => prev.map((j) => j.id === actionModal.jobId ? { ...j, status: 'removed' as JobStatus } : j))
-    }
-    setActionModal(null)
-    setNote('')
+  useEffect(() => { void load() }, [load])
+
+  async function updateJobStatus(id: string, status: 'active' | 'rejected' | 'closed') {
+    setActing(id)
+    setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j))
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('job_postings').update({ status }).eq('id', id)
+    await supabase.from('audit_logs').insert({
+      event: `admin.job_posting_${status}`,
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: id,
+      target_type: 'job_posting',
+      severity: status === 'rejected' ? 'warning' : 'info',
+      app: 'admin_panel',
+    })
+    setActing(null)
   }
 
-  return (
-    <div className="flex flex-col min-h-full">
-      <TopBar title="Job Post Moderation" subtitle={`${jobs.filter((j) => j.status === 'flagged').length} flagged · ${jobs.filter((j) => j.status === 'active').length} active`} />
+  const filtered = jobs.filter(j => {
+    const matchTab = tab === 'all' || j.status === tab
+    const matchSearch = !search || j.title.toLowerCase().includes(search.toLowerCase()) || j.company_id.toLowerCase().includes(search.toLowerCase())
+    return matchTab && matchSearch
+  })
 
-      <div className="px-8 py-6 space-y-5">
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  const pendingCount = jobs.filter(j => j.status === 'pending').length
+  const activeCount = jobs.filter(j => j.status === 'active').length
+  const rejectedCount = jobs.filter(j => j.status === 'rejected').length
+  const total = jobs.length
+
+  const TABS: { key: TabFilter; label: string; count: number }[] = [
+    { key: 'pending', label: 'Pending', count: pendingCount },
+    { key: 'active', label: 'Active', count: activeCount },
+    { key: 'all', label: 'All', count: total },
+    { key: 'rejected', label: 'Rejected', count: rejectedCount },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <TopBar title="Job Moderation" subtitle={`${pendingCount} pending approval · ${activeCount} live jobs`} />
+
+      <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {[
+            { label: 'Pending Approval', value: pendingCount, color: '#FBBF24' },
+            { label: 'Active / Live', value: activeCount, color: '#34D399' },
+            { label: 'Rejected', value: rejectedCount, color: '#F87171' },
+            { label: 'Total', value: total, color: 'var(--tx-1)' },
+          ].map(stat => (
+            <div key={stat.label} style={{ ...CARD_STYLE, padding: '20px 24px' }}>
+              <p style={{ fontSize: 28, fontWeight: 700, color: stat.color, margin: 0, fontFamily: 'var(--font-display)' }}>{stat.value}</p>
+              <p style={{ fontSize: 12, color: 'var(--tx-3)', margin: '4px 0 0' }}>{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Controls */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              padding: '7px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              border: '1px solid var(--border)', transition: 'all 0.15s',
+              backgroundColor: tab === t.key ? '#6366F1' : 'var(--bg-elevated)',
+              color: tab === t.key ? '#fff' : 'var(--tx-2)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              {t.label}
+              <span style={{ backgroundColor: tab === t.key ? 'rgba(255,255,255,0.2)' : 'var(--bg-surface)', borderRadius: 99, padding: '1px 8px', fontSize: 11 }}>{t.count}</span>
+            </button>
+          ))}
+          <div style={{ flex: 1 }} />
+          <div style={{ position: 'relative' }}>
+            <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-3)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search jobs or companies..."
-              className="w-full bg-surface-card border border-surface-border rounded-lg pl-8 pr-4 py-2.5 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none"
+              type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by title..."
+              style={{ paddingLeft: 32, paddingRight: 16, paddingTop: 8, paddingBottom: 8, borderRadius: 10, border: '1px solid var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--tx-1)', fontSize: 13, outline: 'none', width: 200 }}
             />
           </div>
-          <div className="flex gap-2">
-            {(['all', 'flagged', 'active'] as JobFilter[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-2 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                  filter === f ? 'bg-admin-500 text-white' : 'bg-surface-elevated text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                {f}
-                <span className="ml-1.5 font-mono opacity-60">
-                  {f === 'all' ? jobs.length : jobs.filter((j) => j.status === f).length}
-                </span>
-              </button>
-            ))}
-          </div>
         </div>
 
-        <div className="space-y-3">
-          {filtered.map((job) => {
-            const isExpanded = expanded === job.id
-            return (
-              <div key={job.id} className="bg-surface-card rounded-xl border border-surface-border overflow-hidden">
-                <button
-                  onClick={() => setExpanded(isExpanded ? null : job.id)}
-                  className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-surface-elevated/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-text-primary">{job.title}</p>
-                      <p className="text-xs text-text-secondary">{job.company} · {job.category}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <StatusBadge status={job.status} />
-                    <span className="text-xs text-text-muted font-mono">{job.applications} apps</span>
-                    <span className="text-xs text-text-muted font-mono">{formatDate(job.postedAt)}</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="border-t border-surface-border px-6 py-5">
-                    {job.flagReason && (
-                      <div className="bg-error/10 border border-error/20 rounded-lg px-4 py-3 mb-4">
-                        <div className="flex items-start gap-2">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" className="mt-0.5 flex-shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-                          <div>
-                            <p className="text-xs text-error font-semibold mb-0.5">AI Flag: {job.confidence}% confidence</p>
-                            <p className="text-xs text-text-secondary">{job.flagReason}</p>
-                          </div>
-                        </div>
+        {/* Table */}
+        <div style={{ ...CARD_STYLE, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
+                {['Job Title', 'Type', 'Location', 'Salary Range', 'Posted', 'Status', 'Actions'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '11px 20px', fontSize: 10, fontWeight: 600, color: 'var(--tx-3)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading && Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}><td colSpan={7} style={{ padding: '16px 20px' }}><div style={{ height: 14, backgroundColor: 'var(--bg-elevated)', borderRadius: 6, width: '65%' }} /></td></tr>
+              ))}
+              {!loading && filtered.map(job => (
+                <>
+                  <tr key={job.id} style={{ borderBottom: expanded === job.id ? 'none' : '1px solid var(--border)', cursor: 'pointer' }}
+                    onClick={() => setExpanded(expanded === job.id ? null : job.id)}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
+                    <td style={{ padding: '14px 20px' }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{job.title}</p>
+                      <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0, fontFamily: 'monospace' }}>{job.company_id.slice(0, 12)}…</p>
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      {job.type && (
+                        <span style={{ fontSize: 11, backgroundColor: 'rgba(99,102,241,0.12)', color: '#818CF8', padding: '3px 8px', borderRadius: 6, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          {TYPE_LABELS[job.type] ?? job.type}
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-2)' }}>{job.location ?? '—'}</td>
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: '#34D399', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                      {job.salary_min || job.salary_max
+                        ? `${fmtNGN(job.salary_min)} – ${fmtNGN(job.salary_max)}/mo`
+                        : '—'}
+                    </td>
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-3)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(job.created_at)}</td>
+                    <td style={{ padding: '14px 20px' }}><StatusPill value={job.status} /></td>
+                    <td style={{ padding: '14px 20px' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {job.status === 'pending' && (
+                          <button onClick={() => updateJobStatus(job.id, 'active')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(52,211,153,0.15)', color: '#34D399', opacity: acting === job.id ? 0.6 : 1 }}>Approve</button>
+                        )}
+                        {job.status !== 'rejected' && (
+                          <button onClick={() => updateJobStatus(job.id, 'rejected')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(239,68,68,0.15)', color: '#F87171', opacity: acting === job.id ? 0.6 : 1 }}>Reject</button>
+                        )}
+                        {job.status === 'active' && (
+                          <button onClick={() => updateJobStatus(job.id, 'closed')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-3)', opacity: acting === job.id ? 0.6 : 1 }}>Suspend</button>
+                        )}
                       </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      {job.status === 'flagged' && (
-                        <button
-                          onClick={() => setActionModal({ jobId: job.id, jobTitle: job.title, action: 'clear' })}
-                          className="px-3 py-2 rounded-lg text-xs font-semibold bg-trust-high-bg text-trust-high border border-trust-high-border transition-colors"
-                        >
-                          Clear Flag
-                        </button>
-                      )}
-                      {job.status !== 'removed' && (
-                        <button
-                          onClick={() => setActionModal({ jobId: job.id, jobTitle: job.title, action: 'remove' })}
-                          className="px-3 py-2 rounded-lg text-xs font-semibold bg-error/15 text-error border border-error/30 transition-colors"
-                        >
-                          Remove Post
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setActionModal({ jobId: job.id, jobTitle: job.title, action: 'warn' })}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold bg-warning/15 text-warning border border-warning/30 transition-colors"
-                      >
-                        Warn Company
-                      </button>
-                      <button
-                        onClick={() => setActionModal({ jobId: job.id, jobTitle: job.title, action: 'ban_company' })}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold bg-surface-muted text-text-muted transition-colors"
-                      >
-                        Ban Company
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                    </td>
+                  </tr>
+                  {expanded === job.id && (
+                    <tr key={`${job.id}-expanded`} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td colSpan={7} style={{ padding: '16px 20px 20px 48px', backgroundColor: 'var(--bg-elevated)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                          {job.description && (
+                            <div>
+                              <p style={{ fontSize: 11, color: 'var(--tx-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Description</p>
+                              <p style={{ fontSize: 12, color: 'var(--tx-2)', margin: 0, lineHeight: 1.6 }}>{job.description.slice(0, 300)}{job.description.length > 300 ? '…' : ''}</p>
+                            </div>
+                          )}
+                          {job.requirements && (
+                            <div>
+                              <p style={{ fontSize: 11, color: 'var(--tx-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px' }}>Requirements</p>
+                              <p style={{ fontSize: 12, color: 'var(--tx-2)', margin: 0, lineHeight: 1.6 }}>{job.requirements.slice(0, 300)}{job.requirements.length > 300 ? '…' : ''}</p>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--tx-3)', fontSize: 13 }}>No job postings found.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      {actionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-surface-elevated rounded-2xl border border-surface-border w-full max-w-md p-6 space-y-5">
-            <div>
-              <h3 className="text-base font-semibold font-display text-text-primary">{ACTION_DETAILS[actionModal.action].label}</h3>
-              <p className="text-sm text-text-secondary mt-1 line-clamp-1">{actionModal.jobTitle}</p>
-            </div>
-            <div className="bg-surface-muted rounded-lg px-4 py-3">
-              <p className="text-sm text-text-secondary">{ACTION_DETAILS[actionModal.action].desc}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-2">Note (optional)</p>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason for audit log..." rows={2}
-                className="w-full bg-surface-muted border border-surface-border rounded-lg px-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none resize-none" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => { setActionModal(null); setNote('') }} className="flex-1 py-2.5 rounded-lg bg-surface-muted text-text-secondary text-sm font-semibold">Cancel</button>
-              <button onClick={handleAction} className="flex-1 py-2.5 rounded-lg bg-admin-500 hover:bg-admin-600 text-white text-sm font-semibold transition-colors">Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

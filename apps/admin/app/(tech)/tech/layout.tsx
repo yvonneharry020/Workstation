@@ -28,9 +28,18 @@ const TECH_NAV = [
   {
     label: 'Integrations',
     items: [
+      { href: '/tech/integrations', label: 'Integration Health', icon: <HeartbeatIcon /> },
       { href: '/tech/email', label: 'Email Inspector', icon: <MailIcon /> },
       { href: '/tech/webhooks', label: 'Webhook Logs', icon: <WebhookIcon /> },
       { href: '/tech/deployment', label: 'Deployment Console', icon: <RocketIcon /> },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/tech/performance', label: 'Performance', icon: <SpeedIcon /> },
+      { href: '/tech/queues', label: 'Job Queues', icon: <QueueIcon /> },
+      { href: '/tech/rate-limits', label: 'Rate Limits', icon: <ThrottleIcon /> },
     ],
   },
   {
@@ -103,6 +112,18 @@ function TicketIcon() {
 }
 function CommsIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+}
+function HeartbeatIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+}
+function SpeedIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12 8 8"/><path d="M22 2 12 12"/></svg>
+}
+function QueueIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+}
+function ThrottleIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
 }
 
 export default function TechLayout({ children }: { children: React.ReactNode }) {
