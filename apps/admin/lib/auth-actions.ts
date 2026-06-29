@@ -88,7 +88,7 @@ export async function loginAction(
   // Check if the staff account has been deactivated
   const { data: staffRecord } = await supabase
     .from('staff_members')
-    .select('is_active')
+    .select('is_active, role, permissions')
     .eq('email', parsed.data.email)
     .maybeSingle()
 
@@ -112,7 +112,16 @@ export async function loginAction(
     metadata: { ip },
   })
 
-  redirect('/dashboard')
+  // Route to the correct room dashboard based on permissions
+  let destination = '/dashboard'
+  if (staffRecord && staffRecord.role !== 'admin') {
+    const perms = (staffRecord.permissions as Record<string, boolean>) ?? {}
+    if (perms.management) destination = '/ops/dashboard'
+    else if (perms.technical) destination = '/tech/dashboard'
+    else if (perms.finance) destination = '/finance/dashboard'
+  }
+
+  redirect(destination)
 }
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────
@@ -265,7 +274,7 @@ export async function resendStaffInviteAction(
 ): Promise<ResendInviteState> {
   try {
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://skiniq.store'
-    const redirectTo = `${origin}/auth/callback?next=/dashboard`
+    const redirectTo = `${origin}/auth/callback?next=/setup-account`
 
     const admin = createAdminClient()
 

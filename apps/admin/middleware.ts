@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
 const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password']
-const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/access-restricted']
+const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/access-restricted', '/setup-account']
 
 const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: '/finance/', allowed: ['superadmin', 'finance'] },
