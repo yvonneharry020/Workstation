@@ -17,23 +17,48 @@ interface StaffMember {
   permissions: Record<string, boolean>
 }
 
-const ALL_PAGES = [
-  { key: 'dashboard',               label: 'Dashboard',                 group: 'Main' },
-  { key: 'verifications_candidates', label: 'Candidate Verifications',   group: 'Main' },
-  { key: 'verifications_companies', label: 'Company Verifications',     group: 'Main' },
-  { key: 'flagged',                 label: 'Flagged Content',           group: 'Main' },
-  { key: 'jobs',                    label: 'Job Moderation',            group: 'Main' },
-  { key: 'users',                   label: 'User Management',           group: 'Main' },
-  { key: 'disputes',                label: 'Badge Disputes',            group: 'Support' },
-  { key: 'tickets',                 label: 'Support Tickets',           group: 'Support' },
-  { key: 'chat',                    label: 'Live Chat',                 group: 'Support' },
-  { key: 'analytics',               label: 'Analytics',                 group: 'Platform' },
-  { key: 'audit_log',               label: 'Audit Log',                 group: 'Platform' },
-  { key: 'staff',                   label: 'Staff Management',          group: 'Platform' },
-  { key: 'config',                  label: 'System Config',             group: 'Platform' },
-]
+type RoleValue = 'admin' | 'staff' | 'viewer'
 
-const GROUPS = ['Main', 'Support', 'Platform'] as const
+const ROLES = [
+  { value: 'admin',  label: 'Admin',  desc: 'Full access to all rooms automatically' },
+  { value: 'staff',  label: 'Staff',  desc: 'Full working access in assigned rooms' },
+  { value: 'viewer', label: 'Viewer', desc: 'Read-only — cannot create, send, or modify anything' },
+] as const
+
+const ROOMS = [
+  {
+    key: 'admin',
+    label: 'Admin Room',
+    desc: 'Main admin panel — users, analytics, audit log, system config',
+    color: 'bg-indigo-900/30 border-indigo-700/40 text-indigo-300',
+    dot: 'bg-indigo-400',
+    activeToggle: 'bg-indigo-500',
+  },
+  {
+    key: 'management',
+    label: 'Management Room',
+    desc: 'Operations — verifications, support tickets, badge disputes, live chat',
+    color: 'bg-ops-900/30 border-ops-700/40 text-ops-300',
+    dot: 'bg-ops-400',
+    activeToggle: 'bg-ops-500',
+  },
+  {
+    key: 'technical',
+    label: 'Technical Room',
+    desc: 'Engineering — feature flags, releases, system health, tech tickets',
+    color: 'bg-tech-900/30 border-tech-700/40 text-tech-300',
+    dot: 'bg-tech-400',
+    activeToggle: 'bg-tech-500',
+  },
+  {
+    key: 'finance',
+    label: 'Finance Room',
+    desc: 'Finance — invoices, billing, payroll, financial reports',
+    color: 'bg-finance-900/30 border-finance-700/40 text-finance-300',
+    dot: 'bg-finance-400',
+    activeToggle: 'bg-finance-500',
+  },
+]
 
 const ROLE_STYLES = {
   admin:  { label: 'Admin',  bg: '#A855F715', text: '#A855F7', border: '#A855F730' },
@@ -46,57 +71,74 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-export default function StaffProfilePage() {
+export default function StaffEditPage() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
   const supabase = createClient()
 
-  const [member, setMember] = useState<StaffMember | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [permissions, setPermissions] = useState<Record<string, boolean>>({})
+  const [member, setMember]           = useState<StaffMember | null>(null)
+  const [loading, setLoading]         = useState(true)
+  const [saving, setSaving]           = useState(false)
+  const [saved, setSaved]             = useState(false)
+  const [role, setRole]               = useState<RoleValue>('staff')
+  const [roomAccess, setRoomAccess]   = useState<Record<string, boolean>>({
+    admin: false, management: false, technical: false, finance: false,
+  })
 
   const fetchMember = useCallback(async () => {
     const { data } = await supabase.from('staff_members').select('*').eq('id', id).single()
     if (data) {
-      setMember(data as StaffMember)
-      setPermissions((data as StaffMember).permissions ?? {})
+      const m = data as StaffMember
+      setMember(m)
+      setRole(m.role)
+      // Migrate legacy page-based permissions to room-based if needed
+      const perms = m.permissions ?? {}
+      const hasRoomKeys = 'admin' in perms || 'management' in perms || 'technical' in perms || 'finance' in perms
+      if (hasRoomKeys) {
+        setRoomAccess({
+          admin:      perms.admin      ?? false,
+          management: perms.management ?? false,
+          technical:  perms.technical  ?? false,
+          finance:    perms.finance    ?? false,
+        })
+      }
     }
     setLoading(false)
   }, [supabase, id])
 
   useEffect(() => { void fetchMember() }, [fetchMember])
 
-  function togglePerm(key: string) {
-    if (member?.role === 'admin') return
-    setPermissions(prev => ({ ...prev, [key]: !prev[key] }))
+  function toggleRoom(key: string) {
+    if (role === 'admin') return
+    setRoomAccess(prev => ({ ...prev, [key]: !prev[key] }))
     setSaved(false)
   }
 
-  function setGroup(group: string, value: boolean) {
-    if (member?.role === 'admin') return
-    const keys = ALL_PAGES.filter(p => p.group === group).map(p => p.key)
-    setPermissions(prev => {
-      const next = { ...prev }
-      keys.forEach(k => { next[k] = value })
-      return next
-    })
+  function handleRoleChange(newRole: RoleValue) {
+    setRole(newRole)
     setSaved(false)
   }
+
+  const finalRoomAccess = role === 'admin'
+    ? { admin: true, management: true, technical: true, finance: true }
+    : roomAccess
 
   async function handleSave() {
     if (!member) return
     setSaving(true)
-    const finalPerms = member.role === 'admin'
-      ? Object.fromEntries(ALL_PAGES.map(p => [p.key, true]))
-      : permissions
-    await supabase.from('staff_members').update({ permissions: finalPerms }).eq('id', id)
-    setMember(prev => prev ? { ...prev, permissions: finalPerms } : prev)
+
+    await supabase.from('staff_members').update({
+      role,
+      permissions: finalRoomAccess,
+      updated_at: new Date().toISOString(),
+    }).eq('id', id)
+
+    setMember(prev => prev ? { ...prev, role, permissions: finalRoomAccess } : prev)
+
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('audit_logs').insert({
-      event: 'admin.staff_permissions_updated',
+      event: 'admin.staff_updated',
       actor_email: user?.email ?? null,
       actor_id: user?.id ?? null,
       actor_type: 'admin',
@@ -105,8 +147,9 @@ export default function StaffProfilePage() {
       target_name: member.full_name,
       severity: 'info',
       app: 'admin_panel',
-      metadata: { permissions: finalPerms },
+      metadata: { role, permissions: finalRoomAccess },
     })
+
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -114,8 +157,9 @@ export default function StaffProfilePage() {
 
   async function toggleActive() {
     if (!member) return
-    await supabase.from('staff_members').update({ is_active: !member.is_active }).eq('id', id)
-    setMember(prev => prev ? { ...prev, is_active: !prev.is_active } : prev)
+    const next = !member.is_active
+    await supabase.from('staff_members').update({ is_active: next }).eq('id', id)
+    setMember(prev => prev ? { ...prev, is_active: next } : prev)
   }
 
   async function handleResendInvite() {
@@ -128,29 +172,19 @@ export default function StaffProfilePage() {
     setMember(prev => prev ? { ...prev, invite_sent_at: new Date().toISOString() } : prev)
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full text-text-muted py-20">Loading…</div>
-    )
-  }
-
-  if (!member) {
-    return (
-      <div className="flex items-center justify-center h-full text-text-muted py-20">Staff member not found.</div>
-    )
-  }
+  if (loading) return <div className="flex items-center justify-center py-20 text-text-muted">Loading…</div>
+  if (!member) return <div className="flex items-center justify-center py-20 text-text-muted">Staff member not found.</div>
 
   const roleStyle = ROLE_STYLES[member.role]
-  const selectedCount = member.role === 'admin'
-    ? ALL_PAGES.length
-    : Object.values(permissions).filter(Boolean).length
+  const enabledRooms = Object.values(finalRoomAccess).filter(Boolean).length
 
   return (
     <div className="flex flex-col min-h-full">
       {/* Header */}
       <div className="px-8 py-5 border-b border-surface-border flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/staff')} className="w-9 h-9 rounded-lg bg-surface-elevated border border-surface-border flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors">
+          <button onClick={() => router.push('/staff')}
+            className="w-9 h-9 rounded-lg bg-surface-elevated border border-surface-border flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div className="flex items-center gap-3">
@@ -162,138 +196,155 @@ export default function StaffProfilePage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold font-display text-text-primary">{member.full_name}</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ backgroundColor: roleStyle.bg, color: roleStyle.text, borderColor: roleStyle.border }}>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                  style={{ backgroundColor: roleStyle.bg, color: roleStyle.text, borderColor: roleStyle.border }}>
                   {roleStyle.label}
                 </span>
                 {!member.is_active && (
                   <span className="text-[10px] text-text-muted bg-surface-elevated border border-surface-border px-1.5 py-0.5 rounded-full">Deactivated</span>
                 )}
               </div>
-              <p className="text-xs text-text-secondary">{member.email}{member.department ? ` · ${member.department}` : ''}</p>
+              <p className="text-xs text-text-secondary">{member.email}</p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {!member.last_login_at && (
-            <button onClick={handleResendInvite} className="px-3 py-2 rounded-lg bg-surface-elevated border border-surface-border text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors">
+            <button onClick={handleResendInvite}
+              className="px-3 py-2 rounded-lg bg-surface-elevated border border-surface-border text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors">
               Resend invite
             </button>
           )}
           <button onClick={toggleActive}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${member.is_active ? 'bg-error/10 text-error border border-error/20 hover:bg-error/20' : 'bg-trust-high-bg text-trust-high border border-trust-high-border hover:bg-green-900/30'}`}>
-            {member.is_active ? 'Deactivate' : 'Reactivate'}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors border ${member.is_active ? 'bg-error/10 text-error border-error/20 hover:bg-error/20' : 'bg-trust-high-bg text-trust-high border-trust-high-border hover:bg-green-900/30'}`}>
+            {member.is_active ? 'Deactivate Access' : 'Reactivate Access'}
           </button>
-          <button onClick={handleSave} disabled={saving || member.role === 'admin'}
+          <button onClick={handleSave} disabled={saving}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${saved ? 'bg-trust-high-bg text-trust-high border border-trust-high-border' : 'bg-admin-500 hover:bg-admin-600 text-white'}`}>
-            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Permissions'}
+            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
           </button>
         </div>
       </div>
 
-      <div className="px-8 py-6 grid grid-cols-3 gap-6 max-w-5xl">
-        {/* Info cards */}
-        <div className="col-span-1 space-y-3">
+      <div className="px-8 py-6 max-w-4xl grid grid-cols-3 gap-6">
+        {/* Left column — account info */}
+        <div className="col-span-1 space-y-4">
           <div className="bg-surface-card border border-surface-border rounded-xl p-4 space-y-3">
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Account Info</p>
             <div>
               <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Email</p>
-              <p className="text-sm text-text-primary">{member.email}</p>
+              <p className="text-sm text-text-primary break-all">{member.email}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Role</p>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border" style={{ backgroundColor: roleStyle.bg, color: roleStyle.text, borderColor: roleStyle.border }}>
+              <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Current Role</p>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border"
+                style={{ backgroundColor: roleStyle.bg, color: roleStyle.text, borderColor: roleStyle.border }}>
                 {roleStyle.label}
               </span>
             </div>
-            {member.department && (
-              <div>
-                <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Department</p>
-                <p className="text-sm text-text-primary">{member.department}</p>
-              </div>
-            )}
             <div>
               <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Joined</p>
-              <p className="text-sm text-text-primary">{formatDate(member.created_at)}</p>
+              <p className="text-xs text-text-primary">{formatDate(member.created_at)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Last login</p>
-              <p className="text-sm text-text-primary">{formatDate(member.last_login_at)}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Last Login</p>
+              <p className="text-xs text-text-primary">{formatDate(member.last_login_at)}</p>
             </div>
             {!member.last_login_at && member.invite_sent_at && (
               <div>
-                <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Invite sent</p>
+                <p className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">Invite Sent</p>
                 <p className="text-xs text-amber-400">{formatDate(member.invite_sent_at)}</p>
               </div>
             )}
           </div>
 
           <div className="bg-surface-card border border-surface-border rounded-xl p-4">
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Access Summary</p>
-            <div className="text-3xl font-bold text-text-primary font-display">{selectedCount}</div>
-            <p className="text-xs text-text-muted mt-0.5">of {ALL_PAGES.length} pages</p>
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Access Status</p>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${member.is_active ? 'bg-trust-high-bg border-trust-high-border' : 'bg-error/10 border-error/30'}`}>
+              <span className={`w-2 h-2 rounded-full ${member.is_active ? 'bg-trust-high' : 'bg-error'}`} />
+              <p className={`text-xs font-semibold ${member.is_active ? 'text-trust-high' : 'text-error'}`}>
+                {member.is_active ? 'Active — can log in' : 'Deactivated — login blocked'}
+              </p>
+            </div>
+            <p className="text-[10px] text-text-muted mt-2">{enabledRooms} of {ROOMS.length} rooms enabled</p>
           </div>
         </div>
 
-        {/* Permissions */}
-        <div className="col-span-2">
+        {/* Right column — edit role + rooms */}
+        <div className="col-span-2 space-y-5">
+          {/* Role */}
           <div className="bg-surface-card border border-surface-border rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Role</p>
+            <div className="flex flex-col gap-1.5">
+              {ROLES.map(r => (
+                <label key={r.value}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${role === r.value ? 'bg-admin-900/40 border-admin-500/40' : 'bg-surface-elevated border-surface-border hover:border-admin-800'}`}>
+                  <input type="radio" name="edit-role" value={r.value} checked={role === r.value} onChange={() => handleRoleChange(r.value)} className="hidden" />
+                  <span className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${role === r.value ? 'border-admin-500 bg-admin-500' : 'border-surface-border bg-transparent'}`}>
+                    {role === r.value && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold text-text-primary">{r.label}</p>
+                    <p className="text-[10px] text-text-muted">{r.desc}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Room access */}
+          <div className="bg-surface-card border border-surface-border rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Page Permissions</p>
-                {member.role === 'admin'
-                  ? <p className="text-xs text-admin-400 mt-0.5">Admin role has access to all pages</p>
-                  : <p className="text-xs text-text-muted mt-0.5">Toggle pages this staff member can access</p>
-                }
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Room Access</p>
+                {role === 'admin' ? (
+                  <p className="text-xs text-admin-400 mt-0.5">Admin role has access to all rooms</p>
+                ) : (
+                  <p className="text-xs text-text-muted mt-0.5">Toggle which rooms this staff member can enter</p>
+                )}
               </div>
             </div>
 
-            {GROUPS.map(group => {
-              const pages = ALL_PAGES.filter(p => p.group === group)
-              const groupPerms = member.role === 'admin'
-                ? pages.map(() => true)
-                : pages.map(p => permissions[p.key] ?? false)
-              const allOn = groupPerms.every(Boolean)
-              const someOn = groupPerms.some(Boolean)
-
-              return (
-                <div key={group} className="mb-4">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{group}</p>
-                    {member.role !== 'admin' && (
-                      <button onClick={() => setGroup(group, !allOn)}
-                        className="text-[10px] font-semibold text-admin-400 hover:text-admin-300 transition-colors">
-                        {allOn ? 'Disable all' : someOn ? 'Enable all' : 'Enable all'}
-                      </button>
-                    )}
+            <div className="space-y-2">
+              {ROOMS.map(room => {
+                const isOn = finalRoomAccess[room.key] ?? false
+                const isDisabled = role === 'admin'
+                return (
+                  <div key={room.key}
+                    onClick={() => toggleRoom(room.key)}
+                    className={`flex items-center justify-between px-4 py-3.5 rounded-xl border transition-colors
+                      ${isOn ? `${room.color}` : 'bg-surface-elevated border-surface-border'}
+                      ${isDisabled ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-elevated/80'}`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOn ? room.dot : 'bg-surface-border'}`} />
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">{room.label}</p>
+                        <p className="text-[10px] text-text-muted mt-0.5">{room.desc}</p>
+                      </div>
+                    </div>
+                    <div className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${isOn ? room.activeToggle : 'bg-surface-border'} ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isOn ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    {pages.map(page => {
-                      const isOn = member.role === 'admin' ? true : (permissions[page.key] ?? false)
-                      const isDisabled = member.role === 'admin'
-                      return (
-                        <div key={page.key} className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors ${isOn ? 'bg-admin-900/30 border-admin-800/40' : 'bg-surface-elevated border-surface-border'} ${isDisabled ? 'opacity-60' : 'cursor-pointer hover:bg-surface-elevated/60'}`}
-                          onClick={() => togglePerm(page.key)}>
-                          <span className="text-sm text-text-primary">{page.label}</span>
-                          <div className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${isOn ? 'bg-admin-500' : 'bg-surface-border'} ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isOn ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
 
-            {member.role !== 'admin' && (
-              <div className="pt-3 border-t border-surface-border">
-                <button onClick={handleSave} disabled={saving}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 ${saved ? 'bg-trust-high-bg text-trust-high border border-trust-high-border' : 'bg-admin-500 hover:bg-admin-600 text-white'}`}>
-                  {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Permissions'}
-                </button>
+            {role === 'viewer' && (
+              <div className="mt-3 px-4 py-3 bg-surface-elevated rounded-xl border border-surface-border">
+                <p className="text-[11px] text-text-secondary">
+                  <span className="font-semibold text-text-primary">Viewer mode:</span> This staff member can see everything in their enabled rooms but all action buttons are disabled — they cannot create, send, resolve, or modify anything.
+                </p>
               </div>
             )}
+
+            <div className="pt-4 border-t border-surface-border mt-4">
+              <button onClick={handleSave} disabled={saving}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-40 ${saved ? 'bg-trust-high-bg text-trust-high border border-trust-high-border' : 'bg-admin-500 hover:bg-admin-600 text-white'}`}>
+                {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

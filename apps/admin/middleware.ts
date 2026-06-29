@@ -2,13 +2,24 @@ import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
 const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password']
-const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized']
+const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/access-restricted']
 
-const ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
+const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: '/finance/', allowed: ['superadmin', 'finance'] },
   { prefix: '/tech/',    allowed: ['superadmin', 'tech'] },
   { prefix: '/ops/',     allowed: ['superadmin', 'ops'] },
 ]
+
+function getRoomForPath(pathname: string): string | null {
+  if (pathname.startsWith('/ops/'))     return 'management'
+  if (pathname.startsWith('/tech/'))    return 'technical'
+  if (pathname.startsWith('/finance/')) return 'finance'
+  // All admin-side routes (staff, users, disputes, etc.) map to admin room
+  if (!pathname.startsWith('/ops/') && !pathname.startsWith('/tech/') && !pathname.startsWith('/finance/')) {
+    return 'admin'
+  }
+  return null
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -52,11 +63,44 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // RBAC: check room-based roles for department routes
   if (user) {
-    const roomRule = ROOM_ROLES.find(r => pathname.startsWith(r.prefix))
-    if (roomRule) {
-      try {
+    try {
+      // Check staff_members table first (new room-based permission system)
+      const { data: staffMember } = await supabase
+        .from('staff_members')
+        .select('is_active, role, permissions')
+        .eq('email', user.email)
+        .maybeSingle()
+
+      if (staffMember) {
+        // Staff member found — enforce room-based access
+        if (!staffMember.is_active) {
+          return NextResponse.redirect(new URL('/access-restricted', request.url))
+        }
+
+        // Admin role bypasses all room checks
+        if (staffMember.role !== 'admin') {
+          const room = getRoomForPath(pathname)
+          if (room) {
+            const perms = (staffMember.permissions as Record<string, boolean>) ?? {}
+            if (!perms[room]) {
+              return NextResponse.redirect(new URL('/unauthorized', request.url))
+            }
+          }
+        }
+
+        // Passed staff checks — skip legacy role check
+        response.headers.set('X-Frame-Options', 'DENY')
+        response.headers.set('X-Content-Type-Options', 'nosniff')
+        response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+        response.headers.set('X-XSS-Protection', '1; mode=block')
+        response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        return response
+      }
+
+      // No staff_members record — fall back to legacy profiles.role check
+      const roomRule = LEGACY_ROOM_ROLES.find(r => pathname.startsWith(r.prefix))
+      if (roomRule) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -64,14 +108,12 @@ export async function middleware(request: NextRequest) {
           .single()
 
         const role = profile?.role as string | undefined
-
         if (role && !roomRule.allowed.includes(role)) {
           return NextResponse.redirect(new URL('/unauthorized', request.url))
         }
-        // Fail open: if no profile or DB error, allow access
-      } catch {
-        // Fail open on any DB error
       }
+    } catch {
+      // Fail open on any DB error — do not lock out users
     }
   }
 

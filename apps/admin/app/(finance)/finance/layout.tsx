@@ -1,62 +1,15 @@
 'use client'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import DeptSidebar from '@/components/department/DeptSidebar'
 
-const FINANCE_NAV = [
-  {
-    label: 'Overview',
-    items: [
-      { href: '/finance/dashboard', label: 'Dashboard', icon: <GridIcon /> },
-    ],
-  },
-  {
-    label: 'Revenue',
-    items: [
-      { href: '/finance/subscriptions', label: 'Subscriptions', icon: <SubscriptionIcon /> },
-      { href: '/finance/transactions', label: 'Transactions', icon: <TransactionIcon /> },
-      { href: '/finance/invoices', label: 'Invoices', icon: <InvoiceIcon /> },
-      { href: '/finance/referrals', label: 'Referrals & Promos', icon: <ReferralIcon /> },
-    ],
-  },
-  {
-    label: 'Analysis',
-    items: [
-      { href: '/finance/plans', label: 'Plan Analytics', icon: <PieIcon /> },
-      { href: '/finance/costs', label: 'Platform Costs', icon: <CostIcon /> },
-      { href: '/finance/reports', label: 'P&L Reports', icon: <ReportIcon /> },
-      { href: '/finance/churn', label: 'Churn Analysis', icon: <ChurnIcon /> },
-      { href: '/finance/aging', label: 'AR Aging', icon: <AgingIcon /> },
-      { href: '/finance/forecasting', label: 'Forecasting', icon: <ForecastIcon /> },
-      { href: '/finance/budget', label: 'Budget vs Actuals', icon: <BudgetIcon /> },
-      { href: '/finance/board-report', label: 'Board Report', icon: <BoardIcon /> },
-    ],
-  },
-  {
-    label: 'Compliance',
-    items: [
-      { href: '/finance/vat', label: 'VAT & Tax', icon: <VatIcon /> },
-      { href: '/finance/gateway', label: 'Paystack Gateway', icon: <GatewayIcon /> },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { href: '/finance/refunds', label: 'Refunds', icon: <RefundIcon /> },
-      { href: '/finance/payment-failures', label: 'Payment Failures', icon: <FailureIcon /> },
-    ],
-  },
-  {
-    label: 'Support Inbox',
-    items: [
-      { href: '/finance/tickets', label: 'Tickets Inbox', icon: <TicketInboxIcon /> },
-    ],
-  },
-  {
-    label: 'Internal',
-    items: [
-      { href: '/finance/staff-comms', label: '# general', icon: <CommsIcon /> },
-    ],
-  },
-]
+interface FinanceCounts {
+  paymentFailures: number
+  pendingRefunds: number
+  financeTickets: number
+}
+
+const ZERO: FinanceCounts = { paymentFailures: 0, pendingRefunds: 0, financeTickets: 0 }
 
 function GridIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -91,7 +44,6 @@ function TicketInboxIcon() {
 function CommsIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
 }
-
 function ChurnIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-2-2-4 4"/></svg>
 }
@@ -118,9 +70,105 @@ function ReferralIcon() {
 }
 
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
+  const [counts, setCounts] = useState<FinanceCounts>(ZERO)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    async function refreshCounts() {
+      const [
+        { count: paymentFailures },
+        { count: pendingRefunds },
+        { count: financeTickets },
+      ] = await Promise.all([
+        supabase.from('payment_failures').select('*', { count: 'exact', head: true })
+          .eq('status', 'pending_retry'),
+        supabase.from('refunds').select('*', { count: 'exact', head: true })
+          .eq('status', 'pending'),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true })
+          .eq('department', 'accounting')
+          .not('status', 'in', '("resolved","closed")'),
+      ])
+
+      setCounts({
+        paymentFailures: paymentFailures ?? 0,
+        pendingRefunds:  pendingRefunds  ?? 0,
+        financeTickets:  financeTickets  ?? 0,
+      })
+    }
+
+    void refreshCounts()
+
+    const channel = supabase
+      .channel('finance-sidebar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_failures' }, () => void refreshCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'refunds' },          () => void refreshCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' },  () => void refreshCounts())
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [])
+
+  const navGroups = [
+    {
+      label: 'Overview',
+      items: [
+        { href: '/finance/dashboard', label: 'Dashboard', icon: <GridIcon /> },
+      ],
+    },
+    {
+      label: 'Revenue',
+      items: [
+        { href: '/finance/subscriptions', label: 'Subscriptions',    icon: <SubscriptionIcon /> },
+        { href: '/finance/transactions',  label: 'Transactions',     icon: <TransactionIcon /> },
+        { href: '/finance/invoices',      label: 'Invoices',         icon: <InvoiceIcon /> },
+        { href: '/finance/referrals',     label: 'Referrals & Promos', icon: <ReferralIcon /> },
+      ],
+    },
+    {
+      label: 'Analysis',
+      items: [
+        { href: '/finance/plans',        label: 'Plan Analytics',    icon: <PieIcon /> },
+        { href: '/finance/costs',        label: 'Platform Costs',    icon: <CostIcon /> },
+        { href: '/finance/reports',      label: 'P&L Reports',       icon: <ReportIcon /> },
+        { href: '/finance/churn',        label: 'Churn Analysis',    icon: <ChurnIcon /> },
+        { href: '/finance/aging',        label: 'AR Aging',          icon: <AgingIcon /> },
+        { href: '/finance/forecasting',  label: 'Forecasting',       icon: <ForecastIcon /> },
+        { href: '/finance/budget',       label: 'Budget vs Actuals', icon: <BudgetIcon /> },
+        { href: '/finance/board-report', label: 'Board Report',      icon: <BoardIcon /> },
+      ],
+    },
+    {
+      label: 'Compliance',
+      items: [
+        { href: '/finance/vat',     label: 'VAT & Tax',        icon: <VatIcon /> },
+        { href: '/finance/gateway', label: 'Paystack Gateway', icon: <GatewayIcon /> },
+      ],
+    },
+    {
+      label: 'Operations',
+      items: [
+        { href: '/finance/refunds',          label: 'Refunds',          icon: <RefundIcon />,  badge: counts.pendingRefunds },
+        { href: '/finance/payment-failures', label: 'Payment Failures', icon: <FailureIcon />, badge: counts.paymentFailures },
+      ],
+    },
+    {
+      label: 'Support Inbox',
+      items: [
+        { href: '/finance/tickets', label: 'Tickets Inbox', icon: <TicketInboxIcon />, badge: counts.financeTickets },
+      ],
+    },
+    {
+      label: 'Internal',
+      items: [
+        { href: '/finance/staff-comms', label: '# general', icon: <CommsIcon /> },
+      ],
+    },
+  ]
+
   return (
     <div className="flex min-h-screen">
-      <DeptSidebar color="finance" roomLabel="Finance Room" navGroups={FINANCE_NAV} isSuperAdmin />
+      <DeptSidebar color="finance" roomLabel="Finance Room" navGroups={navGroups} isSuperAdmin />
       <main className="flex-1 min-w-0 overflow-auto">{children}</main>
     </div>
   )

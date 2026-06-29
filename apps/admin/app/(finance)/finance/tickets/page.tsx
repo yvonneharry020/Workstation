@@ -24,6 +24,11 @@ interface Ticket {
   resolution_note: string | null
   internal_notes: string | null
   source: string
+  resolved_by_email: string | null
+  parent_ticket_id: string | null
+  escalation_raised: boolean
+  escalation_raised_at: string | null
+  escalation_raised_by: string | null
 }
 
 const STATUS_STYLES: Record<TicketStatus, string> = {
@@ -66,7 +71,7 @@ export default function FinanceTicketsPage() {
     const { data } = await supabase
       .from('support_tickets')
       .select('*')
-      .in('department', ['Finance', 'Billing'])
+      .eq('department', 'Finance')
       .order('created_at', { ascending: false })
     if (data) setTickets(data as Ticket[])
     setLoading(false)
@@ -78,11 +83,11 @@ export default function FinanceTicketsPage() {
     const ch = supabase.channel('finance-tickets')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_tickets' }, (p) => {
         const t = p.new as Ticket
-        if (t.department === 'Finance' || t.department === 'Billing') setTickets(prev => [t, ...prev])
+        if (t.department === 'Finance') setTickets(prev => [t, ...prev])
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_tickets' }, (p) => {
         const t = p.new as Ticket
-        const isOurs = t.department === 'Finance' || t.department === 'Billing'
+        const isOurs = t.department === 'Finance'
         setTickets(prev =>
           !isOurs
             ? prev.filter(x => x.id !== t.id)
@@ -127,6 +132,7 @@ export default function FinanceTicketsPage() {
       status: 'resolved',
       resolved_at: new Date().toISOString(),
       resolution_note: resolutionNote.trim() || null,
+      resolved_by_email: user?.email ?? null,
     }).eq('id', selectedId)
     await supabase.from('audit_logs').insert({
       event: 'finance.ticket_resolved', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
@@ -190,13 +196,30 @@ export default function FinanceTicketsPage() {
                 <p className="text-sm text-text-muted">No tickets here</p>
                 <p className="text-[11px] text-text-muted mt-1">Management will route billing issues here</p>
               </div>
-            ) : filtered.map(t => (
-              <button key={t.id} onClick={() => handleSelect(t.id)}
-                className={`w-full text-left px-4 py-3.5 transition-colors ${selectedId === t.id ? 'bg-finance-900/30 border-l-2 border-l-finance-500' : 'hover:bg-surface-elevated/40 border-l-2 border-l-transparent'}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[9px] font-mono text-text-muted">{t.ticket_number}</span>
-                  <span className="text-[9px] text-text-muted">{relTime(t.created_at)}</span>
-                </div>
+            ) : filtered.map(t => {
+              const isEscalated = t.escalation_raised && t.status !== 'resolved'
+              return (
+                <button key={t.id} onClick={() => handleSelect(t.id)}
+                  className={`w-full text-left px-4 py-3.5 relative transition-colors
+                    ${isEscalated
+                      ? 'border-l-2 border-l-red-500 bg-red-500/5 animate-pulse'
+                      : selectedId === t.id
+                        ? 'bg-finance-900/30 border-l-2 border-l-finance-500'
+                        : 'hover:bg-surface-elevated/40 border-l-2 border-l-transparent'
+                    }`}>
+                  {isEscalated && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-red-500/20 border border-red-500/40 rounded px-1.5 py-0.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <span className="text-[9px] font-bold text-red-400">URGENT</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] font-mono text-text-muted">{t.ticket_number}</span>
+                    <span className="text-[9px] text-text-muted">{relTime(t.created_at)}</span>
+                  </div>
                 <p className="text-xs font-semibold text-text-primary mb-0.5 truncate">{t.subject}</p>
                 <p className="text-[11px] text-text-secondary mb-2 truncate">{t.submitter_name} · {t.submitter_email}</p>
                 <div className="flex items-center gap-2">
@@ -207,7 +230,8 @@ export default function FinanceTicketsPage() {
                   <span className="text-[9px] text-text-muted capitalize">{t.category}</span>
                 </div>
               </button>
-            ))}
+              )
+            })}
           </div>
         </div>
 

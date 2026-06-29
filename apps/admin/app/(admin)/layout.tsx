@@ -37,15 +37,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
   }
 
-  const { count: adminInboxCount } = await supabase
-    .from('support_tickets')
-    .select('*', { count: 'exact', head: true })
-    .eq('department', 'Admin')
-    .not('status', 'in', '("resolved","closed")')
-
   return (
     <div className="flex min-h-screen">
-      <Sidebar pendingCandidates={23} pendingCompanies={8} flaggedItems={14} badgeDisputes={2} adminInboxCount={adminInboxCount ?? 0} />
+      <Sidebar />
       <div className="flex-1 min-w-0 overflow-auto flex flex-col">
         <DeptSwitcher />
         <main className="flex-1">{children}</main>

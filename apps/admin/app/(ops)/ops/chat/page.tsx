@@ -19,6 +19,9 @@ interface Thread {
   last_message_at: string
   unread_admin: number
   unread_user: number
+  first_admin_reply_at: string | null
+  resolved_by_email: string | null
+  resolved_at: string | null
 }
 
 interface Message {
@@ -123,26 +126,36 @@ export default function OpsLiveChatPage() {
     if (!reply.trim() || !selectedId || sending) return
     setSending(true)
     const content = reply.trim()
+    const now = new Date().toISOString()
     setReply('')
+    const { data: { user } } = await supabase.auth.getUser()
+    const staffName = user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'Staff'
+    const staffEmail = user?.email ?? null
     const { error } = await supabase.from('chat_messages').insert({
       thread_id: selectedId,
       sender_type: 'admin',
-      sender_name: 'Support Team',
+      sender_name: staffName,
+      sender_email: staffEmail,
       content,
       is_read: false,
     })
     if (!error) {
-      await supabase.from('chat_threads').update({
+      const threadUpdates: Record<string, unknown> = {
         last_message: content,
-        last_message_at: new Date().toISOString(),
+        last_message_at: now,
         status: 'in_progress',
-        assigned_to: 'support@workstation.ng',
+        assigned_to: staffEmail,
         unread_user: (selected?.unread_user ?? 0) + 1,
-      }).eq('id', selectedId)
-      const { data: { user } } = await supabase.auth.getUser()
+      }
+      if (!selected?.first_admin_reply_at) {
+        threadUpdates.first_admin_reply_at = now
+      }
+      await supabase.from('chat_threads').update(threadUpdates).eq('id', selectedId)
+      setThreads(prev => prev.map(t => t.id === selectedId
+        ? { ...t, ...threadUpdates, first_admin_reply_at: t.first_admin_reply_at ?? now } : t))
       await supabase.from('audit_logs').insert({
         event: 'admin.support_reply_sent',
-        actor_email: user?.email ?? null,
+        actor_email: staffEmail,
         actor_id: user?.id ?? null,
         actor_type: 'staff',
         target_id: selectedId,
@@ -158,8 +171,15 @@ export default function OpsLiveChatPage() {
 
   async function handleResolve() {
     if (!selectedId) return
-    await supabase.from('chat_threads').update({ status: 'resolved' }).eq('id', selectedId)
-    setThreads(prev => prev.map(t => t.id === selectedId ? { ...t, status: 'resolved' } : t))
+    const now = new Date().toISOString()
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('chat_threads').update({
+      status: 'resolved',
+      resolved_by_email: user?.email ?? null,
+      resolved_at: now,
+    }).eq('id', selectedId)
+    setThreads(prev => prev.map(t => t.id === selectedId
+      ? { ...t, status: 'resolved', resolved_by_email: user?.email ?? null, resolved_at: now } : t))
   }
 
   const filteredThreads = threads.filter(t => {

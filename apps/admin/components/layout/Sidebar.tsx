@@ -1,14 +1,15 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, ShieldCheck, Building2, Flag, Briefcase,
-  Users, Award, Bell, TicketCheck, Inbox, MessageSquare,
+  LayoutDashboard, Users, Bell, TicketCheck, Inbox, MessageSquare,
   BarChart3, ScrollText, UserCog, Settings2, Sun, Moon,
   Layers, Shield, BookOpen, PlayCircle,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
+import { createClient } from '@/lib/supabase/client'
 
 interface NavItem {
   href: string
@@ -22,23 +23,32 @@ interface NavGroup {
   items: NavItem[]
 }
 
-interface SidebarProps {
-  pendingCandidates?: number
-  pendingCompanies?: number
-  flaggedItems?: number
-  badgeDisputes?: number
-  adminInboxCount?: number
-}
-
-export default function Sidebar({
-  pendingCandidates = 0,
-  pendingCompanies = 0,
-  flaggedItems = 0,
-  badgeDisputes = 0,
-  adminInboxCount = 0,
-}: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname()
   const { theme, toggle } = useTheme()
+  const [adminInboxCount, setAdminInboxCount] = useState(0)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    async function fetchInboxCount() {
+      const { count } = await supabase
+        .from('support_tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('department', 'Admin')
+        .not('status', 'in', '("resolved","closed")')
+      setAdminInboxCount(count ?? 0)
+    }
+
+    void fetchInboxCount()
+
+    const channel = supabase
+      .channel('admin-inbox-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, () => void fetchInboxCount())
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [])
 
   const navGroups: NavGroup[] = [
     {
@@ -48,25 +58,9 @@ export default function Sidebar({
       ],
     },
     {
-      label: 'Verification',
-      items: [
-        { href: '/verifications/candidates', label: 'Candidate Queue', icon: <ShieldCheck size={15} />, badge: pendingCandidates },
-        { href: '/verifications/companies',  label: 'Company Queue',   icon: <Building2   size={15} />, badge: pendingCompanies },
-      ],
-    },
-    {
-      label: 'Moderation',
-      items: [
-        { href: '/flagged', label: 'Flagged Content', icon: <Flag      size={15} />, badge: flaggedItems },
-        { href: '/jobs',    label: 'Job Moderation',  icon: <Briefcase size={15} /> },
-      ],
-    },
-    {
       label: 'Management',
       items: [
-        { href: '/users',         label: 'User Management', icon: <Users    size={15} /> },
-        { href: '/disputes',      label: 'Badge Disputes',  icon: <Award    size={15} />, badge: badgeDisputes },
-        { href: '/notifications', label: 'Notifications',   icon: <Bell     size={15} /> },
+        { href: '/users', label: 'User Management', icon: <Users size={15} /> },
       ],
     },
     {
@@ -142,7 +136,7 @@ export default function Sidebar({
                 const isActive =
                   pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
-                  <li key={item.href}>
+                  <li key={item.label}>
                     <Link
                       href={item.href}
                       className={`group flex items-center justify-between px-3 py-[7px] rounded-lg

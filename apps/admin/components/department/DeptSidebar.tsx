@@ -101,7 +101,7 @@ export default function DeptSidebar({
                 const isActive =
                   pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
-                  <li key={item.href}>
+                  <li key={item.label}>
                     <Link
                       href={item.href}
                       className={`group flex items-center justify-between px-3 py-[7px] rounded-lg

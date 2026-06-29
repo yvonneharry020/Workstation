@@ -43,10 +43,8 @@ const PRIORITY_DOT: Record<TicketPriority, string> = {
 const DEPT_BADGE: Record<string, string> = {
   Technical:  'bg-tech-500/15 text-tech-400 border-tech-500/30',
   Finance:    'bg-finance-500/15 text-finance-400 border-finance-500/30',
-  Billing:    'bg-finance-500/15 text-finance-400 border-finance-500/30',
   Admin:      'bg-admin-500/15 text-admin-400 border-admin-500/30',
   Management: 'bg-ops-500/15 text-ops-400 border-ops-500/30',
-  Support:    'bg-ops-500/15 text-ops-400 border-ops-500/30',
 }
 
 function relTime(iso: string) {

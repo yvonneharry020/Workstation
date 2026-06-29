@@ -1,74 +1,14 @@
 'use client'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import DeptSidebar from '@/components/department/DeptSidebar'
 
-const TECH_NAV = [
-  {
-    label: 'Overview',
-    items: [
-      { href: '/tech/dashboard', label: 'Dashboard', icon: <GridIcon /> },
-    ],
-  },
-  {
-    label: 'Diagnostics',
-    items: [
-      { href: '/tech/user-doctor', label: 'User Doctor', icon: <StethoscopeIcon /> },
-      { href: '/tech/error-feed', label: 'Error Feed', icon: <AlertIcon /> },
-      { href: '/tech/sessions', label: 'Active Sessions', icon: <UsersIcon /> },
-      { href: '/tech/incidents', label: 'Incidents', icon: <IncidentIcon /> },
-    ],
-  },
-  {
-    label: 'Developer Tools',
-    items: [
-      { href: '/tech/api-console', label: 'API Console', icon: <TerminalIcon /> },
-      { href: '/tech/database', label: 'Database Explorer', icon: <DatabaseIcon /> },
-      { href: '/tech/env-check', label: 'Env Checker', icon: <EnvIcon /> },
-    ],
-  },
-  {
-    label: 'Integrations',
-    items: [
-      { href: '/tech/integrations', label: 'Integration Health', icon: <HeartbeatIcon /> },
-      { href: '/tech/email', label: 'Email Inspector', icon: <MailIcon /> },
-      { href: '/tech/webhooks', label: 'Webhook Logs', icon: <WebhookIcon /> },
-      { href: '/tech/deployment', label: 'Deployment Console', icon: <RocketIcon /> },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { href: '/tech/performance', label: 'Performance', icon: <SpeedIcon /> },
-      { href: '/tech/queues', label: 'Job Queues', icon: <QueueIcon /> },
-      { href: '/tech/rate-limits', label: 'Rate Limits', icon: <ThrottleIcon /> },
-      { href: '/tech/storage', label: 'Storage Manager', icon: <StorageIcon /> },
-      { href: '/tech/crash-logs', label: 'Crash Logs', icon: <BugIcon /> },
-    ],
-  },
-  {
-    label: 'Security',
-    items: [
-      { href: '/tech/security', label: 'Security Events', icon: <ShieldIcon /> },
-    ],
-  },
-  {
-    label: 'Support Inbox',
-    items: [
-      { href: '/tech/tickets', label: 'Tickets Inbox', icon: <TicketIcon /> },
-    ],
-  },
-  {
-    label: 'Internal',
-    items: [
-      { href: '/tech/staff-comms', label: '# general', icon: <CommsIcon /> },
-    ],
-  },
-  {
-    label: 'Configuration',
-    items: [
-      { href: '/tech/feature-flags', label: 'Feature Flags', icon: <FlagIcon /> },
-    ],
-  },
-]
+interface TechCounts {
+  openIncidents: number
+  techTickets: number
+}
+
+const ZERO: TechCounts = { openIncidents: 0, techTickets: 0 }
 
 function GridIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -135,9 +75,112 @@ function BugIcon() {
 }
 
 export default function TechLayout({ children }: { children: React.ReactNode }) {
+  const [counts, setCounts] = useState<TechCounts>(ZERO)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    async function refreshCounts() {
+      const [
+        { count: openIncidents },
+        { count: techTickets },
+      ] = await Promise.all([
+        supabase.from('incidents').select('*', { count: 'exact', head: true })
+          .not('status', 'in', '("resolved","closed")'),
+        supabase.from('support_tickets').select('*', { count: 'exact', head: true })
+          .eq('department', 'technical')
+          .not('status', 'in', '("resolved","closed")'),
+      ])
+
+      setCounts({
+        openIncidents: openIncidents ?? 0,
+        techTickets:   techTickets   ?? 0,
+      })
+    }
+
+    void refreshCounts()
+
+    const channel = supabase
+      .channel('tech-sidebar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' },       () => void refreshCounts())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, () => void refreshCounts())
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [])
+
+  const navGroups = [
+    {
+      label: 'Overview',
+      items: [
+        { href: '/tech/dashboard', label: 'Dashboard', icon: <GridIcon /> },
+      ],
+    },
+    {
+      label: 'Diagnostics',
+      items: [
+        { href: '/tech/user-doctor', label: 'User Doctor',      icon: <StethoscopeIcon /> },
+        { href: '/tech/error-feed',  label: 'Error Feed',       icon: <AlertIcon /> },
+        { href: '/tech/sessions',    label: 'Active Sessions',  icon: <UsersIcon /> },
+        { href: '/tech/incidents',   label: 'Incidents',        icon: <IncidentIcon />, badge: counts.openIncidents },
+      ],
+    },
+    {
+      label: 'Developer Tools',
+      items: [
+        { href: '/tech/api-console', label: 'API Console',      icon: <TerminalIcon /> },
+        { href: '/tech/database',    label: 'Database Explorer',icon: <DatabaseIcon /> },
+        { href: '/tech/env-check',   label: 'Env Checker',      icon: <EnvIcon /> },
+      ],
+    },
+    {
+      label: 'Integrations',
+      items: [
+        { href: '/tech/integrations', label: 'Integration Health', icon: <HeartbeatIcon /> },
+        { href: '/tech/email',        label: 'Email Inspector',    icon: <MailIcon /> },
+        { href: '/tech/webhooks',     label: 'Webhook Logs',       icon: <WebhookIcon /> },
+        { href: '/tech/deployment',   label: 'Deployment Console', icon: <RocketIcon /> },
+      ],
+    },
+    {
+      label: 'System',
+      items: [
+        { href: '/tech/performance', label: 'Performance',     icon: <SpeedIcon /> },
+        { href: '/tech/queues',      label: 'Job Queues',      icon: <QueueIcon /> },
+        { href: '/tech/rate-limits', label: 'Rate Limits',     icon: <ThrottleIcon /> },
+        { href: '/tech/storage',     label: 'Storage Manager', icon: <StorageIcon /> },
+        { href: '/tech/crash-logs',  label: 'Crash Logs',      icon: <BugIcon /> },
+      ],
+    },
+    {
+      label: 'Security',
+      items: [
+        { href: '/tech/security', label: 'Security Events', icon: <ShieldIcon /> },
+      ],
+    },
+    {
+      label: 'Support Inbox',
+      items: [
+        { href: '/tech/tickets', label: 'Tickets Inbox', icon: <TicketIcon />, badge: counts.techTickets },
+      ],
+    },
+    {
+      label: 'Internal',
+      items: [
+        { href: '/tech/staff-comms', label: '# general', icon: <CommsIcon /> },
+      ],
+    },
+    {
+      label: 'Configuration',
+      items: [
+        { href: '/tech/feature-flags', label: 'Feature Flags', icon: <FlagIcon /> },
+      ],
+    },
+  ]
+
   return (
     <div className="flex min-h-screen">
-      <DeptSidebar color="tech" roomLabel="Technical Room" navGroups={TECH_NAV} isSuperAdmin />
+      <DeptSidebar color="tech" roomLabel="Technical Room" navGroups={navGroups} isSuperAdmin />
       <main className="flex-1 min-w-0 overflow-auto">{children}</main>
     </div>
   )
