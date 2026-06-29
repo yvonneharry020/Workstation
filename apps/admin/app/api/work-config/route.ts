@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     .eq('email', user.email)
     .maybeSingle()
 
-  const isSuperAdmin = user.email === process.env.SUPER_ADMIN_EMAIL
+  const isSuperAdmin = user.email === 'yvonne2okis@gmail.com'
   const isAdmin      = isSuperAdmin || staffMember?.role === 'admin'
 
   if (!isAdmin) {
