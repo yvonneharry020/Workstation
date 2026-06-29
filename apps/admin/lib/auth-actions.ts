@@ -337,6 +337,84 @@ export async function resendStaffInviteAction(
   }
 }
 
+// ─── Realtime Broadcast Helper ────────────────────────────────────────────────
+
+async function broadcastToStaff(
+  email: string,
+  event: 'force_logout' | 'permissions_updated',
+  payload: Record<string, unknown>,
+): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return
+  await fetch(`${url}/realtime/v1/api/broadcast`, {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messages: [{ topic: `realtime:staff-session:${email}`, event, payload }],
+    }),
+  }).catch(() => { /* broadcast failure is non-fatal */ })
+}
+
+// ─── Save Staff Permissions ───────────────────────────────────────────────────
+
+export type SavePermissionsState = { success?: boolean; error?: string }
+
+export async function saveStaffPermissionsAction(
+  staffId: string,
+  fullName: string,
+  email: string,
+  newRole: 'admin' | 'staff' | 'viewer',
+  newPermissions: Record<string, boolean>,
+  oldRole: 'admin' | 'staff' | 'viewer',
+  oldPermissions: Record<string, boolean>,
+): Promise<SavePermissionsState> {
+  try {
+    const admin = createAdminClient()
+
+    const { error: updateError } = await admin
+      .from('staff_members')
+      .update({ role: newRole, permissions: newPermissions, updated_at: new Date().toISOString() })
+      .eq('id', staffId)
+
+    if (updateError) return { error: updateError.message }
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    await admin.from('audit_logs').insert({
+      event: 'admin.staff_updated',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: staffId,
+      target_type: 'staff_member',
+      target_name: fullName,
+      severity: 'info',
+      app: 'admin_panel',
+      metadata: { role: newRole, permissions: newPermissions },
+    })
+
+    const roleChangedToViewer = newRole === 'viewer' && oldRole !== 'viewer'
+    const roomRemoved = Object.keys(oldPermissions).some(k => oldPermissions[k] && !newPermissions[k])
+
+    if (roleChangedToViewer) {
+      await broadcastToStaff(email, 'force_logout', { reason: 'viewer' })
+    } else if (roomRemoved) {
+      await broadcastToStaff(email, 'force_logout', { reason: 'permissions_changed' })
+    } else {
+      await broadcastToStaff(email, 'permissions_updated', { role: newRole, permissions: newPermissions })
+    }
+
+    return { success: true }
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : 'Failed to save permissions.' }
+  }
+}
+
 // ─── Toggle Staff Active ──────────────────────────────────────────────────────
 
 export type ToggleActiveState = { success?: boolean; error?: string; newIsActive?: boolean }
@@ -373,6 +451,10 @@ export async function toggleStaffActiveAction(
       app: 'admin_panel',
       metadata: { email, is_active: newIsActive },
     })
+
+    if (!newIsActive) {
+      await broadcastToStaff(email, 'force_logout', { reason: 'deactivated' })
+    }
 
     return { success: true, newIsActive }
   } catch (err: unknown) {

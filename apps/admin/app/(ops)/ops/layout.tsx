@@ -214,7 +214,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <DeptSidebar color="ops" roomLabel="Management Room" navGroups={navGroups} isSuperAdmin />
+      <DeptSidebar color="ops" roomLabel="Management Room" navGroups={navGroups} />
       <main className="flex-1 min-w-0 overflow-auto">{children}</main>
     </div>
   )

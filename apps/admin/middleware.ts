@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
-const AUTH_ROUTES = ['/login', '/forgot-password', '/reset-password']
+const AUTH_ROUTES    = ['/login', '/forgot-password', '/reset-password']
 const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/access-restricted', '/setup-account']
 
 const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
@@ -10,16 +10,56 @@ const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: '/ops/',     allowed: ['superadmin', 'ops'] },
 ]
 
+type Permissions = { admin: boolean; management: boolean; technical: boolean; finance: boolean }
+type StaffRow    = { is_active: boolean; role: string; permissions: Permissions; full_name: string | null }
+
 function getRoomForPath(pathname: string): string | null {
   if (pathname.startsWith('/ops/'))     return 'management'
   if (pathname.startsWith('/tech/'))    return 'technical'
   if (pathname.startsWith('/finance/')) return 'finance'
-  // All admin-side routes (staff, users, disputes, etc.) map to admin room
-  if (!pathname.startsWith('/ops/') && !pathname.startsWith('/tech/') && !pathname.startsWith('/finance/')) {
+  if (pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/users')     ||
+      pathname.startsWith('/staff')     ||
+      pathname.startsWith('/tickets')   ||
+      pathname.startsWith('/ticket-overview') ||
+      pathname.startsWith('/analytics') ||
+      pathname.startsWith('/audit-log') ||
+      pathname.startsWith('/admin-inbox') ||
+      pathname.startsWith('/staff-comms') ||
+      pathname.startsWith('/disputes')  ||
+      pathname.startsWith('/flagged')   ||
+      pathname.startsWith('/verifications') ||
+      pathname.startsWith('/jobs')      ||
+      pathname.startsWith('/notifications') ||
+      pathname.startsWith('/compliance') ||
+      pathname.startsWith('/knowledge-base') ||
+      pathname.startsWith('/tutorials') ||
+      pathname.startsWith('/sla-monitor') ||
+      pathname.startsWith('/agent-performance') ||
+      pathname.startsWith('/search')    ||
+      pathname.startsWith('/chat')      ||
+      pathname.startsWith('/config')    ||
+      pathname.startsWith('/notifications')) {
     return 'admin'
   }
   return null
 }
+
+function getPrimaryDest(perms: Permissions, role: string): string {
+  if (role === 'admin') return '/dashboard'
+  if (perms.admin)      return '/dashboard'
+  if (perms.management) return '/ops/dashboard'
+  if (perms.technical)  return '/tech/dashboard'
+  if (perms.finance)    return '/finance/dashboard'
+  return '/dashboard'
+}
+
+const COOKIE_OPTS = {
+  path: '/',
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  httpOnly: false,  // must be readable by client JS for UI permission checks
+} as const
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -61,44 +101,51 @@ export async function middleware(request: NextRequest) {
 
   if (user) {
     try {
-      // Check staff_members table first (new room-based permission system)
-      const { data: staffMember } = await supabase
-        .from('staff_members')
-        .select('is_active, role, permissions')
-        .eq('email', user.email)
-        .maybeSingle()
+      // Service role key bypasses RLS — anon key + user JWT is blocked on staff_members
+      const staffRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/staff_members` +
+        `?email=eq.${encodeURIComponent(user.email ?? '')}` +
+        `&select=is_active,role,permissions,full_name&limit=1`,
+        {
+          headers: {
+            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+          },
+        }
+      )
+      const staffRows: StaffRow[] = staffRes.ok ? await staffRes.json() : []
+      const staffMember = staffRows[0] ?? null
 
       if (staffMember) {
-        // Staff member found — enforce room-based access
         if (!staffMember.is_active) {
           return NextResponse.redirect(new URL('/access-restricted', request.url))
         }
 
-        // Redirect logged-in staff away from login/forgot-password to their correct room
-        // /reset-password must remain accessible — recovery links need it while logged in
-        if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
-          let dest = '/dashboard'
-          if (staffMember.role !== 'admin') {
-            const perms = (staffMember.permissions as Record<string, boolean>) ?? {}
-            if (perms.management) dest = '/ops/dashboard'
-            else if (perms.technical) dest = '/tech/dashboard'
-            else if (perms.finance) dest = '/finance/dashboard'
-          }
-          return NextResponse.redirect(new URL(dest, request.url))
+        const perms: Permissions = (staffMember.permissions as Permissions) ?? {
+          admin: false, management: false, technical: false, finance: false,
         }
 
-        // Admin role bypasses all room checks
+        // Redirect logged-in staff away from login / forgot-password
+        // (/reset-password stays accessible — recovery links need it while logged in)
+        if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
+          return NextResponse.redirect(
+            new URL(getPrimaryDest(perms, staffMember.role), request.url)
+          )
+        }
+
+        // Admin role bypasses all room checks; otherwise verify room access
         if (staffMember.role !== 'admin') {
           const room = getRoomForPath(pathname)
-          if (room) {
-            const perms = (staffMember.permissions as Record<string, boolean>) ?? {}
-            if (!perms[room]) {
-              return NextResponse.redirect(new URL('/unauthorized', request.url))
-            }
+          if (room && !perms[room as keyof Permissions]) {
+            return NextResponse.redirect(new URL('/unauthorized', request.url))
           }
         }
 
-        // Passed staff checks — skip legacy role check
+        // Stamp permission cookies so client components can read them without a DB round-trip
+        response.cookies.set('_wk_role',  staffMember.role, COOKIE_OPTS)
+        response.cookies.set('_wk_perms', encodeURIComponent(JSON.stringify(perms)), COOKIE_OPTS)
+        response.cookies.set('_wk_name',  encodeURIComponent(staffMember.full_name ?? ''), COOKIE_OPTS)
+
         response.headers.set('X-Frame-Options', 'DENY')
         response.headers.set('X-Content-Type-Options', 'nosniff')
         response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -107,7 +154,7 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
-      // No staff_members record — fall back to legacy profiles.role check
+      // No staff_members record — fall back to legacy profiles.role check (super admin path)
       const roomRule = LEGACY_ROOM_ROLES.find(r => pathname.startsWith(r.prefix))
       if (roomRule) {
         const { data: profile } = await supabase
@@ -131,7 +178,6 @@ export async function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-
   return response
 }
 

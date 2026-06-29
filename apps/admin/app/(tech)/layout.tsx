@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -9,15 +10,19 @@ export default async function TechRootLayout({ children }: { children: React.Rea
   if (!user) redirect('/login')
 
   if (user.email !== SUPER_ADMIN_EMAIL) {
-    const { data: staffMember } = await supabase
+    const admin = createAdminClient()
+    const { data: staffMember } = await admin
       .from('staff_members')
-      .select('department, is_active')
+      .select('role, permissions, is_active')
       .eq('email', user.email!)
       .maybeSingle()
 
-    if (!staffMember?.is_active || staffMember.department !== 'technical') {
-      redirect('/dashboard')
-    }
+    const perms = (staffMember?.permissions as Record<string, boolean>) ?? {}
+    const hasAccess =
+      staffMember?.is_active &&
+      (staffMember.role === 'admin' || perms.technical === true)
+
+    if (!hasAccess) redirect('/unauthorized')
   }
 
   return <>{children}</>

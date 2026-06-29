@@ -12,9 +12,9 @@ export default function UnauthorizedPage() {
           This area is restricted to users with the appropriate room-level role.
           Contact your system administrator if you need access.
         </p>
-        <Link href="/dashboard"
+        <Link href="/login"
           style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 10, backgroundColor: '#6366F1', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-          Back to Dashboard
+          Back to Login
         </Link>
       </div>
     </div>

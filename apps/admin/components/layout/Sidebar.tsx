@@ -11,6 +11,8 @@ import {
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
 import LogoutButton from '@/components/auth/LogoutButton'
+import { useStaffInfo } from '@/lib/staff-cookies'
+import SessionWatcher from '@/components/auth/SessionWatcher'
 
 interface NavItem {
   href: string
@@ -24,9 +26,15 @@ interface NavGroup {
   items: NavItem[]
 }
 
+function initials(name: string): string {
+  if (!name.trim()) return 'YH'
+  return name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
 export default function Sidebar() {
   const pathname = usePathname()
   const { theme, toggle } = useTheme()
+  const { name, role } = useStaffInfo()
   const [adminInboxCount, setAdminInboxCount] = useState(0)
 
   useEffect(() => {
@@ -103,6 +111,7 @@ export default function Sidebar() {
       style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
       className="w-64 flex-shrink-0 flex flex-col h-screen sticky top-0 border-r"
     >
+      <SessionWatcher />
       {/* Logo */}
       <div
         style={{ borderColor: 'var(--border)' }}
@@ -192,14 +201,16 @@ export default function Sidebar() {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600
             flex items-center justify-center flex-shrink-0 shadow-sm">
-            <span className="text-white text-[11px] font-bold tracking-tight">YH</span>
+            <span className="text-white text-[11px] font-bold tracking-tight">
+              {initials(name || 'Yvonne Harry')}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold leading-none truncate" style={{ color: 'var(--tx-1)' }}>
-              Yvonne Harry
+              {name || 'Yvonne Harry'}
             </p>
             <p className="text-[11px] font-medium leading-none mt-1 text-indigo-400">
-              Super Admin
+              {role === 'superadmin' || !name ? 'Super Admin' : role === 'admin' ? 'Admin' : role === 'viewer' ? 'Viewer' : 'Staff'}
             </p>
           </div>
           <div className="flex items-center gap-1">

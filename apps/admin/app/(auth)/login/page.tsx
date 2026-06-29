@@ -50,6 +50,9 @@ const CALLBACK_ERRORS: Record<string, string> = {
   auth_callback_failed: 'Something went wrong during authentication. Please try again.',
   missing_code: 'Invalid authentication link.',
   link_expired: 'Your invite link has expired or was already used. Contact your administrator to send a new one.',
+  deactivated: 'Your access has been deactivated. Contact your administrator for help.',
+  viewer: 'Your access level has been updated. Please sign in again to continue.',
+  permissions_changed: 'Your room access has been updated. Please sign in again.',
 }
 
 function LoginForm() {

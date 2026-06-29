@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   resendStaffInviteAction,
   toggleStaffActiveAction,
+  saveStaffPermissionsAction,
 } from '@/lib/auth-actions'
 
 interface StaffMember {
@@ -137,28 +138,23 @@ export default function StaffEditPage() {
     if (!member) return
     setSaving(true)
 
-    await supabase.from('staff_members').update({
+    const result = await saveStaffPermissionsAction(
+      id,
+      member.full_name,
+      member.email,
       role,
-      permissions: finalRoomAccess,
-      updated_at: new Date().toISOString(),
-    }).eq('id', id)
+      finalRoomAccess,
+      member.role,
+      (member.permissions as Record<string, boolean>) ?? {},
+    )
+
+    if (result.error) {
+      setSaving(false)
+      setToggleError(result.error)
+      return
+    }
 
     setMember(prev => prev ? { ...prev, role, permissions: finalRoomAccess } : prev)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('audit_logs').insert({
-      event: 'admin.staff_updated',
-      actor_email: user?.email ?? null,
-      actor_id: user?.id ?? null,
-      actor_type: 'admin',
-      target_id: id,
-      target_type: 'staff_member',
-      target_name: member.full_name,
-      severity: 'info',
-      app: 'admin_panel',
-      metadata: { role, permissions: finalRoomAccess },
-    })
-
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)

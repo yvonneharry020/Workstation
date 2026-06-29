@@ -181,7 +181,7 @@ export default function TechLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex min-h-screen">
-      <DeptSidebar color="tech" roomLabel="Technical Room" navGroups={navGroups} isSuperAdmin />
+      <DeptSidebar color="tech" roomLabel="Technical Room" navGroups={navGroups} />
       <main className="flex-1 min-w-0 overflow-auto">{children}</main>
     </div>
   )

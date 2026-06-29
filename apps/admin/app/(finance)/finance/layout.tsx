@@ -172,7 +172,7 @@ export default function FinanceLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen">
-      <DeptSidebar color="finance" roomLabel="Finance Room" navGroups={navGroups} isSuperAdmin />
+      <DeptSidebar color="finance" roomLabel="Finance Room" navGroups={navGroups} />
       <main className="flex-1 min-w-0 overflow-auto">{children}</main>
     </div>
   )

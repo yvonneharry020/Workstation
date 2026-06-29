@@ -1,5 +1,6 @@
 import Sidebar from '@/components/layout/Sidebar'
 import DeptSwitcher from '@/components/layout/DeptSwitcher'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -11,29 +12,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/login')
 
-  // Staff members get routed to their department room
   if (user.email !== SUPER_ADMIN_EMAIL) {
-    const { data: staffMember } = await supabase
+    const admin = createAdminClient()
+    const { data: staffMember } = await admin
       .from('staff_members')
-      .select('department, is_active')
+      .select('role, permissions, is_active')
       .eq('email', user.email!)
       .maybeSingle()
 
     if (staffMember?.is_active) {
-      // Check if staff has completed onboarding profile
-      const { data: profile } = await supabase
-        .from('staff_profiles')
-        .select('profile_complete')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      const perms = (staffMember.permissions as Record<string, boolean>) ?? {}
+      const hasAdminAccess = staffMember.role === 'admin' || perms.admin === true
 
-      if (!profile?.profile_complete) {
-        redirect('/staff-profile')
+      if (!hasAdminAccess) {
+        // Redirect to their primary room
+        if (perms.management) redirect('/ops/dashboard')
+        if (perms.technical)  redirect('/tech/dashboard')
+        if (perms.finance)    redirect('/finance/dashboard')
+        redirect('/unauthorized')
       }
-
-      if (staffMember.department === 'technical') redirect('/tech/dashboard')
-      if (staffMember.department === 'accounting') redirect('/finance/dashboard')
-      if (staffMember.department === 'management') redirect('/ops/dashboard')
+    } else if (!staffMember) {
+      // No staff record and not super admin — block access
+      redirect('/login')
     }
   }
 
