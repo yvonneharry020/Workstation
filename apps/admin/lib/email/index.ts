@@ -1,9 +1,13 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY ?? 'noreply@kaylabeauty.shop'
 const FROM_TEAM    = process.env.RESEND_FROM_TEAM    ?? 'team@kaylabeauty.shop'
+
+// Lazily created so missing env var doesn't throw at module load / build time
+function getResend(): Resend {
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set')
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export type EmailType =
   | 'staff-invite'
@@ -35,7 +39,7 @@ interface SendEmailParams {
 
 export async function sendEmail(p: SendEmailParams): Promise<{ id?: string; error?: string }> {
   const from = p.from === 'team' ? `Workstation <${FROM_TEAM}>` : `Workstation <${FROM_NOREPLY}>`
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from,
     to:       [p.to],
     subject:  p.subject,
