@@ -42,11 +42,11 @@ function calcCompletion(profile: ProfileRow | null): number {
   if (!profile) return 0
   const locked = profile.locked_fields ?? {}
   const personal = PERSONAL_KEYS.filter(k => locked[k]).length
-  const edu      = Array.isArray(profile.education) && profile.education.length > 0 ? 1 : 0
-  const work     = Array.isArray(profile.work_history) && profile.work_history.length > 0 ? 1 : 0
-  const cv       = locked.cv ? 1 : 0
-  const total    = PERSONAL_KEYS.length + 3
-  return Math.round(((personal + edu + work + cv) / total) * 100)
+  const hasEdu  = Array.isArray(profile.education) && profile.education.length > 0
+  const hasWork = Array.isArray(profile.work_history) && profile.work_history.length > 0
+  const hasCv   = !!locked.cv
+  const personalPct = (personal / PERSONAL_KEYS.length) * 25
+  return Math.round(personalPct + (hasEdu ? 25 : 0) + (hasWork ? 25 : 0) + (hasCv ? 25 : 0))
 }
 
 function RoleChip({ role }: { role: string }) {

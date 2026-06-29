@@ -26,8 +26,10 @@ function calcCompletion(p: StaffProfile): number {
   const hasEdu  = p.education.some(e => e.locked)
   const hasWork = p.work_history.some(w => w.locked)
   const hasCv   = !!locked.cv
-  const total   = PERSONAL_KEYS.length + 3
-  return Math.round(((personal + (hasEdu ? 1 : 0) + (hasWork ? 1 : 0) + (hasCv ? 1 : 0)) / total) * 100)
+  // Each of the 4 sections contributes 25% so filling only personal info
+  // cannot inflate the total beyond 25% regardless of how many fields are filled.
+  const personalPct = (personal / PERSONAL_KEYS.length) * 25
+  return Math.round(personalPct + (hasEdu ? 25 : 0) + (hasWork ? 25 : 0) + (hasCv ? 25 : 0))
 }
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────

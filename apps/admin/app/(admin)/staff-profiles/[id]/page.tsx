@@ -74,9 +74,9 @@ export default async function StaffProfileDetailPage({
     'emergency_phone', 'linkedin_url', 'national_id_type',
   ]
   const filledPersonal = PERSONAL_KEYS.filter(k => locked[k]).length
-  const total          = PERSONAL_KEYS.length + 3
+  const personalPct = (filledPersonal / PERSONAL_KEYS.length) * 25
   const pct = profile
-    ? Math.round(((filledPersonal + (edu.length > 0 ? 1 : 0) + (work.length > 0 ? 1 : 0) + (locked.cv ? 1 : 0)) / total) * 100)
+    ? Math.round(personalPct + (edu.length > 0 ? 25 : 0) + (work.length > 0 ? 25 : 0) + (locked.cv ? 25 : 0))
     : 0
 
   const cvUrl = profile?.cv_url as string | null
