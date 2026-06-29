@@ -93,6 +93,7 @@ export default function Sidebar() {
         { href: '/sla-monitor',      label: 'SLA Monitor',     icon: <Timer       size={15} /> },
         { href: '/agent-performance',label: 'Agent Performance',icon: <TrendingUp  size={15} /> },
         { href: '/staff',            label: 'Staff',           icon: <UserCog     size={15} /> },
+        { href: '/staff-profiles',   label: 'Staff Profiles',  icon: <Users       size={15} /> },
         { href: '/config',           label: 'System Config',   icon: <Settings2   size={15} /> },
       ],
     },
@@ -210,7 +211,7 @@ export default function Sidebar() {
               {name || 'Yvonne Harry'}
             </p>
             <p className="text-[11px] font-medium leading-none mt-1 text-indigo-400">
-              {role === 'superadmin' || !name ? 'Super Admin' : role === 'admin' ? 'Admin' : role === 'viewer' ? 'Viewer' : 'Staff'}
+              {role === 'superadmin' ? 'Super Admin' : role === 'admin' ? 'Admin' : role === 'viewer' ? 'Viewer' : 'Staff'}
             </p>
           </div>
           <div className="flex items-center gap-1">

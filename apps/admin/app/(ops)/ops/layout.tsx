@@ -198,12 +198,6 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       ],
     },
     {
-      label: 'Team Analytics',
-      items: [
-        { href: '/ops/profile-views', label: 'Profile Views', icon: <EyeIcon /> },
-      ],
-    },
-    {
       label: 'Internal',
       items: [
         { href: '/ops/admin-inbox', label: 'Admin Inbox', icon: <MailIcon /> },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export interface StaffInfo {
   role: string      // 'admin' | 'staff' | 'viewer' | 'superadmin'
@@ -20,33 +20,48 @@ const SUPER_ADMIN_DEFAULTS: StaffInfo = {
 }
 
 function readCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null
   const match = document.cookie.split('; ').find(c => c.startsWith(name + '='))
   return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null
 }
 
-// Returns the current staff member's info from cookies set by middleware.
-// Falls back to super-admin defaults if no cookies are present
-// (i.e., the user has no staff_members record — they are the super admin).
-export function useStaffInfo(): StaffInfo {
-  const [info, setInfo] = useState<StaffInfo>(SUPER_ADMIN_DEFAULTS)
+// Module-level cache so useSyncExternalStore gets a stable reference
+// when cookie values haven't changed (React requires this to avoid infinite loops).
+let _cacheKey = ''
+let _cached: StaffInfo = SUPER_ADMIN_DEFAULTS
 
-  useEffect(() => {
-    const role  = readCookie('_wk_role')
-    const name  = readCookie('_wk_name')
-    const permsRaw = readCookie('_wk_perms')
+function getSnapshot(): StaffInfo {
+  const role     = readCookie('_wk_role')
+  const name     = readCookie('_wk_name')
+  const permsRaw = readCookie('_wk_perms')
+  const key      = `${role ?? ''}|${name ?? ''}|${permsRaw ?? ''}`
 
-    if (role && permsRaw) {
-      try {
-        const permissions = JSON.parse(permsRaw) as StaffInfo['permissions']
-        setInfo({ role, name: name ?? '', permissions })
-      } catch {
-        // malformed cookie — keep defaults
-      }
+  if (key === _cacheKey) return _cached
+  _cacheKey = key
+
+  if (role && permsRaw) {
+    try {
+      const permissions = JSON.parse(permsRaw) as StaffInfo['permissions']
+      _cached = { role, name: name ?? '', permissions }
+      return _cached
+    } catch {
+      // malformed — fall through
     }
-  }, [])
+  }
 
-  return info
+  _cached = SUPER_ADMIN_DEFAULTS
+  return _cached
+}
+
+function subscribe(_cb: () => void) {
+  return () => {}
+}
+
+export function useStaffInfo(): StaffInfo {
+  return useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => SUPER_ADMIN_DEFAULTS,
+  )
 }
 
 export function useIsViewer(): boolean {

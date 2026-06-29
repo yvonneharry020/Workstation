@@ -60,7 +60,7 @@ type ProfileResult = { profile?: StaffProfile; error?: string }
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
-async function getAuthenticatedStaffId(): Promise<{ staffMemberId: string; email: string } | null> {
+async function getAuthenticatedStaffId(): Promise<{ staffMemberId: string; userId: string; email: string } | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return null
@@ -73,7 +73,7 @@ async function getAuthenticatedStaffId(): Promise<{ staffMemberId: string; email
     .maybeSingle()
 
   if (!data) return null
-  return { staffMemberId: data.id, email: user.email }
+  return { staffMemberId: data.id, userId: user.id, email: user.email }
 }
 
 // ─── Get or create profile ────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ export async function getOrCreateProfileAction(): Promise<ProfileResult> {
     .from('staff_profiles')
     .insert({
       staff_member_id: auth.staffMemberId,
-      user_id: auth.staffMemberId,
+      user_id: auth.userId,
       email: auth.email,
       locked_fields: {},
       education: [],
