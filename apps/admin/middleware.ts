@@ -4,14 +4,20 @@ import { NextRequest, NextResponse } from 'next/server'
 const AUTH_ROUTES    = ['/login', '/forgot-password', '/reset-password']
 const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/access-restricted', '/setup-account']
 
+type Permissions = { admin: boolean; management: boolean; technical: boolean; finance: boolean }
+type StaffRow    = { is_active: boolean; role: string; permissions: Permissions; full_name: string | null }
+
+const SUPER_ADMIN_EMAIL = 'yvonne2okis@gmail.com'
+
+const SUPER_ADMIN_PERMS: Permissions = {
+  admin: true, management: true, technical: true, finance: true,
+}
+
 const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
   { prefix: '/finance/', allowed: ['superadmin', 'finance'] },
   { prefix: '/tech/',    allowed: ['superadmin', 'tech'] },
   { prefix: '/ops/',     allowed: ['superadmin', 'ops'] },
 ]
-
-type Permissions = { admin: boolean; management: boolean; technical: boolean; finance: boolean }
-type StaffRow    = { is_active: boolean; role: string; permissions: Permissions; full_name: string | null }
 
 function getRoomForPath(pathname: string): string | null {
   if (pathname.startsWith('/ops/'))     return 'management'
@@ -102,6 +108,29 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
+    // ── Super admin fast-path ─────────────────────────────────────────────────
+    // Identified by email — bypass staff_members entirely and stamp fresh cookies
+    // so stale staff cookies from a previous session are always overwritten.
+    if (user.email === SUPER_ADMIN_EMAIL) {
+      if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+      const superAdminName =
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        'Yvonne Harry'
+      response.cookies.set('_wk_role',  'superadmin', COOKIE_OPTS)
+      response.cookies.set('_wk_perms', JSON.stringify(SUPER_ADMIN_PERMS), COOKIE_OPTS)
+      response.cookies.set('_wk_name',  superAdminName, COOKIE_OPTS)
+      response.headers.set('X-Frame-Options', 'DENY')
+      response.headers.set('X-Content-Type-Options', 'nosniff')
+      response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+      response.headers.set('X-XSS-Protection', '1; mode=block')
+      response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      return response
+    }
+
+    // ── Staff / regular admin path ────────────────────────────────────────────
     try {
       // Service role key bypasses RLS — anon key + user JWT is blocked on staff_members
       const staffRes = await fetch(
@@ -156,19 +185,9 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
-      // No staff_members record — fall back to legacy profiles.role check (super admin path)
-      const roomRule = LEGACY_ROOM_ROLES.find(r => pathname.startsWith(r.prefix))
-      if (roomRule) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single()
-
-        const role = profile?.role as string | undefined
-        if (role && !roomRule.allowed.includes(role)) {
-          return NextResponse.redirect(new URL('/unauthorized', request.url))
-        }
+      // No staff_members record and not super admin — deny access
+      if (!isAuthRoute) {
+        return NextResponse.redirect(new URL('/login', request.url))
       }
     } catch {
       // Fail open on any DB error — do not lock out users

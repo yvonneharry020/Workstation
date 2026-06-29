@@ -197,8 +197,8 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Clock widget — visible for all staff except superadmin */}
-      {role !== 'superadmin' && <ClockWidget />}
+      {/* Clock widget — only for staff, never for admins */}
+      {role !== 'superadmin' && role !== 'admin' && <ClockWidget />}
 
       {/* User dock */}
       <div
