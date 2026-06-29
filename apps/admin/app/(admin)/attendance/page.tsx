@@ -63,6 +63,14 @@ function computeLiveWorked(session: ClockSession): number {
   ))
 }
 
+function computeLiveBreak(session: ClockSession): number {
+  const base = session.total_break_seconds
+  if (session.status !== 'on_break' || !session.current_interval_started_at) return base
+  return base + Math.max(0, Math.floor(
+    (Date.now() - new Date(session.current_interval_started_at).getTime()) / 1000
+  ))
+}
+
 export default function AttendancePage() {
   const [sessions,     setSessions]     = useState<ClockSession[]>([])
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -86,10 +94,10 @@ export default function AttendancePage() {
 
   useEffect(() => { void loadSessions() }, [loadSessions])
 
-  // Live tick for running timers
+  // Live tick for running timers — fires for active work and on-break sessions
   useEffect(() => {
-    const hasActive = sessions.some(s => s.status === 'active')
-    if (!hasActive) return
+    const hasRunning = sessions.some(s => s.status === 'active' || s.status === 'on_break')
+    if (!hasRunning) return
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
   }, [sessions])
@@ -186,6 +194,7 @@ export default function AttendancePage() {
               const cfg         = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.completed
               const online      = isOnline(session)
               const liveWorked  = computeLiveWorked(session)
+              const liveBreak   = computeLiveBreak(session)
               const { totalPay, overtimePay } = computeSessionPay(
                 liveWorked,
                 session.overtime_seconds,
@@ -273,8 +282,8 @@ export default function AttendancePage() {
                     {/* Break */}
                     <div className="text-center flex-shrink-0 w-20">
                       <p className="text-[10px] mb-0.5" style={{ color: 'var(--tx-3)' }}>Break</p>
-                      <p className="text-[12px] font-mono" style={{ color: 'var(--tx-2)' }}>
-                        {formatDuration(session.total_break_seconds)}
+                      <p className="text-[12px] font-mono" style={{ color: session.status === 'on_break' ? '#F59E0B' : 'var(--tx-2)' }}>
+                        {formatDuration(liveBreak)}
                       </p>
                     </div>
 
