@@ -271,9 +271,9 @@ export default function OpsDashboardPage() {
 
           <div className="flex flex-col gap-3">
             {[
-              { label: 'Resolved Tickets', value: stats.resolvedTickets, color: 'text-emerald-400', bg: 'rgba(16,185,129,0.1)' },
-              { label: 'In Progress',      value: stats.inProgressTickets, color: 'text-amber-400',  bg: 'rgba(245,158,11,0.1)' },
-              { label: 'Unread Chats',     value: stats.unreadChats,      color: 'text-rose-400',   bg: 'rgba(239,68,68,0.1)' },
+              { label: 'Resolved Tickets', value: stats.resolvedTickets,    color: 'text-emerald-400', bg: 'rgba(16,185,129,0.1)' },
+              { label: 'In Progress',      value: stats.inProgressTickets,  color: 'text-amber-400',  bg: 'rgba(245,158,11,0.1)' },
+              { label: 'Pending Job Posts', value: stats.pendingJobs,       color: 'text-cyan-400',   bg: 'rgba(6,182,212,0.1)' },
             ].map(s => (
               <div key={s.label} className="rounded-2xl p-4 flex-1 flex flex-col justify-between"
                 style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>

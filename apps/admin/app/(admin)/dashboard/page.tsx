@@ -241,12 +241,12 @@ export default function DashboardPage() {
   ]
 
   const quickActions = [
-    { href: '/verifications/candidates', label: 'Review Candidates', count: pendingCand,  color: 'text-indigo-400' },
-    { href: '/verifications/companies',  label: 'Review Companies',  count: pendingComp,  color: 'text-indigo-400' },
-    { href: '/flagged',                  label: 'Clear Flagged',     count: flagged,      color: 'text-rose-400' },
-    { href: '/disputes',                 label: 'Badge Disputes',    count: disputes,     color: 'text-amber-400' },
-    { href: '/notifications',            label: 'Send Notification', count: null,         color: 'text-emerald-400' },
-    { href: '/audit-log',                label: 'Audit Log',         count: null,         color: 'text-sky-400' },
+    { href: '/users',          label: 'User Management',   count: null,        color: 'text-indigo-400' },
+    { href: '/analytics',      label: 'Analytics',         count: null,        color: 'text-sky-400' },
+    { href: '/staff',          label: 'Staff Members',     count: null,        color: 'text-violet-400' },
+    { href: '/audit-log',      label: 'Audit Log',         count: null,        color: 'text-sky-400' },
+    { href: '/notifications',  label: 'Send Notification', count: null,        color: 'text-emerald-400' },
+    { href: '/system-config',  label: 'System Config',     count: null,        color: 'text-rose-400' },
   ]
 
   if (loading) {
