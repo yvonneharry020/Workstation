@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
+
+// useLayoutEffect runs before paint on the client; fall back to useEffect on server to avoid SSR warning
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 export interface StaffInfo {
   role: string      // 'admin' | 'staff' | 'viewer' | 'superadmin'
@@ -47,7 +50,7 @@ export function useStaffInfo(): StaffInfo {
   const pathname = usePathname()
   const [info, setInfo] = useState<StaffInfo>(SUPER_ADMIN_DEFAULTS)
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     setInfo(parseCookies())
   }, [pathname])
 

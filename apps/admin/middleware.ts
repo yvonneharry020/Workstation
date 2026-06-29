@@ -145,8 +145,8 @@ export async function middleware(request: NextRequest) {
 
         // Stamp permission cookies so client components can read them without a DB round-trip
         response.cookies.set('_wk_role',  staffMember.role, COOKIE_OPTS)
-        response.cookies.set('_wk_perms', encodeURIComponent(JSON.stringify(perms)), COOKIE_OPTS)
-        response.cookies.set('_wk_name',  encodeURIComponent(staffMember.full_name ?? ''), COOKIE_OPTS)
+        response.cookies.set('_wk_perms', JSON.stringify(perms), COOKIE_OPTS)
+        response.cookies.set('_wk_name',  staffMember.full_name ?? '', COOKIE_OPTS)
 
         response.headers.set('X-Frame-Options', 'DENY')
         response.headers.set('X-Content-Type-Options', 'nosniff')
