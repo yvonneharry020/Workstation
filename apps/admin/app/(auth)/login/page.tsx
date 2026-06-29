@@ -2,7 +2,7 @@
 
 import { useTransition, useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { loginAction, type LoginState } from '@/lib/auth-actions'
 
 function ShieldIcon() {
@@ -53,6 +53,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
 }
 
 function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const callbackError = searchParams.get('error')
   const [state, setState] = useState<LoginState>({})
@@ -65,7 +66,11 @@ function LoginForm() {
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
       const result = await loginAction(state, formData)
-      setState(result)
+      if (result?.redirectTo) {
+        router.replace(result.redirectTo)
+      } else {
+        setState(result)
+      }
     })
   }
 
@@ -103,17 +108,6 @@ function LoginForm() {
         )}
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate autoComplete="on">
-          {/* Honeypot — hidden from humans, bots fill it */}
-          <input
-            type="text"
-            name="username_field"
-            defaultValue=""
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }}
-          />
-
           {/* Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">

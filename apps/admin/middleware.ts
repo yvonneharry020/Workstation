@@ -74,8 +74,9 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('/access-restricted', request.url))
         }
 
-        // Redirect logged-in staff away from auth pages to their correct room
-        if (AUTH_ROUTES.some(r => pathname.startsWith(r))) {
+        // Redirect logged-in staff away from login/forgot-password to their correct room
+        // /reset-password must remain accessible — recovery links need it while logged in
+        if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
           let dest = '/dashboard'
           if (staffMember.role !== 'admin') {
             const perms = (staffMember.permissions as Record<string, boolean>) ?? {}

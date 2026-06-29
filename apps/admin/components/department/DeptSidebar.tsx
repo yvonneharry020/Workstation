@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronLeft, Sun, Moon, Code2, DollarSign, Users2, LayoutDashboard } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
+import LogoutButton from '@/components/auth/LogoutButton'
 
 interface NavItem {
   href: string
@@ -185,23 +186,38 @@ export default function DeptSidebar({
               {roomLabel}
             </p>
           </div>
-          <button
-            onClick={toggle}
-            className="w-7 h-7 rounded-lg flex items-center justify-center
-              transition-all duration-150 flex-shrink-0"
-            style={{ color: 'var(--tx-3)' }}
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            onMouseEnter={e => {
-              ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
-              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
-            }}
-            onMouseLeave={e => {
-              ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
-              ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-3)'
-            }}
-          >
-            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggle}
+              className="w-7 h-7 rounded-lg flex items-center justify-center
+                transition-all duration-150 flex-shrink-0"
+              style={{ color: 'var(--tx-3)' }}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              onMouseEnter={e => {
+                ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
+              }}
+              onMouseLeave={e => {
+                ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-3)'
+              }}
+            >
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+            <LogoutButton
+              showLabel={false}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 flex-shrink-0"
+              style={{ color: 'var(--tx-3)' } as React.CSSProperties}
+              onMouseEnter={e => {
+                ;(e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-1)'
+              }}
+              onMouseLeave={e => {
+                ;(e.currentTarget as HTMLElement).style.backgroundColor = ''
+                ;(e.currentTarget as HTMLElement).style.color = 'var(--tx-3)'
+              }}
+            />
+          </div>
         </div>
       </div>
     </aside>

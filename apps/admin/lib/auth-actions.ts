@@ -31,6 +31,7 @@ const loginSchema = z.object({
 export type LoginState = {
   error?: string
   fieldErrors?: { email?: string[]; password?: string[] }
+  redirectTo?: string
 }
 
 export async function loginAction(
@@ -38,13 +39,6 @@ export async function loginAction(
   formData: FormData
 ): Promise<LoginState> {
   const ip = await getClientIp()
-
-  // Bot check — honeypot field must be empty
-  if (formData.get('username_field') !== '') {
-    // Silently reject bots — return fake success to avoid tipping them off
-    await new Promise(r => setTimeout(r, 1500))
-    return {}
-  }
 
   const limit = checkRateLimit(`login:${ip}`, 5, 15 * 60 * 1000)
   if (!limit.allowed) {
@@ -121,7 +115,7 @@ export async function loginAction(
     else if (perms.finance) destination = '/finance/dashboard'
   }
 
-  redirect(destination)
+  return { redirectTo: destination }
 }
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────
@@ -384,4 +378,11 @@ export async function toggleStaffActiveAction(
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : 'Failed to update access status.' }
   }
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+export async function logoutAction(): Promise<void> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
 }
