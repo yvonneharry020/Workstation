@@ -7,6 +7,7 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import LogoutButton from '@/components/auth/LogoutButton'
 import { useStaffInfo } from '@/lib/staff-cookies'
 import SessionWatcher from '@/components/auth/SessionWatcher'
+import ClockWidget from '@/components/clock/ClockWidget'
 
 interface NavItem {
   href: string
@@ -76,9 +77,12 @@ export default function DeptSidebar({ color, roomLabel, navGroups }: DeptSidebar
   const a = ACCENT[color]
   const currentRoomKey = COLOR_TO_ROOM_KEY[color]
 
-  const switchableRooms = ALL_ROOMS.filter(
-    r => r.key !== currentRoomKey && permissions[r.key as keyof typeof permissions]
-  )
+  const isAdminOrSuper = role === 'admin' || role === 'superadmin'
+  const switchableRooms = ALL_ROOMS.filter(r => {
+    if (r.key === currentRoomKey) return false
+    if (isAdminOrSuper) return true
+    return permissions[r.key as keyof typeof permissions]
+  })
 
   const isViewer    = role === 'viewer'
   const displayName = name || 'Staff Member'
@@ -178,6 +182,9 @@ export default function DeptSidebar({ color, roomLabel, navGroups }: DeptSidebar
           </div>
         ))}
       </nav>
+
+      {/* Clock widget — visible for all non-superadmin staff */}
+      {role !== 'superadmin' && <ClockWidget />}
 
       {/* Footer dock */}
       <div

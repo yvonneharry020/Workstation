@@ -139,7 +139,12 @@ export async function POST(req: NextRequest) {
     const breakSecs = secondsSince(session.current_interval_started_at, now)
     const newBreak  = (session.total_break_seconds as number) + breakSecs
 
-    const intervalMins  = 120
+    const { data: resumeConfig } = await admin
+      .from('staff_work_config')
+      .select('presence_check_interval_minutes')
+      .eq('staff_member_id', staffMember.id)
+      .maybeSingle()
+    const intervalMins  = resumeConfig?.presence_check_interval_minutes ?? 120
     const nextCheckAt   = nextPresenceCheckAt(now, intervalMins)
 
     const { data: updated } = await admin

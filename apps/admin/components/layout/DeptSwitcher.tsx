@@ -11,10 +11,11 @@ const ROOM_LINKS = [
 ]
 
 export default function DeptSwitcher() {
-  const { permissions } = useStaffInfo()
+  const { role, permissions } = useStaffInfo()
 
-  const visibleRooms = ROOM_LINKS.filter(
-    r => permissions[r.key as keyof typeof permissions]
+  const isAdminOrSuper = role === 'admin' || role === 'superadmin'
+  const visibleRooms = ROOM_LINKS.filter(r =>
+    isAdminOrSuper || permissions[r.key as keyof typeof permissions]
   )
 
   return (

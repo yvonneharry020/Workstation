@@ -45,8 +45,13 @@ export async function POST(req: NextRequest) {
       metadata:        { attempt: check.attempt_number },
     })
 
-    // Schedule next check
-    const intervalMins = 120
+    // Schedule next check using staff's configured interval
+    const { data: presConfig } = await admin
+      .from('staff_work_config')
+      .select('presence_check_interval_minutes')
+      .eq('staff_member_id', check.staff_member_id)
+      .maybeSingle()
+    const intervalMins = presConfig?.presence_check_interval_minutes ?? 120
     await admin
       .from('clock_sessions')
       .update({ next_presence_check_at: nextPresenceCheckAt(now, intervalMins).toISOString() })
