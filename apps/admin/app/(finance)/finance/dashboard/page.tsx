@@ -104,9 +104,13 @@ export default function FinanceDashboardPage() {
     setLoading(false)
   }
 
+  const thisMonth = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })()
   const activeSubs = subs.filter(s => s.status === 'active')
   const mrr = activeSubs.reduce((sum, s) => sum + s.amount, 0)
-  const totalCosts = costs.filter(c => c.month === '2026-06').reduce((sum, c) => sum + c.amount, 0)
+  const totalCosts = costs.filter(c => c.month === thisMonth).reduce((sum, c) => sum + c.amount, 0)
   const mrrUSD = mrr / 1600
   const netMargin = mrrUSD - totalCosts
   const pastDue = subs.filter(s => s.status === 'past_due').length
@@ -172,7 +176,7 @@ export default function FinanceDashboardPage() {
           <KpiCard
             label="Platform Costs (USD)"
             value={`$${totalCosts.toFixed(2)}`}
-            sub="Infrastructure · June 2026"
+            sub={`Infrastructure · ${new Date().toLocaleDateString('en-NG', { month: 'long', year: 'numeric' })}`}
             icon={<DollarSign size={18} />}
             iconBg="rgba(6,182,212,0.12)"
             iconColor="#22D3EE"

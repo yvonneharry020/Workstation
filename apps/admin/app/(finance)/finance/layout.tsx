@@ -71,6 +71,15 @@ function BoardIcon() {
 function ReferralIcon() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
 }
+function PayrollIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+}
+function DbIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+}
+function PlanBoardIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="7" height="9" rx="1"/><rect x="15" y="3" width="7" height="5" rx="1"/><rect x="15" y="12" width="7" height="9" rx="1"/><rect x="2" y="16" width="7" height="5" rx="1"/></svg>
+}
 
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
   const [counts, setCounts] = useState<FinanceCounts>(ZERO)
@@ -122,18 +131,31 @@ export default function FinanceLayout({ children }: { children: React.ReactNode 
     {
       label: 'Revenue',
       items: [
-        { href: '/finance/subscriptions', label: 'Subscriptions',    icon: <SubscriptionIcon /> },
-        { href: '/finance/transactions',  label: 'Transactions',     icon: <TransactionIcon /> },
-        { href: '/finance/invoices',      label: 'Invoices',         icon: <InvoiceIcon /> },
+        { href: '/finance/subscriptions', label: 'Subscriptions',      icon: <SubscriptionIcon /> },
+        { href: '/finance/transactions',  label: 'Transactions',       icon: <TransactionIcon /> },
+        { href: '/finance/invoices',      label: 'Invoices',           icon: <InvoiceIcon /> },
         { href: '/finance/referrals',     label: 'Referrals & Promos', icon: <ReferralIcon /> },
+      ],
+    },
+    {
+      label: 'Payroll',
+      items: [
+        { href: '/finance/payroll', label: 'Staff Payroll', icon: <PayrollIcon /> },
+      ],
+    },
+    {
+      label: 'Plans',
+      items: [
+        { href: '/finance/plan-board', label: 'Plan Board', icon: <PlanBoardIcon /> },
+        { href: '/finance/plans',      label: 'Plan Analytics', icon: <PieIcon /> },
       ],
     },
     {
       label: 'Analysis',
       items: [
-        { href: '/finance/plans',        label: 'Plan Analytics',    icon: <PieIcon /> },
         { href: '/finance/costs',        label: 'Platform Costs',    icon: <CostIcon /> },
         { href: '/finance/reports',      label: 'P&L Reports',       icon: <ReportIcon /> },
+        { href: '/finance/finance-db',   label: 'Finance Records',   icon: <DbIcon /> },
         { href: '/finance/churn',        label: 'Churn Analysis',    icon: <ChurnIcon /> },
         { href: '/finance/aging',        label: 'AR Aging',          icon: <AgingIcon /> },
         { href: '/finance/forecasting',  label: 'Forecasting',       icon: <ForecastIcon /> },

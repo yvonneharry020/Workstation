@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+const USD_RATE = 1600
+function currentYYYYMM() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 interface Cost {
   id: string
   month: string
@@ -22,7 +28,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: 'bg-gray-900/20 text-gray-400 border-gray-800/30',
 }
 
-const BLANK_FORM = { month: '2026-06', category: 'infrastructure', vendor: '', amount: '', currency: 'USD', description: '' }
+const BLANK_FORM = { month: currentYYYYMM(), category: 'infrastructure', vendor: '', amount: '', currency: 'USD', description: '' }
 
 export default function CostsPage() {
   const supabase = createClient()
@@ -31,12 +37,18 @@ export default function CostsPage() {
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState(BLANK_FORM)
   const [saving, setSaving] = useState(false)
+  const [liveMrrNGN, setLiveMrrNGN] = useState(0)
 
   useEffect(() => { void load() }, [])
 
   async function load() {
-    const { data } = await supabase.from('platform_costs').select('*').order('month', { ascending: false }).order('category')
-    setCosts((data ?? []) as Cost[])
+    const [{ data: costData }, { data: subData }] = await Promise.all([
+      supabase.from('platform_costs').select('*').order('month', { ascending: false }).order('category'),
+      supabase.from('platform_subscriptions').select('amount').eq('status', 'active'),
+    ])
+    setCosts((costData ?? []) as Cost[])
+    const mrr = (subData ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0)
+    setLiveMrrNGN(mrr)
     setLoading(false)
   }
 
@@ -58,8 +70,12 @@ export default function CostsPage() {
   }
 
   const months = [...new Set(costs.map(c => c.month))].sort().reverse()
-  const currentMonthTotal = costs.filter(c => c.month === '2026-06').reduce((sum, c) => sum + c.amount, 0)
-  const mrrEstUSD = 43500 / 1600
+  const thisMonth = currentYYYYMM()
+  const currentMonthTotalUSD = costs.filter(c => c.month === thisMonth && c.currency === 'USD').reduce((sum, c) => sum + c.amount, 0)
+  const currentMonthTotalNGN = costs.filter(c => c.month === thisMonth && c.currency === 'NGN').reduce((sum, c) => sum + c.amount, 0)
+  const currentMonthCostNGN = currentMonthTotalUSD * USD_RATE + currentMonthTotalNGN
+  const mrrEstUSD = liveMrrNGN / USD_RATE
+  const netMarginUSD = mrrEstUSD - currentMonthTotalUSD
 
   return (
     <div className="flex flex-col">
@@ -74,16 +90,18 @@ export default function CostsPage() {
       <div className="px-8 py-4 border-b border-surface-border">
         <div className="flex gap-4">
           <div className="bg-surface-card border border-surface-border rounded-xl px-4 py-3">
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">This Month (USD)</p>
-            <div className="text-2xl font-bold text-text-primary font-display">${currentMonthTotal.toFixed(2)}</div>
+            <p className="text-[10px] text-text-muted uppercase tracking-wider">This Month Costs (NGN)</p>
+            <div className="text-2xl font-bold text-text-primary font-display">₦{Math.round(currentMonthCostNGN).toLocaleString('en-NG')}</div>
+            {currentMonthTotalUSD > 0 && <p className="text-[10px] text-text-muted mt-0.5">${currentMonthTotalUSD.toFixed(2)} USD component</p>}
           </div>
           <div className="bg-surface-card border border-surface-border rounded-xl px-4 py-3">
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">MRR Estimate (USD)</p>
-            <div className="text-2xl font-bold text-finance-400 font-display">${mrrEstUSD.toFixed(2)}</div>
+            <p className="text-[10px] text-text-muted uppercase tracking-wider">Live MRR (from subscriptions)</p>
+            <div className="text-2xl font-bold text-finance-400 font-display">₦{Math.round(liveMrrNGN).toLocaleString('en-NG')}</div>
+            <p className="text-[10px] text-text-muted mt-0.5">${mrrEstUSD.toFixed(2)} USD equiv</p>
           </div>
           <div className="bg-surface-card border border-finance-800/30 rounded-xl px-4 py-3">
-            <p className="text-[10px] text-text-muted uppercase tracking-wider">Net Margin (USD)</p>
-            <div className={`text-2xl font-bold font-display ${mrrEstUSD - currentMonthTotal >= 0 ? 'text-green-400' : 'text-red-400'}`}>${(mrrEstUSD - currentMonthTotal).toFixed(2)}</div>
+            <p className="text-[10px] text-text-muted uppercase tracking-wider">Net Margin (USD equiv)</p>
+            <div className={`text-2xl font-bold font-display ${netMarginUSD >= 0 ? 'text-green-400' : 'text-red-400'}`}>${netMarginUSD.toFixed(2)}</div>
           </div>
         </div>
       </div>

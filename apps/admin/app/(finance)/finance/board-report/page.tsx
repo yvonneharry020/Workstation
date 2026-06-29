@@ -55,11 +55,11 @@ export default function BoardReportPage() {
       invoiceSum, subs,
       flagged, dsrPending, verQueue,
     ] = await Promise.all([
-      supabase.from('candidates').select('*', { count: 'exact', head: true }),
-      supabase.from('candidates').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
-      supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
-      supabase.from('companies').select('*', { count: 'exact', head: true }),
-      supabase.from('companies').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+      supabase.from('candidate_profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('candidate_profiles').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
+      supabase.from('candidate_profiles').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+      supabase.from('company_profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('company_profiles').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
       supabase.from('job_postings').select('*', { count: 'exact', head: true }),
       supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'filled'),
@@ -69,7 +69,7 @@ export default function BoardReportPage() {
       supabase.from('platform_subscriptions').select('amount').eq('status', 'active'),
       supabase.from('flagged_content').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('data_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
+      supabase.from('candidate_profiles').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
     ])
 
     const totalInvoiced = (invoiceSum.data ?? []).reduce((s: number, r: { amount: number }) => s + Number(r.amount), 0)
