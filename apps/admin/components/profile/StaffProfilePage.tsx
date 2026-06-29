@@ -273,11 +273,11 @@ function PersonalSection({ profile, onUpdated }: {
         {/* National ID */}
         <Field label="ID Type" value={display('national_id_type')} locked={locked.national_id_type} editing={editing}>
           <Select value={f('national_id_type')} onChange={set('national_id_type')} options={[
-            { value: 'NIN', label: 'National ID (NIN)' },
-            { value: 'BVN', label: 'Bank Verification No. (BVN)' },
-            { value: 'Passport', label: 'International Passport' },
-            { value: "Driver's License", label: "Driver's License" },
-            { value: 'Voter Card', label: "Voter's Card" },
+            { value: 'nin',             label: 'National ID (NIN)' },
+            { value: 'bvn',             label: 'Bank Verification No. (BVN)' },
+            { value: 'passport',        label: 'International Passport' },
+            { value: 'drivers_license', label: "Driver's License" },
+            { value: 'voters_card',     label: "Voter's Card" },
           ]} />
         </Field>
         <Field label="ID Number" value={display('national_id_number')} locked={locked.national_id_number} editing={editing}>
