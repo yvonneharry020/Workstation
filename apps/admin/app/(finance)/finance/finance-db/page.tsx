@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Download, ChevronDown, ChevronUp, Database } from 'lucide-react'
 
@@ -305,8 +305,8 @@ export default function FinanceDbPage() {
                     const isOpen = expandedMonth === r.month
                     const pill = r.payrollStatus ? PAYROLL_PILL[r.payrollStatus] : null
                     return (
-                      <>
-                        <tr key={r.month}
+                      <React.Fragment key={r.month}>
+                        <tr
                           onClick={() => setExpandedMonth(isOpen ? null : r.month)}
                           style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
                           onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
@@ -377,7 +377,7 @@ export default function FinanceDbPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     )
                   })}
                 </tbody>

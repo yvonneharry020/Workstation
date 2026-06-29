@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { computeSessionPay, formatDuration } from '@/lib/clock-utils'
 import {
@@ -517,8 +517,8 @@ export default function PayrollPage() {
                   const isEditing = editingItem === item.id
                   const edit = itemEdits[item.id] ?? { deductions: String(item.deductions), bonuses: String(item.bonuses), notes: item.notes ?? '' }
                   return (
-                    <>
-                      <tr key={item.id}
+                    <React.Fragment key={item.id}>
+                      <tr
                         style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
                         onClick={() => setExpandedStaff(expandedStaff === item.id ? null : item.id)}
                         onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
@@ -600,7 +600,7 @@ export default function PayrollPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   )
                 })}
               </tbody>
