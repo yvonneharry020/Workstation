@@ -59,10 +59,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  if (user && (pathname.startsWith('/login') || pathname.startsWith('/forgot-password'))) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
   if (user) {
     try {
       // Check staff_members table first (new room-based permission system)
@@ -76,6 +72,18 @@ export async function middleware(request: NextRequest) {
         // Staff member found — enforce room-based access
         if (!staffMember.is_active) {
           return NextResponse.redirect(new URL('/access-restricted', request.url))
+        }
+
+        // Redirect logged-in staff away from auth pages to their correct room
+        if (AUTH_ROUTES.some(r => pathname.startsWith(r))) {
+          let dest = '/dashboard'
+          if (staffMember.role !== 'admin') {
+            const perms = (staffMember.permissions as Record<string, boolean>) ?? {}
+            if (perms.management) dest = '/ops/dashboard'
+            else if (perms.technical) dest = '/tech/dashboard'
+            else if (perms.finance) dest = '/finance/dashboard'
+          }
+          return NextResponse.redirect(new URL(dest, request.url))
         }
 
         // Admin role bypasses all room checks
