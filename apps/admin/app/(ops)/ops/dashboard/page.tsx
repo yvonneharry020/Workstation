@@ -8,8 +8,7 @@ import {
 } from 'recharts'
 import {
   ShieldCheck, TicketCheck, MessageSquare, Briefcase,
-  ArrowRight, TrendingUp, Clock, CheckCircle, AlertTriangle,
-  Activity, ChevronRight,
+  ArrowRight, TrendingUp, Activity,
 } from 'lucide-react'
 
 interface Stats {
@@ -150,15 +149,6 @@ export default function OpsDashboardPage() {
     setLoading(false)
   }
 
-  const quickActions = [
-    { label: 'Live Chat',          href: '/ops/chat',          desc: 'Reply to user messages',     Icon: MessageSquare },
-    { label: 'Support Tickets',    href: '/ops/tickets',       desc: 'Manage open tickets',        Icon: TicketCheck },
-    { label: 'Escalation Queue',   href: '/ops/escalations',   desc: 'Handle raised issues',       Icon: AlertTriangle },
-    { label: 'Verification Queue', href: '/ops/verifications', desc: 'Review pending users',       Icon: ShieldCheck },
-    { label: 'SLA Monitor',        href: '/ops/sla-monitor',   desc: 'Check response times',       Icon: Clock },
-    { label: 'Badge Management',   href: '/ops/badges',        desc: 'Issue or revoke badges',     Icon: CheckCircle },
-  ]
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -280,44 +270,6 @@ export default function OpsDashboardPage() {
                 <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tx-3)' }}>{s.label}</p>
                 <p className={`text-[32px] font-bold font-mono ${s.color}`}>{s.value}</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick access grid */}
-        <div
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
-        >
-          <p className="text-[14px] font-semibold mb-4" style={{ color: 'var(--tx-1)' }}>Quick Access</p>
-          <div className="grid grid-cols-3 gap-2.5">
-            {quickActions.map(qa => (
-              <Link
-                key={qa.href}
-                href={qa.href}
-                className="flex items-center justify-between px-4 py-3 rounded-xl border
-                  border-transparent transition-all duration-150 group"
-                style={{ backgroundColor: 'var(--bg-elevated)' }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.borderColor = 'rgba(245,158,11,0.35)'
-                  el.style.backgroundColor = 'rgba(245,158,11,0.05)'
-                }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.borderColor = 'transparent'
-                  el.style.backgroundColor = 'var(--bg-elevated)'
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <qa.Icon size={14} className="text-amber-400 flex-shrink-0" />
-                  <div>
-                    <p className="text-[13px] font-medium" style={{ color: 'var(--tx-1)' }}>{qa.label}</p>
-                    <p className="text-[10px]" style={{ color: 'var(--tx-3)' }}>{qa.desc}</p>
-                  </div>
-                </div>
-                <ChevronRight size={12} style={{ color: 'var(--tx-3)' }} />
-              </Link>
             ))}
           </div>
         </div>
