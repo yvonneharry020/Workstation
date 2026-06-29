@@ -92,6 +92,7 @@ interface PayrollItem {
   bonuses: number
   net_pay: number
   payment_status: string
+  notes: string | null
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
