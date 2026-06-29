@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import {
+  resendStaffInviteAction,
+  toggleStaffActiveAction,
+} from '@/lib/auth-actions'
 
 interface StaffMember {
   id: string
@@ -85,6 +89,11 @@ export default function StaffEditPage() {
   const [roomAccess, setRoomAccess]   = useState<Record<string, boolean>>({
     admin: false, management: false, technical: false, finance: false,
   })
+  const [inviting, setInviting]       = useState(false)
+  const [inviteSent, setInviteSent]   = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [toggling, setToggling]       = useState(false)
+  const [toggleError, setToggleError] = useState<string | null>(null)
 
   const fetchMember = useCallback(async () => {
     const { data } = await supabase.from('staff_members').select('*').eq('id', id).single()
@@ -156,20 +165,50 @@ export default function StaffEditPage() {
   }
 
   async function toggleActive() {
-    if (!member) return
+    if (!member || toggling) return
+    setToggling(true)
+    setToggleError(null)
     const next = !member.is_active
-    await supabase.from('staff_members').update({ is_active: next }).eq('id', id)
-    setMember(prev => prev ? { ...prev, is_active: next } : prev)
+    const result = await toggleStaffActiveAction(id, member.full_name, member.email, next)
+    if (result.error) {
+      setToggleError(result.error)
+    } else {
+      setMember(prev => prev ? { ...prev, is_active: next } : prev)
+    }
+    setToggling(false)
   }
 
   async function handleResendInvite() {
-    if (!member) return
-    const origin = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
-    await supabase.auth.admin?.inviteUserByEmail?.(member.email, {
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
-    })
-    await supabase.from('staff_members').update({ invite_sent_at: new Date().toISOString() }).eq('id', id)
-    setMember(prev => prev ? { ...prev, invite_sent_at: new Date().toISOString() } : prev)
+    if (!member || inviting) return
+    setInviting(true)
+    setInviteError(null)
+    setInviteSent(false)
+
+    const roomLabels: Record<string, string> = {
+      admin: 'Admin Room', management: 'Management Room',
+      technical: 'Technical Room', finance: 'Finance Room',
+    }
+    const enabledRooms = Object.entries(finalRoomAccess)
+      .filter(([, v]) => v)
+      .map(([k]) => roomLabels[k] ?? k)
+
+    try {
+      const result = await resendStaffInviteAction(
+        id, member.email, member.full_name, member.role, enabledRooms,
+      )
+
+      if (result.error) {
+        setInviteError(result.error)
+      } else {
+        setInviteSent(true)
+        setMember(prev => prev ? { ...prev, invite_sent_at: new Date().toISOString() } : prev)
+        setTimeout(() => setInviteSent(false), 4000)
+      }
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : 'Failed to send invite. Try again.')
+    } finally {
+      setInviting(false)
+    }
   }
 
   if (loading) return <div className="flex items-center justify-center py-20 text-text-muted">Loading…</div>
@@ -209,21 +248,47 @@ export default function StaffEditPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {!member.last_login_at && (
-            <button onClick={handleResendInvite}
-              className="px-3 py-2 rounded-lg bg-surface-elevated border border-surface-border text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors">
-              Resend invite
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-2">
+            {!member.last_login_at && (
+              <button
+                onClick={handleResendInvite}
+                disabled={inviting}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors border disabled:opacity-50 ${
+                  inviteSent
+                    ? 'bg-trust-high-bg text-trust-high border-trust-high-border'
+                    : 'bg-surface-elevated border-surface-border text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {inviting ? 'Sending…' : inviteSent ? 'Invite sent ✓' : 'Resend invite'}
+              </button>
+            )}
+            <button
+              onClick={toggleActive}
+              disabled={toggling}
+              className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors border disabled:opacity-50 ${
+                member.is_active
+                  ? 'bg-error/10 text-error border-error/20 hover:bg-error/20'
+                  : 'bg-trust-high-bg text-trust-high border-trust-high-border hover:bg-green-900/30'
+              }`}
+            >
+              {toggling
+                ? 'Updating…'
+                : member.is_active
+                  ? 'Deactivate Access'
+                  : 'Reactivate Access'}
             </button>
+            <button onClick={handleSave} disabled={saving}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${saved ? 'bg-trust-high-bg text-trust-high border border-trust-high-border' : 'bg-admin-500 hover:bg-admin-600 text-white'}`}>
+              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
+            </button>
+          </div>
+          {inviteError && (
+            <p className="text-[11px] text-error">{inviteError}</p>
           )}
-          <button onClick={toggleActive}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors border ${member.is_active ? 'bg-error/10 text-error border-error/20 hover:bg-error/20' : 'bg-trust-high-bg text-trust-high border-trust-high-border hover:bg-green-900/30'}`}>
-            {member.is_active ? 'Deactivate Access' : 'Reactivate Access'}
-          </button>
-          <button onClick={handleSave} disabled={saving}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${saved ? 'bg-trust-high-bg text-trust-high border border-trust-high-border' : 'bg-admin-500 hover:bg-admin-600 text-white'}`}>
-            {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Changes'}
-          </button>
+          {toggleError && (
+            <p className="text-[11px] text-error">{toggleError}</p>
+          )}
         </div>
       </div>
 

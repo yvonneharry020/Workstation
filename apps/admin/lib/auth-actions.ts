@@ -9,7 +9,7 @@ import { checkRateLimit } from './rate-limiter'
 import { validatePassword } from './password-validator'
 import { logAdminEvent } from './audit'
 import { sendEmail } from './email'
-import { passwordResetEmail } from './email/templates'
+import { passwordResetEmail, staffInviteEmail } from './email/templates'
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
@@ -85,6 +85,25 @@ export async function loginAction(
     return { error: 'Invalid credentials. Check your email and password.' }
   }
 
+  // Check if the staff account has been deactivated
+  const { data: staffRecord } = await supabase
+    .from('staff_members')
+    .select('is_active')
+    .eq('email', parsed.data.email)
+    .maybeSingle()
+
+  if (staffRecord && !staffRecord.is_active) {
+    await supabase.auth.signOut()
+    void logAdminEvent({
+      event: 'admin.login_blocked_deactivated',
+      actorEmail: parsed.data.email,
+      actorType: 'admin',
+      severity: 'warning',
+      metadata: { ip },
+    })
+    return { error: 'Your access has been deactivated. Contact your administrator for further assistance.' }
+  }
+
   void logAdminEvent({
     event: 'admin.login',
     actorEmail: parsed.data.email,
@@ -131,7 +150,7 @@ export async function forgotPasswordAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as ForgotState['fieldErrors'] }
   }
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3003'
+  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://skiniq.store'
 
   // Use admin client to generate the reset link without Supabase sending its own plain email
   try {
@@ -231,4 +250,129 @@ export async function resetPasswordAction(
   })
 
   return { success: true }
+}
+
+// ─── Resend Staff Invite ──────────────────────────────────────────────────────
+
+export type ResendInviteState = { success?: boolean; error?: string }
+
+export async function resendStaffInviteAction(
+  staffId: string,
+  email: string,
+  fullName: string,
+  role: string,
+  rooms: string[],
+): Promise<ResendInviteState> {
+  try {
+    const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://skiniq.store'
+    const redirectTo = `${origin}/auth/callback?next=/dashboard`
+
+    const admin = createAdminClient()
+
+    // Try invite link first (new users); fall back to recovery link for existing auth users
+    let actionLink: string | null = null
+
+    const { data: inviteData } = await admin.auth.admin.generateLink({
+      type: 'invite',
+      email,
+      options: { redirectTo },
+    })
+
+    if (inviteData?.properties?.action_link) {
+      actionLink = inviteData.properties.action_link
+    } else {
+      const { data: recoveryData, error: recoveryError } = await admin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo },
+      })
+
+      if (recoveryData?.properties?.action_link) {
+        actionLink = recoveryData.properties.action_link
+      } else {
+        return { error: recoveryError?.message || 'Failed to generate invite link.' }
+      }
+    }
+
+    const { subject, html } = staffInviteEmail({
+      fullName,
+      email,
+      role,
+      rooms,
+      loginUrl: actionLink,
+      invitedBy: 'Workstation Admin',
+    })
+
+    const emailResult = await sendEmail({ to: email, subject, html })
+    if (emailResult.error) {
+      return { error: `Email failed to send: ${emailResult.error}` }
+    }
+
+    await admin
+      .from('staff_members')
+      .update({ invite_sent_at: new Date().toISOString() })
+      .eq('id', staffId)
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    await admin.from('audit_logs').insert({
+      event: 'admin.staff_invite_resent',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: staffId,
+      target_type: 'staff_member',
+      target_name: fullName,
+      severity: 'info',
+      app: 'admin_panel',
+      metadata: { email, redirectTo },
+    })
+
+    return { success: true }
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : 'Unexpected error. Check server logs.' }
+  }
+}
+
+// ─── Toggle Staff Active ──────────────────────────────────────────────────────
+
+export type ToggleActiveState = { success?: boolean; error?: string; newIsActive?: boolean }
+
+export async function toggleStaffActiveAction(
+  staffId: string,
+  fullName: string,
+  email: string,
+  newIsActive: boolean,
+): Promise<ToggleActiveState> {
+  try {
+    const admin = createAdminClient()
+
+    const { error: updateError } = await admin
+      .from('staff_members')
+      .update({ is_active: newIsActive, updated_at: new Date().toISOString() })
+      .eq('id', staffId)
+
+    if (updateError) {
+      return { error: updateError.message }
+    }
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    await admin.from('audit_logs').insert({
+      event: newIsActive ? 'admin.staff_reactivated' : 'admin.staff_deactivated',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: staffId,
+      target_type: 'staff_member',
+      target_name: fullName,
+      severity: 'warning',
+      app: 'admin_panel',
+      metadata: { email, is_active: newIsActive },
+    })
+
+    return { success: true, newIsActive }
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : 'Failed to update access status.' }
+  }
 }

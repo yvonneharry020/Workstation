@@ -49,6 +49,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
   auth_failed: 'Authentication failed. Please sign in again.',
   auth_callback_failed: 'Something went wrong during authentication. Please try again.',
   missing_code: 'Invalid authentication link.',
+  link_expired: 'Your invite link has expired or was already used. Contact your administrator to send a new one.',
 }
 
 function LoginForm() {
