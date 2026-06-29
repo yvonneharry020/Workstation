@@ -167,7 +167,8 @@ export default function TechLayout({ children }: { children: React.ReactNode }) 
     {
       label: 'Internal',
       items: [
-        { href: '/tech/staff-comms', label: '# general', icon: <CommsIcon /> },
+        { href: '/tech/admin-inbox', label: 'Admin Inbox', icon: <MailIcon /> },
+        { href: '/tech/staff-comms', label: '# general',   icon: <CommsIcon /> },
       ],
     },
     {

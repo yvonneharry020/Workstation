@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Bell, TicketCheck, Inbox, MessageSquare,
   BarChart3, ScrollText, UserCog, Settings2, Sun, Moon,
-  Layers, Shield, BookOpen, PlayCircle,
+  Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
@@ -79,10 +79,12 @@ export default function Sidebar() {
     {
       label: 'Platform',
       items: [
-        { href: '/analytics', label: 'Analytics',    icon: <BarChart3   size={15} /> },
-        { href: '/audit-log', label: 'Audit Log',    icon: <ScrollText  size={15} /> },
-        { href: '/staff',     label: 'Staff',        icon: <UserCog     size={15} /> },
-        { href: '/config',    label: 'System Config', icon: <Settings2  size={15} /> },
+        { href: '/analytics',        label: 'Analytics',       icon: <BarChart3   size={15} /> },
+        { href: '/audit-log',        label: 'Audit Log',       icon: <ScrollText  size={15} /> },
+        { href: '/sla-monitor',      label: 'SLA Monitor',     icon: <Timer       size={15} /> },
+        { href: '/agent-performance',label: 'Agent Performance',icon: <TrendingUp  size={15} /> },
+        { href: '/staff',            label: 'Staff',           icon: <UserCog     size={15} /> },
+        { href: '/config',           label: 'System Config',   icon: <Settings2   size={15} /> },
       ],
     },
     {

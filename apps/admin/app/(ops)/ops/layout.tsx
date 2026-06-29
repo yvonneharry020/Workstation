@@ -161,9 +161,8 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
     {
       label: 'Support',
       items: [
-        { href: '/ops/chat',        label: 'Live Chat',       icon: <ChatIcon />,   badge: counts.liveChat },
-        { href: '/ops/tickets',     label: 'Support Tickets', icon: <TicketIcon />, badge: counts.supportTickets },
-        { href: '/ops/sla-monitor', label: 'SLA Monitor',     icon: <TimerIcon /> },
+        { href: '/ops/chat',    label: 'Live Chat',       icon: <ChatIcon />,   badge: counts.liveChat },
+        { href: '/ops/tickets', label: 'Support Tickets', icon: <TicketIcon />, badge: counts.supportTickets },
       ],
     },
     {
@@ -201,14 +200,14 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
     {
       label: 'Team Analytics',
       items: [
-        { href: '/ops/agent-performance', label: 'Agent Performance', icon: <ChartIcon /> },
-        { href: '/ops/profile-views',     label: 'Profile Views',     icon: <EyeIcon /> },
+        { href: '/ops/profile-views', label: 'Profile Views', icon: <EyeIcon /> },
       ],
     },
     {
       label: 'Internal',
       items: [
-        { href: '/ops/staff-comms', label: '# general', icon: <CommsIcon /> },
+        { href: '/ops/admin-inbox', label: 'Admin Inbox', icon: <MailIcon /> },
+        { href: '/ops/staff-comms', label: '# general',   icon: <CommsIcon /> },
       ],
     },
   ]

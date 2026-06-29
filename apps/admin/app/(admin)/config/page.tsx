@@ -24,6 +24,12 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+function safeDisplayValue(val: unknown): string {
+  if (val === null || val === undefined) return ''
+  if (typeof val === 'object') return JSON.stringify(val)
+  return String(val)
+}
+
 function getCategoryFromKey(key: string): string {
   const dot = key.indexOf('.')
   return dot === -1 ? 'general' : key.slice(0, dot)
@@ -218,7 +224,7 @@ export default function SystemConfigPage() {
                               onClick={() => { setEditingId(row.id); setDraftValues(prev => ({ ...prev, [row.id]: row.value })) }}
                               style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                             >
-                              <span style={{ fontSize: 13, fontFamily: 'monospace', color: 'var(--tx-1)' }}>{row.value.length > 40 ? row.value.slice(0, 40) + '…' : row.value}</span>
+                              <span style={{ fontSize: 13, fontFamily: 'monospace', color: 'var(--tx-1)' }}>{safeDisplayValue(row.value).length > 40 ? safeDisplayValue(row.value).slice(0, 40) + '…' : safeDisplayValue(row.value)}</span>
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" strokeWidth="2">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                               </svg>
