@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { sendEmailClient } from '@/lib/email/client'
 
 const ROLES = [
   { value: 'admin',  label: 'Admin',  desc: 'Full access to all rooms automatically' },
@@ -97,6 +98,26 @@ export default function NewStaffPage() {
     }
 
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
+    const loginUrl = `${origin}/login`
+
+    // Send beautiful invite email via Resend
+    const roomLabels: Record<string, string> = {
+      admin: 'Admin Room', management: 'Management Room', technical: 'Technical Room', finance: 'Finance Room',
+    }
+    const enabledRooms = Object.entries(finalRoomAccess)
+      .filter(([, v]) => v)
+      .map(([k]) => roomLabels[k] ?? k)
+
+    await sendEmailClient('staff-invite', email.trim().toLowerCase(), {
+      fullName: fullName.trim(),
+      email: email.trim().toLowerCase(),
+      role,
+      rooms: enabledRooms,
+      loginUrl,
+      invitedBy: user?.email ?? 'Admin',
+    })
+
+    // Also trigger Supabase invite so they can set their password
     await supabase.auth.admin?.inviteUserByEmail?.(email.trim().toLowerCase(), {
       redirectTo: `${origin}/auth/callback?next=/dashboard`,
     })

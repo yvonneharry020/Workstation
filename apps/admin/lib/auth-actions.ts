@@ -4,9 +4,12 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from './supabase/server'
+import { createAdminClient } from './supabase/admin'
 import { checkRateLimit } from './rate-limiter'
 import { validatePassword } from './password-validator'
 import { logAdminEvent } from './audit'
+import { sendEmail } from './email'
+import { passwordResetEmail } from './email/templates'
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
@@ -128,13 +131,43 @@ export async function forgotPasswordAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as ForgotState['fieldErrors'] }
   }
 
-  const supabase = await createClient()
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3003'
 
-  // Always call this regardless of whether the email exists — prevents user enumeration
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
-  })
+  // Use admin client to generate the reset link without Supabase sending its own plain email
+  try {
+    const admin = createAdminClient()
+    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email: parsed.data.email,
+      options: { redirectTo: `${origin}/auth/callback?next=/reset-password` },
+    })
+
+    if (!linkError && linkData?.properties?.action_link) {
+      // Look up the user's name for personalisation
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('full_name')
+        .eq('email', parsed.data.email)
+        .single()
+
+      const fullName = (profile as { full_name?: string } | null)?.full_name ?? parsed.data.email.split('@')[0]
+      const { subject, html } = passwordResetEmail({
+        fullName,
+        resetUrl: linkData.properties.action_link,
+        expiresIn: '1 hour',
+        ipAddress: ip,
+      })
+
+      await sendEmail({ to: parsed.data.email, subject, html })
+    }
+    // Always return success to prevent email enumeration
+  } catch {
+    // Service role key not configured — fall back to Supabase native email
+    const supabase = await createClient()
+    await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+      redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    })
+  }
 
   return { success: true }
 }
