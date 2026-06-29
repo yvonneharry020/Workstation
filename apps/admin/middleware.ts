@@ -39,6 +39,8 @@ function getRoomForPath(pathname: string): string | null {
       pathname.startsWith('/search')    ||
       pathname.startsWith('/chat')      ||
       pathname.startsWith('/config')    ||
+      pathname.startsWith('/attendance')||
+      pathname.startsWith('/work-config') ||
       pathname.startsWith('/notifications')) {
     return 'admin'
   }

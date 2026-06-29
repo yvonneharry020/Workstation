@@ -6,13 +6,14 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Bell, TicketCheck, Inbox, MessageSquare,
   BarChart3, ScrollText, UserCog, Settings2, Sun, Moon,
-  Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp,
+  Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp, Clock, CalendarClock,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
 import LogoutButton from '@/components/auth/LogoutButton'
 import { useStaffInfo } from '@/lib/staff-cookies'
 import SessionWatcher from '@/components/auth/SessionWatcher'
+import ClockWidget from '@/components/clock/ClockWidget'
 
 interface NavItem {
   href: string
@@ -92,9 +93,11 @@ export default function Sidebar() {
         { href: '/audit-log',        label: 'Audit Log',       icon: <ScrollText  size={15} /> },
         { href: '/sla-monitor',      label: 'SLA Monitor',     icon: <Timer       size={15} /> },
         { href: '/agent-performance',label: 'Agent Performance',icon: <TrendingUp  size={15} /> },
-        { href: '/staff',            label: 'Staff',           icon: <UserCog     size={15} /> },
-        { href: '/staff-profiles',   label: 'Staff Profiles',  icon: <Users       size={15} /> },
-        { href: '/config',           label: 'System Config',   icon: <Settings2   size={15} /> },
+        { href: '/staff',            label: 'Staff',           icon: <UserCog      size={15} /> },
+        { href: '/staff-profiles',   label: 'Staff Profiles',  icon: <Users        size={15} /> },
+        { href: '/attendance',       label: 'Attendance',      icon: <Clock        size={15} /> },
+        { href: '/work-config',      label: 'Work Config',     icon: <CalendarClock size={15} /> },
+        { href: '/config',           label: 'System Config',   icon: <Settings2    size={15} /> },
       ],
     },
     {
@@ -193,6 +196,9 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Clock widget — visible for all staff except superadmin */}
+      {role !== 'superadmin' && <ClockWidget />}
 
       {/* User dock */}
       <div
