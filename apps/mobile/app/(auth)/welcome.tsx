@@ -93,7 +93,7 @@ function FeatureRow({ icon, title, desc }: FeatureItem) {
 
 export default function WelcomeScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#09080E' }}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
@@ -191,15 +191,17 @@ export default function WelcomeScreen() {
           <Pressable
             onPress={() => router.push('/(auth)/register')}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
+            style={{ backgroundColor: '#FF6240', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
-            <Text className="text-white font-semibold text-base">Create an account</Text>
+            <Text className="text-white font-semibold text-base" style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Create an account</Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push('/(auth)/login')}
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-70"
+            style={{ backgroundColor: '#1A1825', borderWidth: 1, borderColor: '#2A2738', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
-            <Text className="text-white font-semibold text-base">Sign in</Text>
+            <Text className="text-white font-semibold text-base" style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Sign in</Text>
           </Pressable>
 
           <Pressable

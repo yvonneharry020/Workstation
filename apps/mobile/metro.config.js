@@ -16,9 +16,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ]
 
-// Force all packages to use ONE React copy regardless of which symlink path they resolve through.
-// pnpm creates per-package symlinks in the virtual store so Metro sees multiple module IDs for the
-// same logical module — this causes "Invalid hook call" / "useState of null" at runtime.
+// Force React singletons to a single instance across the monorepo.
+// Without this, pnpm symlinks can cause two copies of React in the bundle (invalid hook call).
 config.resolver.extraNodeModules = {
   react: path.resolve(projectRoot, 'node_modules/react'),
   'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),

@@ -123,7 +123,7 @@ export default function Tutorial1() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#09080E' }}>
       <View className="flex-row justify-between items-center px-6 pt-4 pb-2">
         <View style={{ width: 44 }} />
         <SlideProgress current={0} />
@@ -164,6 +164,7 @@ export default function Tutorial1() {
           <Pressable
             onPress={() => router.replace('/(tutorial)/tutorial-2')}
             className="bg-primary-500 rounded-2xl py-4 items-center mt-1 active:opacity-80"
+            style={{ backgroundColor: '#FF6240', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 4 }}
           >
             <Text className="text-white font-semibold text-base">Continue</Text>
           </Pressable>
