@@ -16,6 +16,17 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ]
 
+// Force all packages to use ONE React copy regardless of which symlink path they resolve through.
+// pnpm creates per-package symlinks in the virtual store so Metro sees multiple module IDs for the
+// same logical module — this causes "Invalid hook call" / "useState of null" at runtime.
+config.resolver.extraNodeModules = {
+  react: path.resolve(projectRoot, 'node_modules/react'),
+  'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
+  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+  'react/jsx-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-runtime'),
+  'react/jsx-dev-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-dev-runtime'),
+}
+
 // Fix pnpm monorepo bundle URL issue:
 // Metro puts the real pnpm store path in the HTML script src (e.g. /../../node_modules/.pnpm/...)
 // Browsers strip the /../.. making it /node_modules/.pnpm/... which Metro can't find.
