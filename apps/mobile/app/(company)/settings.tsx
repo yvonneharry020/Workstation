@@ -9,7 +9,7 @@ import {
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path } from 'react-native-svg'
+import Svg, { Path, Circle } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -180,10 +180,10 @@ export default function SettingsScreen() {
         text: 'Sign out',
         style: 'destructive',
         onPress: async () => {
-          logEvent({ event: 'user.logout', app: 'company_app' })
-          await supabase.auth.signOut()
+          try { logEvent({ event: 'user.logout', app: 'company_app' }) } catch {}
+          try { await supabase.auth.signOut() } catch {}
           reset()
-          router.replace('/')
+          router.replace('/(auth)/welcome' as never)
         },
       },
     ])
@@ -215,6 +215,18 @@ export default function SettingsScreen() {
         <Animated.View entering={FadeInDown.delay(50).duration(300)}>
           <SectionHeader label="Company" />
           <SectionCard>
+            <SettingRow
+              label="View profile"
+              sub="See your company profile"
+              icon={
+                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <Circle cx="12" cy="12" r="3" />
+                </Svg>
+              }
+              onPress={() => router.push('/(company)/profile/index' as never)}
+            />
+            <Divider />
             <SettingRow
               label="Edit profile"
               sub="Company info, branding, locations"

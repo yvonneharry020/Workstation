@@ -1,10 +1,11 @@
-import { View, Text, ScrollView, Pressable, FlatList } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { View, Text, ScrollView, Pressable, FlatList, Modal, ActivityIndicator } from 'react-native'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path, Circle } from 'react-native-svg'
-import { useQuery } from '@tanstack/react-query'
+import Svg, { Path, Circle, Rect } from 'react-native-svg'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -254,8 +255,108 @@ function ApplicationRow({ item, index }: { item: RecentApplication; index: numbe
   )
 }
 
+function NotificationsModal({ visible, onClose, userId }: { visible: boolean; onClose: () => void; userId: string }) {
+  const insets = useSafeAreaInsets()
+  const queryClient = useQueryClient()
+
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ['company-notifications-modal', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id, type, title, body, read_at, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (error) throw error
+      return data as Array<{ id: string; type: string; title: string; body: string; read_at: string | null; created_at: string }>
+    },
+    enabled: visible && !!userId,
+  })
+
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', userId).is('read_at', null)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-notifications-modal'] }),
+  })
+
+  const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'just now'
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    return `${Math.floor(hrs / 24)}d ago`
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: '#00000070', justifyContent: 'flex-end' }}>
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
+        <View style={{ backgroundColor: '#09080E', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: '#1E1B2E', maxHeight: '80%', paddingBottom: insets.bottom + 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+            <View>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Notifications</Text>
+              {unreadCount > 0 && <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{unreadCount} unread</Text>}
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+              {unreadCount > 0 && (
+                <Pressable onPress={() => markAllRead.mutate()} className="active:opacity-70">
+                  <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Mark all read</Text>
+                </Pressable>
+              )}
+              <Pressable onPress={onClose} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }} className="active:opacity-70">
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M18 6L6 18M6 6l12 12" />
+                </Svg>
+              </Pressable>
+            </View>
+          </View>
+          {isLoading ? (
+            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+              <ActivityIndicator color="#FF6240" />
+            </View>
+          ) : !notifications?.length ? (
+            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <BellIcon />
+              </View>
+              <Text style={{ color: '#64748B', fontSize: 14 }}>No notifications yet</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={notifications}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingVertical: 8 }}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#0F0D1A', backgroundColor: item.read_at ? 'transparent' : '#FF624008' }}
+                  className="active:opacity-70"
+                >
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.read_at ? 'transparent' : '#FF6240', marginTop: 5, flexShrink: 0 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: item.read_at ? '400' : '600', lineHeight: 18 }}>{item.title}</Text>
+                    <Text style={{ color: '#64748B', fontSize: 12, marginTop: 3, lineHeight: 17 }}>{item.body}</Text>
+                    <Text style={{ color: '#475569', fontSize: 11, marginTop: 5 }}>{timeAgo(item.created_at)}</Text>
+                  </View>
+                </Pressable>
+              )}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 export default function CompanyDashboard() {
   const user = useAuthStore((s) => s.user)
+  const [showNotifications, setShowNotifications] = useState(false)
   const today = new Date().toISOString().slice(0, 10)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -305,6 +406,13 @@ export default function CompanyDashboard() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
+      {user?.id && (
+        <NotificationsModal
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          userId={user.id}
+        />
+      )}
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
           <View style={{ flex: 1 }}>
@@ -314,7 +422,7 @@ export default function CompanyDashboard() {
             </Text>
           </View>
           <Pressable
-            onPress={() => router.push('/(company)/notifications' as any)}
+            onPress={() => setShowNotifications(true)}
             style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}
             className="active:opacity-70"
           >

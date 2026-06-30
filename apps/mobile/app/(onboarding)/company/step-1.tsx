@@ -70,6 +70,11 @@ export default function CompanyStep1() {
     setIsSubmitting(true)
     setSubmitError(null)
     try {
+      const { data: { session: existingSession } } = await supabase.auth.getSession()
+      if (existingSession) {
+        await supabase.auth.signOut()
+      }
+
       const { error, data: signUpData } = await supabase.auth.signUp({
         email: data.personalEmail,
         password: data.password,

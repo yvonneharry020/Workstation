@@ -236,12 +236,14 @@ export default function EditCompanyProfileScreen() {
     const asset = result.assets[0]
     setUploadingField(field)
     try {
-      const fileExt = asset.uri.split('.').pop() ?? 'jpg'
+      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const fileExt = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
+      const contentType = fileExt === 'png' ? 'image/png' : fileExt === 'webp' ? 'image/webp' : 'image/jpeg'
       const bucket = field === 'logo' ? 'company-logos' : 'company-banners'
       const filePath = `${user?.id}/${field}_${Date.now()}.${fileExt}`
       const response = await fetch(asset.uri)
-      const blob = await response.blob()
-      const { error } = await supabase.storage.from(bucket).upload(filePath, blob, { contentType: 'image/jpeg', upsert: true })
+      const arrayBuffer = await response.arrayBuffer()
+      const { error } = await supabase.storage.from(bucket).upload(filePath, arrayBuffer, { contentType, upsert: true })
       if (error) throw error
       const { data } = supabase.storage.from(bucket).getPublicUrl(filePath)
       if (field === 'logo') setLogoUri(data.publicUrl)
@@ -263,11 +265,13 @@ export default function EditCompanyProfileScreen() {
     const asset = result.assets[0]
     setUploadingField('gallery')
     try {
-      const fileExt = asset.uri.split('.').pop() ?? 'jpg'
+      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const fileExt = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
+      const contentType = fileExt === 'png' ? 'image/png' : fileExt === 'webp' ? 'image/webp' : 'image/jpeg'
       const filePath = `${user?.id}/gallery_${Date.now()}.${fileExt}`
       const response = await fetch(asset.uri)
-      const blob = await response.blob()
-      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, blob, { contentType: 'image/jpeg', upsert: true })
+      const arrayBuffer = await response.arrayBuffer()
+      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, arrayBuffer, { contentType, upsert: true })
       if (uploadError) throw uploadError
       const { data } = supabase.storage.from('company-gallery').getPublicUrl(filePath)
       const { data: inserted, error: insertError } = await supabase

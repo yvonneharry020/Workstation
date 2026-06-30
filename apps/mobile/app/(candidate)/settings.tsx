@@ -133,6 +133,7 @@ function ActionRow({ label, onPress, destructive }: { label: string; onPress: ()
 
 export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user)
+  const reset = useAuthStore((s) => s.reset)
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS)
   const [isSavingPrefs, setIsSavingPrefs] = useState(false)
 
@@ -184,9 +185,10 @@ export default function SettingsScreen() {
         text: 'Log out',
         style: 'destructive',
         onPress: async () => {
-          logEvent({ event: 'user.logout', app: 'candidate_app' })
-          await supabase.auth.signOut()
-          router.replace('/(auth)/login')
+          try { logEvent({ event: 'user.logout', app: 'candidate_app' }) } catch {}
+          try { await supabase.auth.signOut() } catch {}
+          reset()
+          router.replace('/(auth)/welcome' as never)
         },
       },
     ])

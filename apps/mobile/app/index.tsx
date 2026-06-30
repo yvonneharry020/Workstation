@@ -109,15 +109,20 @@ function SplashContent() {
   )
 }
 
+const SPLASH_MINIMUM_MS = 3500
+
 export default function Index() {
   const { session, role, isOnboardingComplete, isLoading, isResolvingProfile } = useAuthStore()
   const [hasSeenTutorial, setHasSeenTutorial] = useState<boolean | null>(null)
+  const [minDurationPassed, setMinDurationPassed] = useState(false)
 
   useEffect(() => {
     Storage.hasSeenTutorial().then(setHasSeenTutorial)
+    const timer = setTimeout(() => setMinDurationPassed(true), SPLASH_MINIMUM_MS)
+    return () => clearTimeout(timer)
   }, [])
 
-  if (isLoading || isResolvingProfile || hasSeenTutorial === null) return <SplashContent />
+  if (!minDurationPassed || isLoading || isResolvingProfile || hasSeenTutorial === null) return <SplashContent />
 
   if (!session) {
     if (!hasSeenTutorial) {

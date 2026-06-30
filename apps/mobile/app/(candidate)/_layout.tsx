@@ -10,9 +10,9 @@ export default function CandidateLayout() {
           backgroundColor: '#0D0C14',
           borderTopColor: '#1E1B2E',
           borderTopWidth: 1,
-          height: 68,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: 90,
+          paddingBottom: 28,
+          paddingTop: 10,
         },
         tabBarActiveTintColor: '#FF6240',
         tabBarInactiveTintColor: '#475569',
@@ -55,14 +55,37 @@ export default function CandidateLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'More',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="menu-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* All non-tab screens — must be listed so Expo Router doesn't auto-register them as tabs */}
       <Tabs.Screen name="saved" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="profile-views" options={{ href: null }} />
       <Tabs.Screen name="badges" options={{ href: null }} />
       <Tabs.Screen name="portfolio" options={{ href: null }} />
       <Tabs.Screen name="support-chat" options={{ href: null }} />
       <Tabs.Screen name="support-ticket" options={{ href: null }} />
+
+      {/* Nested route sub-screens */}
+      <Tabs.Screen name="cv/index" options={{ href: null }} />
+      <Tabs.Screen name="cv/edit" options={{ href: null }} />
+      <Tabs.Screen name="cv/versions" options={{ href: null }} />
+      <Tabs.Screen name="company/[id]" options={{ href: null }} />
+      <Tabs.Screen name="interviews/confirmed" options={{ href: null }} />
+      <Tabs.Screen name="interviews/history" options={{ href: null }} />
+      <Tabs.Screen name="interviews/pick-slot" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]" options={{ href: null }} />
+      <Tabs.Screen name="jobs/applied" options={{ href: null }} />
+      <Tabs.Screen name="jobs/apply" options={{ href: null }} />
+      <Tabs.Screen name="profile/edit" options={{ href: null }} />
     </Tabs>
   )
 }

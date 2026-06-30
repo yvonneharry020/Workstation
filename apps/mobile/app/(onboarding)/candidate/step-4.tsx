@@ -210,11 +210,11 @@ export default function CandidateStep4() {
 
             {/* Camera preview */}
             <View
-              style={{ height: 340, borderRadius: 24, overflow: 'hidden', marginBottom: 20 }}
+              style={{ height: 340, borderRadius: 24, overflow: 'hidden', marginBottom: 20, position: 'relative' }}
               className="bg-surface-card"
             >
               <CameraView
-                style={{ flex: 1 }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
                 facing="front"
               />
               <FaceOvalFrame />

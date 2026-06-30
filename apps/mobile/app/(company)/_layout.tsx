@@ -10,9 +10,9 @@ export default function CompanyLayout() {
           backgroundColor: '#0D0C14',
           borderTopColor: '#1E1B2E',
           borderTopWidth: 1,
-          height: 68,
-          paddingBottom: 10,
-          paddingTop: 6,
+          height: 90,
+          paddingBottom: 28,
+          paddingTop: 10,
         },
         tabBarActiveTintColor: '#FF6240',
         tabBarInactiveTintColor: '#475569',
@@ -50,15 +50,6 @@ export default function CompanyLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Alerts',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
@@ -68,6 +59,7 @@ export default function CompanyLayout() {
         }}
       />
 
+      <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="support-chat" options={{ href: null }} />
       <Tabs.Screen name="support-ticket" options={{ href: null }} />
       <Tabs.Screen name="analytics" options={{ href: null }} />
@@ -96,6 +88,7 @@ export default function CompanyLayout() {
       <Tabs.Screen name="badges/issue" options={{ href: null }} />
       <Tabs.Screen name="badges/history" options={{ href: null }} />
 
+      <Tabs.Screen name="profile/index" options={{ href: null }} />
       <Tabs.Screen name="profile/edit" options={{ href: null }} />
     </Tabs>
   )
