@@ -149,7 +149,11 @@ export default function CandidateStep1() {
       })
 
       if (error) {
-        Alert.alert('Account creation failed', error.message)
+        const isRateLimit = error.message.toLowerCase().includes('rate limit')
+        const message = isRateLimit
+          ? 'Too many attempts. Please wait a few minutes before trying again, or use a different email address.'
+          : error.message
+        Alert.alert('Account creation failed', message)
         return
       }
 

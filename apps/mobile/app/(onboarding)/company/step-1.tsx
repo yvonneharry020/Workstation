@@ -66,7 +66,7 @@ export default function CompanyStep1() {
     setIsSubmitting(true)
     setSubmitError(null)
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data: signUpData } = await supabase.auth.signUp({
         email: data.businessEmail,
         password: data.password,
         options: {
@@ -83,8 +83,7 @@ export default function CompanyStep1() {
         return
       }
 
-      const { data: userData } = await supabase.auth.getUser()
-      const userId = userData.user?.id
+      const userId = signUpData.user?.id
 
       if (userId) {
         await supabase.from('company_profiles').upsert({
@@ -98,7 +97,7 @@ export default function CompanyStep1() {
           .eq('id', userId)
       }
 
-      router.push('/(onboarding)/company/step-2')
+      router.replace('/(company)/' as never)
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {

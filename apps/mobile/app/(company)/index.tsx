@@ -10,6 +10,13 @@ import { useAuthStore } from '@/stores/authStore'
 
 type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
 
+interface VerificationStatus {
+  cacVerified: boolean
+  directorVerified: boolean
+  documentsSubmitted: boolean
+  profileComplete: boolean
+}
+
 interface RecentApplication {
   id: string
   pipeline_stage: PipelineStage
@@ -84,6 +91,108 @@ function SearchIcon() {
       <Circle cx={11} cy={11} r={8} />
       <Path d="m21 21-4.35-4.35" />
     </Svg>
+  )
+}
+
+function ShieldAlertIcon() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <Path d="M12 8v4M12 16h.01" />
+    </Svg>
+  )
+}
+
+function CheckCircleIcon({ done }: { done: boolean }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={done ? '#22C55E' : '#475569'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={12} cy={12} r={10} />
+      {done && <Path d="M9 12l2 2 4-4" />}
+    </Svg>
+  )
+}
+
+function VerificationBanner({ userId }: { userId: string }) {
+  const { data: status } = useQuery<VerificationStatus>({
+    queryKey: ['company-verification-banner', userId],
+    queryFn: async () => {
+      const [profileRes, verificationRes] = await Promise.all([
+        supabase
+          .from('company_profiles')
+          .select('cac_verified, director_nin_verified, company_name, industry')
+          .eq('id', userId)
+          .maybeSingle(),
+        supabase
+          .from('company_verification')
+          .select('documents_status')
+          .eq('company_id', userId)
+          .maybeSingle(),
+      ])
+      return {
+        cacVerified: (profileRes.data as any)?.cac_verified ?? false,
+        directorVerified: (profileRes.data as any)?.director_nin_verified ?? false,
+        documentsSubmitted: !!(verificationRes.data as any)?.documents_status,
+        profileComplete: !!(profileRes.data as any)?.company_name && !!(profileRes.data as any)?.industry,
+      }
+    },
+    staleTime: 30_000,
+  })
+
+  if (!status) return null
+
+  const steps = [
+    { label: 'CAC Registration', done: status.cacVerified, route: '/(onboarding)/company/step-2' },
+    { label: 'Director Identity', done: status.directorVerified, route: '/(onboarding)/company/step-3' },
+    { label: 'Business Documents', done: status.documentsSubmitted, route: '/(onboarding)/company/step-4' },
+    { label: 'Company Profile', done: status.profileComplete, route: '/(company)/profile/edit' },
+  ]
+
+  const isFullyVerified = steps.every((s) => s.done)
+  if (isFullyVerified) return null
+
+  const nextStep = steps.find((s) => !s.done)
+  const completedCount = steps.filter((s) => s.done).length
+
+  return (
+    <Animated.View entering={FadeInDown.delay(80).duration(350)} className="px-5 mb-5">
+      <View style={{ backgroundColor: '#1A1506', borderRadius: 16, borderWidth: 1, borderColor: '#F59E0B40', padding: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <ShieldAlertIcon />
+          <Text style={{ color: '#F59E0B', fontSize: 13, fontWeight: '700', flex: 1 }}>
+            Complete account verification ({completedCount}/{steps.length})
+          </Text>
+        </View>
+        <Text style={{ color: '#94A3B8', fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
+          Verified companies can post jobs and access full hiring features.
+        </Text>
+        <View style={{ gap: 8, marginBottom: 14 }}>
+          {steps.map((step) => (
+            <Pressable
+              key={step.label}
+              onPress={() => router.push(step.route as never)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              className="active:opacity-70"
+            >
+              <CheckCircleIcon done={step.done} />
+              <Text style={{ color: step.done ? '#64748B' : '#E2E8F0', fontSize: 13, fontWeight: step.done ? '400' : '500', textDecorationLine: step.done ? 'line-through' : 'none' }}>
+                {step.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {nextStep && (
+          <Pressable
+            onPress={() => router.push(nextStep.route as never)}
+            style={{ backgroundColor: '#F59E0B', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+            className="active:opacity-80"
+          >
+            <Text style={{ color: '#000', fontWeight: '700', fontSize: 13 }}>
+              Continue: {nextStep.label}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </Animated.View>
   )
 }
 
@@ -227,6 +336,8 @@ export default function CompanyDashboard() {
             </Text>
           </View>
         </Animated.View>
+
+        {user?.id && <VerificationBanner userId={user.id} />}
 
         <Animated.View entering={FadeInDown.delay(100).duration(350)} className="px-5 mb-5">
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>

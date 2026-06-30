@@ -22,6 +22,9 @@ import {
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono'
 import '../global.css'
+import { cssInterop } from 'nativewind'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Animated from 'react-native-reanimated'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/lib/supabase'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
@@ -30,6 +33,12 @@ import { OfflineScreen } from '@/components/system/OfflineScreen'
 import { UpdateRequiredScreen } from '@/components/system/UpdateRequiredScreen'
 import { MaintenanceScreen } from '@/components/system/MaintenanceScreen'
 import type { UserRole } from '@workstation/types'
+
+// Register third-party components so NativeWind className prop is handled correctly.
+// These are not in css-interop's built-in registry (only plain RN components are).
+cssInterop(SafeAreaView, { className: 'style' })
+cssInterop(Animated.View, { className: 'style' })
+cssInterop(Animated.Text, { className: 'style' })
 
 if (Platform.OS !== 'web') {
   SplashScreen.preventAutoHideAsync()
@@ -75,10 +84,10 @@ async function resolveProfileState(
   } else if (role === 'company') {
     const { data: co } = await supabase
       .from('company_profiles')
-      .select('company_name')
+      .select('id')
       .eq('id', userId)
       .single()
-    setOnboardingComplete(!!co?.company_name)
+    setOnboardingComplete(!!co?.id)
   } else {
     setOnboardingComplete(true)
   }

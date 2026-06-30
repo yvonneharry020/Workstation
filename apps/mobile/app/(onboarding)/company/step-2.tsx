@@ -19,7 +19,6 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/stores/authStore'
 
 type VerifyState = 'idle' | 'loading' | 'success' | 'failed'
 
@@ -118,31 +117,36 @@ function DirectorBadge({ name }: { name: string }) {
 }
 
 export default function CompanyStep2() {
-  const user = useAuthStore((s) => s.user)
   const [verifyState, setVerifyState] = useState<VerifyState>('idle')
   const [cacResult, setCacResult] = useState<CACResult | null>(null)
   const [rcNumber, setRcNumber] = useState('')
 
   useEffect(() => {
     const loadRcNumber = async () => {
-      if (!user?.id) return
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser?.id) return
       const { data } = await supabase
         .from('company_profiles')
         .select('rc_number')
-        .eq('id', user.id)
+        .eq('id', currentUser.id)
         .maybeSingle()
       if (data?.rc_number) setRcNumber(data.rc_number)
     }
     loadRcNumber()
-  }, [user?.id])
+  }, [])
 
   const handleVerify = async () => {
-    if (!user?.id) return
     setVerifyState('loading')
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser?.id) {
+      setVerifyState('failed')
+      Alert.alert('Session expired', 'Please sign in again to continue.')
+      return
+    }
 
     try {
       await supabase.from('company_verification').upsert({
-        company_id: user.id,
+        company_id: currentUser.id,
         cac_status: 'pending',
         overall_status: 'pending',
       }, { onConflict: 'company_id' })
@@ -157,7 +161,7 @@ export default function CompanyStep2() {
       }
 
       const { error } = await supabase.from('company_verification').upsert({
-        company_id: user.id,
+        company_id: currentUser.id,
         cac_status: 'approved',
         cac_verified_at: new Date().toISOString(),
         cac_result: mockResult,
@@ -169,7 +173,7 @@ export default function CompanyStep2() {
       await supabase
         .from('company_profiles')
         .update({ cac_verified: true, cac_verified_at: new Date().toISOString() })
-        .eq('id', user.id)
+        .eq('id', currentUser.id)
 
       setCacResult(mockResult)
       setVerifyState('success')

@@ -18,7 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { Input } from '@/components/ui/Input'
@@ -156,6 +156,19 @@ export default function PostJobScreen() {
   const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
   const [step, setStep] = useState(1)
+
+  const { data: isVerified, isLoading: checkingVerification } = useQuery({
+    queryKey: ['company-can-post', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('company_profiles')
+        .select('cac_verified')
+        .eq('id', user!.id)
+        .maybeSingle()
+      return (data as any)?.cac_verified === true
+    },
+    enabled: !!user?.id,
+  })
   const [successJobId, setSuccessJobId] = useState<SuccessJobId>(null)
   const [isPublishing, setIsPublishing] = useState(false)
 
@@ -251,6 +264,37 @@ export default function PostJobScreen() {
   }
 
   const onSubmit = handleSubmit((data) => insertMutation.mutate(data))
+
+  if (!checkingVerification && !isVerified) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface px-5 justify-center">
+        <Animated.View entering={FadeInDown.duration(400)} style={{ alignItems: 'center' }}>
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#F59E0B15', borderWidth: 1.5, borderColor: '#F59E0B40', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <Svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <Path d="M12 8v4M12 16h.01" />
+            </Svg>
+          </View>
+          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
+            Verification required
+          </Text>
+          <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 28, paddingHorizontal: 16 }}>
+            Your company must complete CAC verification before posting jobs. This protects candidates and builds trust in your listings.
+          </Text>
+          <Pressable
+            onPress={() => router.replace('/(onboarding)/company/step-2' as never)}
+            style={{ backgroundColor: '#F59E0B', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14, marginBottom: 12 }}
+            className="active:opacity-80"
+          >
+            <Text style={{ color: '#000', fontWeight: '700', fontSize: 15 }}>Start Verification</Text>
+          </Pressable>
+          <Pressable onPress={() => router.back()} className="active:opacity-70">
+            <Text style={{ color: '#475569', fontSize: 13 }}>Go back</Text>
+          </Pressable>
+        </Animated.View>
+      </SafeAreaView>
+    )
+  }
 
   if (successJobId) {
     return (
