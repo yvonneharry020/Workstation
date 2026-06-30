@@ -6,9 +6,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native'
+import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Circle, G } from 'react-native-svg'
+import Svg, { Circle, G, Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -173,7 +174,18 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Analytics</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+            className="active:opacity-70"
+          >
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M19 12H5M12 5l-7 7 7 7" />
+            </Svg>
+          </Pressable>
+          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Analytics</Text>
+        </View>
         <View style={{ flexDirection: 'row', backgroundColor: '#131118', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', padding: 3 }}>
           {(['30', '90'] as DateRange[]).map((r) => (
             <Pressable

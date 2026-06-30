@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
+import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
@@ -232,7 +233,18 @@ export default function TeamScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Team Members</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+            className="active:opacity-70"
+          >
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M19 12H5M12 5l-7 7 7 7" />
+            </Svg>
+          </Pressable>
+          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Team Members</Text>
+        </View>
         <Pressable
           onPress={() => setShowInviteModal(true)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FF6240', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 }}

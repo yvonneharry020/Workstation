@@ -19,6 +19,9 @@ const PERSONAL_EMAIL_DOMAINS = /^.+@(gmail|yahoo|hotmail|outlook|icloud)\./i
 
 const schema = z.object({
   fullName: z.string().min(2, 'Enter your full legal name'),
+  personalEmail: z
+    .string()
+    .email('Enter a valid personal email address'),
   businessEmail: z
     .string()
     .email('Enter a valid email address')
@@ -55,6 +58,7 @@ export default function CompanyStep1() {
     resolver: zodResolver(schema),
     defaultValues: {
       fullName: '',
+      personalEmail: '',
       businessEmail: '',
       phone: '',
       rcNumber: '',
@@ -67,7 +71,7 @@ export default function CompanyStep1() {
     setSubmitError(null)
     try {
       const { error, data: signUpData } = await supabase.auth.signUp({
-        email: data.businessEmail,
+        email: data.personalEmail,
         password: data.password,
         options: {
           data: {
@@ -89,6 +93,7 @@ export default function CompanyStep1() {
         await supabase.from('company_profiles').upsert({
           id: userId,
           rc_number: data.rcNumber.toUpperCase(),
+          business_email: data.businessEmail,
         })
 
         await supabase
@@ -116,7 +121,10 @@ export default function CompanyStep1() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable onPress={() => router.back()} className="mt-6 mb-8">
+          <Pressable
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(auth)/register' as never)}
+            className="mt-6 mb-8"
+          >
             <Text className="text-primary-400 text-base">← Back</Text>
           </Pressable>
 
@@ -147,6 +155,23 @@ export default function CompanyStep1() {
                   onChangeText={onChange}
                   error={errors.fullName?.message}
                   autoCapitalize="words"
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="personalEmail"
+              render={({ field: { onChange, value } }) => (
+                <FormInput
+                  label="Your personal email"
+                  placeholder="you@gmail.com"
+                  value={value}
+                  onChangeText={onChange}
+                  error={errors.personalEmail?.message}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  hint="This is where you'll receive your verification email"
                 />
               )}
             />

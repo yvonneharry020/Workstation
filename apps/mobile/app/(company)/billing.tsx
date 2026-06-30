@@ -5,6 +5,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native'
+import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Circle } from 'react-native-svg'
@@ -160,6 +161,15 @@ export default function BillingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center px-5 py-4 border-b border-surface-border gap-3">
+        <Pressable
+          onPress={() => router.back()}
+          style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+          className="active:opacity-70"
+        >
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M19 12H5M12 5l-7 7 7 7" />
+          </Svg>
+        </Pressable>
         <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Billing & Plans</Text>
       </View>
 

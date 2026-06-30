@@ -169,7 +169,7 @@ export default function CompanySupportChatScreen() {
         .update({ unread_user: 0 })
         .eq('id', existing.id)
     } else {
-      const profile = await supabase.from('company_profiles').select('company_name').eq('user_id', user.id).maybeSingle()
+      const profile = await supabase.from('company_profiles').select('company_name').eq('id', user.id).maybeSingle()
       const name = profile?.data?.company_name ?? user.email?.split('@')[0] ?? 'Company'
       const { data: newThread, error } = await supabase.from('chat_threads').insert({
         user_id: user.id,
@@ -192,19 +192,23 @@ export default function CompanySupportChatScreen() {
   useEffect(() => { void initThread() }, [initThread])
 
   useEffect(() => {
-    if (!thread) return
+    if (!thread?.id) return
     const channel = supabase
       .channel(`support-chat-company-${thread.id}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'chat_messages',
         filter: `thread_id=eq.${thread.id}`,
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new as Message])
+        const incoming = payload.new as Message
+        setMessages(prev => {
+          if (prev.some(m => m.id === incoming.id)) return prev
+          return [...prev, incoming]
+        })
         setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
       })
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
-  }, [thread])
+  }, [thread?.id])
 
   async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file') {
     if (!thread) return
@@ -225,7 +229,7 @@ export default function CompanySupportChatScreen() {
       const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(path)
 
       const { data: { user } } = await supabase.auth.getUser()
-      const profile = await supabase.from('company_profiles').select('company_name').eq('user_id', user?.id ?? '').maybeSingle()
+      const profile = await supabase.from('company_profiles').select('company_name').eq('id', user?.id ?? '').maybeSingle()
       const name = profile?.data?.company_name ?? user?.email?.split('@')[0] ?? 'Company'
 
       await supabase.from('chat_messages').insert({
@@ -312,8 +316,23 @@ export default function CompanySupportChatScreen() {
     setSending(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    const profile = await supabase.from('company_profiles').select('company_name').eq('user_id', user?.id ?? '').maybeSingle()
+    const profile = await supabase.from('company_profiles').select('company_name').eq('id', user?.id ?? '').maybeSingle()
     const name = profile?.data?.company_name ?? user?.email?.split('@')[0] ?? 'Company'
+
+    const optimisticMsg: Message = {
+      id: `optimistic-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      thread_id: thread.id,
+      sender_type: 'user',
+      sender_name: name,
+      content,
+      is_read: false,
+      attachment_url: null,
+      attachment_type: null,
+      attachment_name: null,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
 
     const { error } = await supabase.from('chat_messages').insert({
       thread_id: thread.id,
@@ -335,12 +354,12 @@ export default function CompanySupportChatScreen() {
       }).eq('id', thread.id)
       logEvent({ event: 'company.support_message_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
     } else {
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
       Alert.alert('Error', 'Failed to send message. Please try again.')
       setInput(content)
     }
 
     setSending(false)
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
   }
 
   if (loading) {
