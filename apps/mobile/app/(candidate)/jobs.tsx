@@ -118,67 +118,66 @@ function JobCard({
   onToggleSave: (id: string) => void
 }) {
   const company = job.company_profiles
-  const initials = company?.company_name?.slice(0, 2).toUpperCase() ?? '??'
+  const initials = company?.company_name?.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase() ?? '??'
+  const modeColors: Record<string, { bg: string; text: string }> = {
+    remote: { bg: '#0DD4C320', text: '#0DD4C3' },
+    hybrid: { bg: '#F59E0B20', text: '#F59E0B' },
+    on_site: { bg: '#6366F120', text: '#818CF8' },
+  }
+  const modeStyle = modeColors[job.work_mode] ?? { bg: '#1E1B2E', text: '#94A3B8' }
 
   return (
     <Pressable
       onPress={() => router.push(`/(candidate)/jobs/${job.id}`)}
-      className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3 active:opacity-80"
+      style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 12, overflow: 'hidden' }}
     >
-      <View className="flex-row items-start gap-3 mb-3">
+      {/* Top row: logo + title + bookmark */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
         {company?.logo_url ? (
-          <Image
-            source={{ uri: company.logo_url }}
-            style={{ width: 48, height: 48, borderRadius: 12 }}
-            contentFit="cover"
-          />
+          <Image source={{ uri: company.logo_url }} style={{ width: 48, height: 48, borderRadius: 12 }} contentFit="cover" />
         ) : (
-          <View
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              backgroundColor: '#FF624020',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
+          <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#FF624015', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FF624030' }}>
+            <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '800' }}>{initials}</Text>
           </View>
         )}
-        <View className="flex-1">
-          <Text className="text-white font-semibold text-sm leading-5 mb-0.5" numberOfLines={2}>
-            {job.title}
-          </Text>
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-slate-400 text-xs">{company?.company_name ?? 'Unknown'}</Text>
-            {company?.is_verified && <View className="w-1.5 h-1.5 rounded-full bg-green-500" />}
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', lineHeight: 21, marginBottom: 3 }} numberOfLines={2}>{job.title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ color: '#64748B', fontSize: 12 }}>{company?.company_name ?? 'Unknown'}</Text>
+            {company?.is_verified && (
+              <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#22C55E20', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 9 }}>✓</Text>
+              </View>
+            )}
+            {job.city && <Text style={{ color: '#334155', fontSize: 12 }}>· {job.city}</Text>}
           </View>
         </View>
-        <Pressable onPress={() => onToggleSave(job.id)} hitSlop={12}>
+        <Pressable onPress={() => onToggleSave(job.id)} hitSlop={12} style={{ marginTop: 2 }}>
           <BookmarkIcon filled={isSaved} />
         </Pressable>
       </View>
 
-      <View className="flex-row flex-wrap gap-2 mb-3">
-        <WorkModePill mode={job.work_mode} />
-        {job.city && (
-          <View className="bg-surface border border-surface-border rounded-md px-2 py-0.5">
-            <Text className="text-slate-400 text-xs">{job.city}</Text>
-          </View>
-        )}
-        <View className="bg-surface border border-surface-border rounded-md px-2 py-0.5">
-          <Text className="text-slate-400 text-xs">{formatLabel(job.employment_type)}</Text>
+      {/* Tags row */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
+        <View style={{ backgroundColor: modeStyle.bg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: `${modeStyle.text}40` }}>
+          <Text style={{ color: modeStyle.text, fontSize: 11, fontWeight: '700' }}>{formatLabel(job.work_mode)}</Text>
+        </View>
+        <View style={{ backgroundColor: '#1E1B2E', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
+          <Text style={{ color: '#64748B', fontSize: 11 }}>{formatLabel(job.employment_type)}</Text>
+        </View>
+        <View style={{ backgroundColor: '#1E1B2E', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
+          <Text style={{ color: '#64748B', fontSize: 11 }}>{formatLabel(job.experience_level)}</Text>
         </View>
       </View>
 
-      <View className="flex-row items-center justify-between">
-        <Text className="text-primary-400 text-sm font-semibold">
+      {/* Salary + meta */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>
           {formatSalary(job.salary_min, job.salary_max, job.salary_is_confidential)}
         </Text>
-        <View className="flex-row items-center gap-3">
-          <Text className="text-slate-500 text-xs">{job.applications_count} applied</Text>
-          <Text className="text-slate-600 text-xs">{timeAgo(job.published_at)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={{ color: '#475569', fontSize: 11 }}>{job.applications_count} applied</Text>
+          <Text style={{ color: '#334155', fontSize: 11 }}>{timeAgo(job.published_at)}</Text>
         </View>
       </View>
     </Pressable>
@@ -249,27 +248,24 @@ export default function JobsScreen() {
   })
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <View className="px-5 pt-4 pb-3">
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', letterSpacing: -0.3, marginBottom: 12 }}>
-          Browse Jobs
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
+        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 14 }}>
+          Browse Jobs 💼
         </Text>
-        <View
-          className="flex-row items-center gap-2 bg-surface-card border border-surface-border rounded-2xl px-4"
-          style={{ height: 48 }}
-        >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#0F0D1A', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 16, paddingHorizontal: 14, height: 48 }}>
           <SearchIcon />
           <TextInput
             value={searchText}
             onChangeText={handleSearchChange}
             placeholder="Search job titles…"
             placeholderTextColor="#475569"
-            className="flex-1 text-white text-sm"
+            style={{ flex: 1, color: '#fff', fontSize: 14 }}
             returnKeyType="search"
           />
           {searchText.length > 0 && (
             <Pressable onPress={() => { setSearchText(''); setDebouncedSearch('') }} hitSlop={8}>
-              <Text className="text-slate-500 text-sm">✕</Text>
+              <Text style={{ color: '#475569', fontSize: 16 }}>✕</Text>
             </Pressable>
           )}
         </View>
@@ -277,6 +273,7 @@ export default function JobsScreen() {
 
       <ScrollView
         horizontal
+
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 8 }}
       >
@@ -286,43 +283,35 @@ export default function JobsScreen() {
             onPress={() => setActiveFilter(f.value)}
             style={{
               paddingHorizontal: 14,
-              paddingVertical: 7,
+              paddingVertical: 8,
               borderRadius: 20,
-              backgroundColor: activeFilter === f.value ? '#FF6240' : '#131118',
+              backgroundColor: activeFilter === f.value ? '#FF6240' : '#0F0D1A',
               borderWidth: 1,
               borderColor: activeFilter === f.value ? '#FF6240' : '#1E1B2E',
             }}
           >
-            <Text
-              style={{
-                color: activeFilter === f.value ? '#fff' : '#94A3B8',
-                fontSize: 13,
-                fontWeight: activeFilter === f.value ? '600' : '400',
-              }}
-            >
+            <Text style={{ color: activeFilter === f.value ? '#fff' : '#64748B', fontSize: 13, fontWeight: activeFilter === f.value ? '700' : '400' }}>
               {f.label}
             </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      {!isLoading && (
-        <View className="px-5 pb-2">
-          <Text className="text-slate-500 text-xs">
-            {jobs.length} job{jobs.length !== 1 ? 's' : ''} found
-          </Text>
+      {!isLoading && jobs.length > 0 && (
+        <View style={{ paddingHorizontal: 20, paddingBottom: 8 }}>
+          <Text style={{ color: '#334155', fontSize: 12 }}>{jobs.length} job{jobs.length !== 1 ? 's' : ''} found</Text>
         </View>
       )}
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#FF6240" />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : (
         <FlatList
           data={jobs}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF6240" />}
           renderItem={({ item }) => (
@@ -333,13 +322,13 @@ export default function JobsScreen() {
             />
           )}
           ListEmptyComponent={
-            <View className="items-center justify-center py-20">
-              <Text style={{ fontSize: 32, marginBottom: 12 }}>🔍</Text>
-              <Text className="text-white font-semibold text-base mb-2">No jobs found</Text>
-              <Text className="text-slate-400 text-sm text-center leading-5 px-8">
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 }}>
+              <Text style={{ fontSize: 36, marginBottom: 14 }}>🔍</Text>
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>No jobs found</Text>
+              <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
                 {debouncedSearch.length > 0
                   ? `No results for "${debouncedSearch}". Try different keywords.`
-                  : 'No active jobs match this filter. Try a different one.'}
+                  : 'No active jobs match this filter. Try another.'}
               </Text>
             </View>
           }

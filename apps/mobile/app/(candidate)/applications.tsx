@@ -164,43 +164,27 @@ function ApplicationItem({
   return (
     <Pressable
       onPress={onPress}
-      className="bg-surface-card border border-surface-border rounded-2xl px-4 py-4 mb-3 active:opacity-80"
+      style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 12, overflow: 'hidden' }}
     >
-      <View className="flex-row items-start gap-3">
+      {/* Left accent line */}
+      <View style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, backgroundColor: stage.text, borderRadius: 2 }} />
+
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
         <CompanyLogo name={companyName} logoUrl={company?.logo_url ?? null} />
-        <View className="flex-1">
-          <View className="flex-row items-start justify-between mb-1">
-            <Text
-              className="text-white font-semibold text-sm flex-1 mr-2"
-              numberOfLines={1}
-            >
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1, marginRight: 8, lineHeight: 20 }} numberOfLines={2}>
               {item.job_postings?.title ?? 'Job'}
             </Text>
-            <View
-              style={{
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                borderRadius: 8,
-                backgroundColor: stage.bg,
-              }}
-            >
-              <Text style={{ color: stage.text, fontSize: 11, fontWeight: '600' }}>
-                {stage.label}
-              </Text>
+            <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: stage.bg, borderWidth: 1, borderColor: `${stage.text}30` }}>
+              <Text style={{ color: stage.text, fontSize: 10, fontWeight: '700' }}>{stage.label}</Text>
             </View>
           </View>
 
-          <Text className="text-slate-400 text-xs" numberOfLines={1}>
-            {companyName}
-          </Text>
-          <Text className="text-slate-500 text-xs mt-0.5">
-            Applied {timeAgo(item.submitted_at)}
-          </Text>
+          <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }} numberOfLines={1}>{companyName}</Text>
+          <Text style={{ color: '#334155', fontSize: 11 }}>Applied {timeAgo(item.submitted_at)}</Text>
 
-          <EmailStatusPill
-            sentAt={item.email_sent_at}
-            openedAt={item.email_opened_at}
-          />
+          <EmailStatusPill sentAt={item.email_sent_at} openedAt={item.email_opened_at} />
         </View>
       </View>
     </Pressable>
@@ -263,39 +247,50 @@ export default function ApplicationsScreen() {
       ? data ?? []
       : (data ?? []).filter((a) => a.pipeline_stage === activeFilter)
 
+  const totalCount = data?.length ?? 0
+  const shortlistedCount = data?.filter((a) => a.pipeline_stage === 'shortlisted').length ?? 0
+  const reviewingCount = data?.filter((a) => a.pipeline_stage === 'reviewing').length ?? 0
+
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
       {/* Header */}
       <Animated.View
-        entering={FadeInDown.duration(400)}
-        className="flex-row items-center justify-between px-5 pt-4 pb-4"
+        entering={FadeInDown.duration(350)}
+        style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 }}
       >
-        <View className="flex-row items-center gap-3">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
-            My Applications
+            Applications
           </Text>
-          {data && data.length > 0 && (
-            <View
-              style={{
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                borderRadius: 10,
-                backgroundColor: '#FF624020',
-              }}
-            >
-              <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '700' }}>
-                {data.length}
-              </Text>
+          {totalCount > 0 && (
+            <View style={{ backgroundColor: '#FF624020', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: '#FF624030' }}>
+              <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '700' }}>{totalCount}</Text>
             </View>
           )}
         </View>
+
+        {/* Mini stat strip */}
+        {totalCount > 0 && (
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: 'Total', value: totalCount, color: '#FF6240' },
+              { label: 'Reviewing', value: reviewingCount, color: '#F59E0B' },
+              { label: 'Shortlisted', value: shortlistedCount, color: '#22C55E' },
+            ].map((s) => (
+              <View key={s.label} style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: s.color, fontSize: 22, fontWeight: '800' }}>{s.value}</Text>
+                <Text style={{ color: '#475569', fontSize: 10, marginTop: 2 }}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </Animated.View>
 
-      {/* Filter tabs */}
+      {/* Filter chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 8 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 8 }}
       >
         {FILTERS.map((f) => {
           const isActive = activeFilter === f.key
@@ -307,18 +302,12 @@ export default function ApplicationsScreen() {
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderRadius: 20,
-                backgroundColor: isActive ? '#FF6240' : '#131118',
+                backgroundColor: isActive ? '#FF6240' : '#0F0D1A',
                 borderWidth: 1,
                 borderColor: isActive ? '#FF6240' : '#1E1B2E',
               }}
             >
-              <Text
-                style={{
-                  color: isActive ? '#fff' : '#64748B',
-                  fontSize: 13,
-                  fontWeight: isActive ? '600' : '400',
-                }}
-              >
+              <Text style={{ color: isActive ? '#fff' : '#64748B', fontSize: 13, fontWeight: isActive ? '700' : '400' }}>
                 {f.label}
               </Text>
             </Pressable>

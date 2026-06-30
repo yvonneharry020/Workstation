@@ -140,7 +140,7 @@ export default function CompanyProfileViewScreen() {
               ) : (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1E1B2E' }}>
                   <Text style={{ color: '#FF6240', fontSize: 24, fontWeight: '800' }}>
-                    {(profile?.company_name ?? 'C')[0].toUpperCase()}
+                    {(profile?.company_name ?? 'C').charAt(0).toUpperCase()}
                   </Text>
                 </View>
               )}

@@ -301,7 +301,7 @@ export default function CandidatePending() {
           {/* Skip link */}
           <Animated.View entering={FadeInUp.delay(520).duration(400)}>
             <Pressable
-              onPress={() => router.replace('/(candidate)/')}
+              onPress={() => router.replace('/(candidate)/' as never)}
               style={{ alignItems: 'center', paddingVertical: 16 }}
             >
               <Text style={{ color: '#334155', fontSize: 14 }}>

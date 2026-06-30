@@ -214,168 +214,196 @@ export default function CandidateDashboard() {
   const completion = candidate?.profile_completion ?? 0
   const isOpenToWork = candidate?.is_open_to_work ?? false
   const firstName = candidate?.first_name ?? 'there'
+  const fullName = `${candidate?.first_name ?? ''} ${candidate?.last_name ?? ''}`.trim()
   const initials = `${(candidate?.first_name ?? 'U')[0]}${(candidate?.last_name ?? '')[0] ?? ''}`.toUpperCase()
   const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
+  const trustLabel = trustScore >= 80 ? 'Verified' : trustScore >= 50 ? 'Partial' : 'Unverified'
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF6240" />}
       >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(350)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#64748B', fontSize: 13 }}>{greeting()}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.5 }}>{firstName}</Text>
-              {isOpenToWork && (
-                <View style={{ backgroundColor: '#22C55E15', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: '#22C55E30' }}>
-                  <Text style={{ color: '#22C55E', fontSize: 10, fontWeight: '700' }}>Open to Work</Text>
-                </View>
-              )}
-            </View>
-            {candidate?.headline && (
-              <Text style={{ color: '#475569', fontSize: 12, marginTop: 2 }} numberOfLines={1}>{candidate.headline}</Text>
-            )}
+        {/* ── Header bar ── */}
+        <Animated.View entering={FadeInDown.duration(300)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}>
+          <View>
+            <Text style={{ color: '#475569', fontSize: 12, letterSpacing: 0.3 }}>{greeting()}</Text>
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 }}>{firstName} 👋</Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <Pressable onPress={() => router.push('/(candidate)/notifications' as never)} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }} className="active:opacity-70">
-              <BellIcon />
-            </Pressable>
-            {candidate?.avatar_url ? (
-              <Image source={{ uri: candidate.avatar_url }} style={{ width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: '#FF624040' }} contentFit="cover" />
-            ) : (
-              <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#FF624020', borderWidth: 2, borderColor: '#FF624040', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '800' }}>{initials}</Text>
-              </View>
-            )}
-          </View>
+          <Pressable
+            onPress={() => router.push('/(candidate)/notifications' as never)}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}
+            hitSlop={12}
+          >
+            <BellIcon />
+          </Pressable>
         </Animated.View>
 
-        {/* Trust + completion card */}
-        <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#131118', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
-            <TrustRing score={trustScore} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 12 }}>Profile completion</Text>
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{completion}%</Text>
+        {/* ── Hero identity card ── */}
+        <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ marginHorizontal: 20, marginBottom: 16 }}>
+          <View style={{ backgroundColor: '#0F0D1A', borderRadius: 24, borderWidth: 1, borderColor: '#1E1B2E', padding: 20, overflow: 'hidden' }}>
+            {/* Subtle glow accent */}
+            <View style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: '#FF624008' }} />
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              {/* Avatar */}
+              {candidate?.avatar_url ? (
+                <Image source={{ uri: candidate.avatar_url }} style={{ width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderColor: '#FF624040' }} contentFit="cover" />
+              ) : (
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#FF624020', borderWidth: 2, borderColor: '#FF624040', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: '#FF6240', fontSize: 18, fontWeight: '800' }}>{initials}</Text>
+                </View>
+              )}
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }} numberOfLines={1}>{fullName || firstName}</Text>
+                {candidate?.headline && (
+                  <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }} numberOfLines={1}>{candidate.headline}</Text>
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                  <View style={{ backgroundColor: `${trustColor}20`, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: `${trustColor}40` }}>
+                    <Text style={{ color: trustColor, fontSize: 10, fontWeight: '700' }}>{trustLabel}</Text>
+                  </View>
+                  {isOpenToWork && (
+                    <View style={{ backgroundColor: '#22C55E15', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderColor: '#22C55E30' }}>
+                      <Text style={{ color: '#22C55E', fontSize: 10, fontWeight: '700' }}>Open to Work</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={{ height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
+
+              {/* Trust ring */}
+              <TrustRing score={trustScore} />
+            </View>
+
+            {/* Profile completion bar */}
+            <View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <Text style={{ color: '#475569', fontSize: 11 }}>Profile strength</Text>
+                <Text style={{ color: completion >= 80 ? '#22C55E' : '#FF6240', fontSize: 11, fontWeight: '700' }}>{completion}%</Text>
+              </View>
+              <View style={{ height: 5, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
                 <View style={{ height: '100%', width: `${completion}%`, backgroundColor: completion >= 80 ? '#22C55E' : '#FF6240', borderRadius: 3 }} />
               </View>
+
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: trustColor }} />
-                  <Text style={{ color: '#64748B', fontSize: 11 }}>{trustScore >= 80 ? 'Verified' : trustScore >= 50 ? 'Partial' : 'Unverified'}</Text>
-                </View>
-                <Pressable onPress={() => toggleMutation.mutate(!isOpenToWork)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }} className="active:opacity-70">
-                  <View style={{ width: 32, height: 18, borderRadius: 9, backgroundColor: isOpenToWork ? '#22C55E' : '#3D3850', padding: 2, justifyContent: 'center', alignItems: isOpenToWork ? 'flex-end' : 'flex-start' }}>
-                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#fff' }} />
+                {completion < 80 ? (
+                  <Pressable
+                    onPress={() => router.push('/(candidate)/profile/edit' as never)}
+                    style={{ flex: 1, backgroundColor: '#FF624015', borderRadius: 10, paddingVertical: 9, alignItems: 'center', borderWidth: 1, borderColor: '#FF624030', marginRight: 10 }}
+                  >
+                    <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '700' }}>Complete profile →</Text>
+                  </Pressable>
+                ) : (
+                  <Text style={{ color: '#475569', fontSize: 11, flex: 1 }}>Profile complete 🎉</Text>
+                )}
+
+                <Pressable
+                  onPress={() => toggleMutation.mutate(!isOpenToWork)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
+                  <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: isOpenToWork ? '#22C55E' : '#3D3850', padding: 2, justifyContent: 'center', alignItems: isOpenToWork ? 'flex-end' : 'flex-start' }}>
+                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff' }} />
                   </View>
-                  <Text style={{ color: '#64748B', fontSize: 11 }}>Open</Text>
+                  <Text style={{ color: '#64748B', fontSize: 11 }}>Open to work</Text>
                 </Pressable>
               </View>
             </View>
           </View>
-          {completion < 80 && (
-            <Pressable onPress={() => router.push('/(candidate)/profile/edit' as never)} style={{ marginTop: 14, backgroundColor: '#FF624015', borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: '#FF624030' }} className="active:opacity-80">
-              <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>Complete your profile to get noticed</Text>
-            </Pressable>
-          )}
         </Animated.View>
 
-        {/* Stats row */}
-        <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 24 }}>
+        {/* ── Stats row ── */}
+        <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 20 }}>
           {[
-            { label: 'Applications', value: appCount ?? 0, color: '#FF6240' },
-            { label: 'Profile Views', value: viewCount ?? 0, color: '#0DD4C3' },
-            { label: 'Interviews', value: 0, color: '#A78BFA' },
+            { label: 'Applied', value: appCount ?? 0, color: '#FF6240', emoji: '📝' },
+            { label: 'Views (7d)', value: viewCount ?? 0, color: '#0DD4C3', emoji: '👁️' },
+            { label: 'Interviews', value: 0, color: '#A78BFA', emoji: '🗓️' },
           ].map((s) => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, alignItems: 'center' }}>
-              <Text style={{ color: s.color, fontSize: 22, fontWeight: '800' }}>{s.value}</Text>
-              <Text style={{ color: '#64748B', fontSize: 10, marginTop: 3, textAlign: 'center' }}>{s.label}</Text>
+            <View key={s.label} style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, marginBottom: 4 }}>{s.emoji}</Text>
+              <Text style={{ color: s.color, fontSize: 24, fontWeight: '800', lineHeight: 28 }}>{s.value}</Text>
+              <Text style={{ color: '#475569', fontSize: 10, marginTop: 2, textAlign: 'center' }}>{s.label}</Text>
             </View>
           ))}
         </Animated.View>
 
-        {/* Quick actions */}
-        <Animated.View entering={FadeInDown.delay(180).duration(350)} style={{ marginHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Quick actions</Text>
+        {/* ── Quick actions ── */}
+        <Animated.View entering={FadeInDown.delay(160).duration(350)} style={{ marginHorizontal: 20, marginBottom: 24 }}>
+          <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Quick actions</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {([
-              { label: 'Browse Jobs', icon: 'briefcase', route: '/(candidate)/jobs', color: '#FF6240' },
-              { label: 'My CV', icon: 'document', route: '/(candidate)/cv', color: '#0DD4C3' },
-              { label: 'Applied', icon: 'checkmark-circle', route: '/(candidate)/applications', color: '#A78BFA' },
-              { label: 'Profile', icon: 'person', route: '/(candidate)/profile', color: '#F59E0B' },
-            ] as const).map((action) => (
+              { label: 'Jobs', route: '/(candidate)/jobs', color: '#FF6240', emoji: '💼' },
+              { label: 'My CV', route: '/(candidate)/cv', color: '#0DD4C3', emoji: '📄' },
+              { label: 'Applied', route: '/(candidate)/applications', color: '#A78BFA', emoji: '✅' },
+              { label: 'Profile', route: '/(candidate)/profile', color: '#F59E0B', emoji: '👤' },
+            ] as const).map((a) => (
               <Pressable
-                key={action.label}
-                onPress={() => router.push(action.route as never)}
-                style={{ flex: 1, backgroundColor: `${action.color}10`, borderRadius: 14, borderWidth: 1, borderColor: `${action.color}25`, paddingVertical: 14, alignItems: 'center', gap: 6 }}
-                className="active:opacity-70"
+                key={a.label}
+                onPress={() => router.push(a.route as never)}
+                style={{ flex: 1, backgroundColor: `${a.color}10`, borderRadius: 14, borderWidth: 1, borderColor: `${a.color}25`, paddingVertical: 16, alignItems: 'center', gap: 6 }}
               >
-                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: `${action.color}20`, alignItems: 'center', justifyContent: 'center' }}>
-                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={action.color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                    {action.icon === 'briefcase' && <><Path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" /><Path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></>}
-                    {action.icon === 'document' && <><Path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><Path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></>}
-                    {action.icon === 'checkmark-circle' && <><Circle cx={12} cy={12} r={10} /><Path d="M9 12l2 2 4-4" /></>}
-                    {action.icon === 'person' && <><Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><Circle cx={12} cy={7} r={4} /></>}
-                  </Svg>
-                </View>
-                <Text style={{ color: action.color, fontSize: 10, fontWeight: '600', textAlign: 'center' }}>{action.label}</Text>
+                <Text style={{ fontSize: 22 }}>{a.emoji}</Text>
+                <Text style={{ color: a.color, fontSize: 10, fontWeight: '700' }}>{a.label}</Text>
               </Pressable>
             ))}
           </View>
         </Animated.View>
 
-        {/* Matched jobs */}
-        <Animated.View entering={FadeInDown.delay(240).duration(350)} style={{ marginBottom: 24 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 12 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Matched for you</Text>
-            <Pressable onPress={() => router.push('/(candidate)/jobs' as never)} className="active:opacity-70">
-              <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>See all</Text>
+        {/* ── Matched jobs ── */}
+        <Animated.View entering={FadeInDown.delay(200).duration(350)} style={{ marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 14 }}>
+            <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Matched for you</Text>
+            <Pressable onPress={() => router.push('/(candidate)/jobs' as never)}>
+              <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>See all →</Text>
             </Pressable>
           </View>
 
           {jobsLoading ? (
-            <View style={{ height: 120, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ height: 130, alignItems: 'center', justifyContent: 'center' }}>
               <ActivityIndicator color="#FF6240" />
             </View>
           ) : !jobs?.length ? (
-            <View style={{ marginHorizontal: 20, backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
-              <Text style={{ color: '#475569', fontSize: 13, textAlign: 'center' }}>Complete your profile to see job recommendations</Text>
+            <View style={{ marginHorizontal: 20, backgroundColor: '#0F0D1A', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
+              <Text style={{ fontSize: 28, marginBottom: 8 }}>🔍</Text>
+              <Text style={{ color: '#475569', fontSize: 13, textAlign: 'center' }}>Complete your profile to see tailored job matches</Text>
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
               {jobs.map((job) => {
-                const company = job.company_profiles?.company_name ?? 'Company'
-                const initials2 = company.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+                const companyName = job.company_profiles?.company_name ?? 'Company'
+                const initials2 = companyName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+                const modeColor = job.work_mode === 'remote' ? '#0DD4C3' : job.work_mode === 'hybrid' ? '#F59E0B' : '#A78BFA'
+                const modeLabel = job.work_mode === 'remote' ? 'Remote' : job.work_mode === 'hybrid' ? 'Hybrid' : 'On-site'
                 return (
                   <Pressable
                     key={job.id}
                     onPress={() => router.push(`/(candidate)/jobs/${job.id}` as never)}
-                    style={{ width: 240, backgroundColor: '#131118', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}
-                    className="active:opacity-80"
+                    style={{ width: 252, backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, overflow: 'hidden' }}
                   >
+                    {/* Color accent top bar */}
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: modeColor, borderTopLeftRadius: 20, borderTopRightRadius: 20 }} />
+
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                       {job.company_profiles?.logo_url ? (
-                        <Image source={{ uri: job.company_profiles.logo_url }} style={{ width: 38, height: 38, borderRadius: 10 }} contentFit="cover" />
+                        <Image source={{ uri: job.company_profiles.logo_url }} style={{ width: 40, height: 40, borderRadius: 10 }} contentFit="cover" />
                       ) : (
-                        <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '700' }}>{initials2}</Text>
+                        <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#FF624015', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FF624030' }}>
+                          <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '800' }}>{initials2}</Text>
                         </View>
                       )}
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{job.title}</Text>
-                        <Text style={{ color: '#64748B', fontSize: 11, marginTop: 1 }} numberOfLines={1}>{company}{job.city ? ` · ${job.city}` : ''}</Text>
+                        <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '700', lineHeight: 18 }} numberOfLines={2}>{job.title}</Text>
+                        <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{companyName}{job.city ? ` · ${job.city}` : ''}</Text>
                       </View>
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <WorkBadge mode={job.work_mode} />
-                      <Text style={{ color: '#475569', fontSize: 11 }}>{formatSalary(job.salary_min, job.salary_max, job.salary_is_confidential)}</Text>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ backgroundColor: `${modeColor}15`, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: `${modeColor}30` }}>
+                        <Text style={{ color: modeColor, fontSize: 10, fontWeight: '700' }}>{modeLabel}</Text>
+                      </View>
+                      <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '700' }}>{formatSalary(job.salary_min, job.salary_max, job.salary_is_confidential)}</Text>
                     </View>
                   </Pressable>
                 )
@@ -384,30 +412,30 @@ export default function CandidateDashboard() {
           )}
         </Animated.View>
 
-        {/* Recent applications */}
+        {/* ── Recent applications ── */}
         {(recentApps ?? []).length > 0 && (
-          <Animated.View entering={FadeInDown.delay(300).duration(350)} style={{ marginHorizontal: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Recent applications</Text>
-              <Pressable onPress={() => router.push('/(candidate)/applications' as never)} className="active:opacity-70">
-                <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>View all</Text>
+          <Animated.View entering={FadeInDown.delay(260).duration(350)} style={{ marginHorizontal: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Recent applications</Text>
+              <Pressable onPress={() => router.push('/(candidate)/applications' as never)}>
+                <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>View all →</Text>
               </Pressable>
             </View>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', overflow: 'hidden' }}>
+            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', overflow: 'hidden' }}>
               {recentApps!.map((app, idx) => {
                 const color = STAGE_COLOR[app.pipeline_stage] ?? '#64748B'
                 const label = STAGE_LABEL[app.pipeline_stage] ?? app.pipeline_stage
                 const jobTitle = app.job_postings?.title ?? 'Position'
                 const companyName = app.job_postings?.company_profiles?.company_name ?? 'Company'
                 return (
-                  <View key={app.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: idx < recentApps!.length - 1 ? 1 : 0, borderBottomColor: '#1E1B2E' }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, flexShrink: 0 }} />
+                  <View key={app.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 15, borderBottomWidth: idx < recentApps!.length - 1 ? 1 : 0, borderBottomColor: '#1E1B2E' }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, flexShrink: 0, shadowColor: color, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4 }} />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '500' }} numberOfLines={1}>{jobTitle}</Text>
-                      <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>{companyName}</Text>
+                      <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{jobTitle}</Text>
+                      <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{companyName}</Text>
                     </View>
-                    <View style={{ backgroundColor: `${color}20`, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3 }}>
-                      <Text style={{ color, fontSize: 10, fontWeight: '600' }}>{label}</Text>
+                    <View style={{ backgroundColor: `${color}20`, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderColor: `${color}40` }}>
+                      <Text style={{ color, fontSize: 10, fontWeight: '700' }}>{label}</Text>
                     </View>
                   </View>
                 )
