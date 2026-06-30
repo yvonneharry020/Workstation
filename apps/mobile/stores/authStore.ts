@@ -8,10 +8,12 @@ interface AuthState {
   role: UserRole | null
   isOnboardingComplete: boolean
   isLoading: boolean
+  isResolvingProfile: boolean
   setSession: (session: Session | null) => void
   setRole: (role: UserRole | null) => void
   setOnboardingComplete: (complete: boolean) => void
   setLoading: (loading: boolean) => void
+  setResolvingProfile: (resolving: boolean) => void
   reset: () => void
 }
 
@@ -21,6 +23,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   role: null,
   isOnboardingComplete: false,
   isLoading: true,
+  isResolvingProfile: false,
 
   setSession: (session) =>
     set({ session, user: session?.user ?? null }),
@@ -31,6 +34,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setLoading: (isLoading) => set({ isLoading }),
 
+  setResolvingProfile: (isResolvingProfile) => set({ isResolvingProfile }),
+
   reset: () =>
-    set({ session: null, user: null, role: null, isOnboardingComplete: false, isLoading: false }),
+    set({ session: null, user: null, role: null, isOnboardingComplete: false, isLoading: false, isResolvingProfile: false }),
 }))

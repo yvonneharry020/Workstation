@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Modal } from 'react-native'
+import { View, Modal, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
@@ -31,7 +31,9 @@ import { UpdateRequiredScreen } from '@/components/system/UpdateRequiredScreen'
 import { MaintenanceScreen } from '@/components/system/MaintenanceScreen'
 import type { UserRole } from '@workstation/types'
 
-SplashScreen.preventAutoHideAsync()
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync()
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,7 +115,7 @@ function SystemOverlay() {
 }
 
 export default function RootLayout() {
-  const { setSession, setRole, setOnboardingComplete, setLoading, reset } = useAuthStore()
+  const { setSession, setRole, setOnboardingComplete, setLoading, setResolvingProfile, reset } = useAuthStore()
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -127,32 +129,54 @@ export default function RootLayout() {
     JetBrainsMono_700Bold,
   })
 
+  // Safety net: if auth check hangs for any reason, unblock after 3s
   useEffect(() => {
-    if (!fontsLoaded) return
+    const timeout = setTimeout(() => setLoading(false), 3000)
+    return () => clearTimeout(timeout)
+  }, [setLoading])
 
-    SplashScreen.hideAsync()
+  useEffect(() => {
+    // On web, useFonts behaves differently — don't gate auth on it
+    if (!fontsLoaded && Platform.OS !== 'web') return
+
+    if (Platform.OS !== 'web') {
+      SplashScreen.hideAsync()
+    }
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       if (session?.user) {
-        await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+        try {
+          await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+        } catch {
+          // profile fetch failed — proceed without role, app will redirect to auth
+        }
       }
+      setLoading(false)
+    }).catch(() => {
       setLoading(false)
     })
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       if (session?.user) {
-        await resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+        setResolvingProfile(true)
+        resolveProfileState(session.user.id, setRole, setOnboardingComplete)
+          .catch(() => {
+            setRole(null)
+            setOnboardingComplete(false)
+          })
+          .finally(() => setResolvingProfile(false))
       } else {
         reset()
+        setLoading(false)
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [fontsLoaded, setSession, setRole, setOnboardingComplete, setLoading, reset])
+  }, [fontsLoaded, setSession, setRole, setOnboardingComplete, setLoading, setResolvingProfile, reset])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -12,11 +12,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hivedigital.workstation",
-      "associatedDomains": ["applinks:workstationng.com"],
+      "associatedDomains": [
+        "applinks:workstationng.com"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "Workstation needs camera access for identity verification and profile photos.",
         "NSFaceIDUsageDescription": "Workstation uses Face ID for secure, fast login.",
@@ -41,9 +45,15 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "workstationng.com" }
+            {
+              "scheme": "https",
+              "host": "workstationng.com"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -79,7 +89,8 @@
         {
           "photosPermission": "Workstation needs access to your photos for profile and portfolio uploads."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

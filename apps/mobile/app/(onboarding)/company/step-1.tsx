@@ -6,7 +6,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -46,6 +45,7 @@ const STEPS_TOTAL = 7
 
 export default function CompanyStep1() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     control,
@@ -64,6 +64,7 @@ export default function CompanyStep1() {
 
   const handleCreate = async (data: FormData) => {
     setIsSubmitting(true)
+    setSubmitError(null)
     try {
       const { error } = await supabase.auth.signUp({
         email: data.businessEmail,
@@ -78,7 +79,7 @@ export default function CompanyStep1() {
       })
 
       if (error) {
-        Alert.alert('Registration failed', error.message)
+        setSubmitError(error.message)
         return
       }
 
@@ -98,8 +99,8 @@ export default function CompanyStep1() {
       }
 
       router.push('/(onboarding)/company/step-2')
-    } catch {
-      Alert.alert('Error', 'Something went wrong. Please try again.')
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -217,6 +218,12 @@ export default function CompanyStep1() {
             By registering you confirm you are authorised to act on behalf of this company.
             All data is processed under NDPR.
           </Text>
+
+          {submitError && (
+            <View className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-4">
+              <Text className="text-red-400 text-sm text-center">{submitError}</Text>
+            </View>
+          )}
 
           <Pressable
             onPress={handleSubmit(handleCreate)}

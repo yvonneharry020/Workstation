@@ -1,11 +1,16 @@
-import { MMKV } from 'react-native-mmkv'
-
-const storage = new MMKV({ id: 'workstation-storage' })
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const HAS_SEEN_TUTORIAL = 'has_seen_tutorial'
 
 export const Storage = {
-  hasSeenTutorial: (): boolean => storage.getBoolean(HAS_SEEN_TUTORIAL) ?? false,
-  markTutorialSeen: (): void => storage.set(HAS_SEEN_TUTORIAL, true),
-  clearAll: (): void => storage.clearAll(),
+  hasSeenTutorial: async (): Promise<boolean> => {
+    const val = await AsyncStorage.getItem(HAS_SEEN_TUTORIAL)
+    return val === 'true'
+  },
+  markTutorialSeen: async (): Promise<void> => {
+    await AsyncStorage.setItem(HAS_SEEN_TUTORIAL, 'true')
+  },
+  clearAll: async (): Promise<void> => {
+    await AsyncStorage.clear()
+  },
 }

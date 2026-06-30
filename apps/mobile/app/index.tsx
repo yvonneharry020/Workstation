@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { View, Text } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, Platform } from 'react-native'
 import { Redirect } from 'expo-router'
 import Animated, {
   useSharedValue,
@@ -13,11 +13,12 @@ import { useAuthStore } from '@/stores/authStore'
 import { Storage } from '@/lib/storage'
 
 function SplashContent() {
-  const logoScale = useSharedValue(0.25)
-  const logoOpacity = useSharedValue(0)
-  const titleOpacity = useSharedValue(0)
-  const taglineOpacity = useSharedValue(0)
-  const dotsOpacity = useSharedValue(0)
+  const isWeb = Platform.OS === 'web'
+  const logoScale = useSharedValue(isWeb ? 1 : 0.25)
+  const logoOpacity = useSharedValue(isWeb ? 1 : 0)
+  const titleOpacity = useSharedValue(isWeb ? 1 : 0)
+  const taglineOpacity = useSharedValue(isWeb ? 1 : 0)
+  const dotsOpacity = useSharedValue(isWeb ? 1 : 0)
 
   useEffect(() => {
     logoScale.value = withSpring(1, { damping: 14, stiffness: 120 })
@@ -109,12 +110,17 @@ function SplashContent() {
 }
 
 export default function Index() {
-  const { session, role, isOnboardingComplete, isLoading } = useAuthStore()
+  const { session, role, isOnboardingComplete, isLoading, isResolvingProfile } = useAuthStore()
+  const [hasSeenTutorial, setHasSeenTutorial] = useState<boolean | null>(null)
 
-  if (isLoading) return <SplashContent />
+  useEffect(() => {
+    Storage.hasSeenTutorial().then(setHasSeenTutorial)
+  }, [])
+
+  if (isLoading || isResolvingProfile || hasSeenTutorial === null) return <SplashContent />
 
   if (!session) {
-    if (!Storage.hasSeenTutorial()) {
+    if (!hasSeenTutorial) {
       return <Redirect href="/(tutorial)/tutorial-1" />
     }
     return <Redirect href="/(auth)/welcome" />

@@ -41,10 +41,10 @@ function BriefcaseIcon() {
   )
 }
 
-function CheckIcon() {
+function ShieldIcon() {
   return (
-    <Svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="#0DD4C3" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M20 6L9 17l-5-5" />
+    <Svg width={11} height={11} viewBox="0 0 24 24" fill="#0DD4C3" stroke="none">
+      <Path d="M12 2L3 7v5c0 5.25 3.75 10.2 9 11.4C17.25 22.2 21 17.25 21 12V7l-9-5z" />
     </Svg>
   )
 }
@@ -54,19 +54,23 @@ type Job = {
   title: string
   employment_type: string | null
   work_mode: string | null
-  location_state: string | null
+  city: string | null
   salary_min: number | null
   salary_max: number | null
-  salary_currency: string | null
   created_at: string
   company_profiles: {
     company_name: string
-    trust_score: number | null
-    is_verified: boolean
+    cac_verified: boolean
   } | null
 }
 
-const JOB_TYPES = ['All', 'Full-time', 'Part-time', 'Contract', 'Internship']
+const JOB_TYPES: { label: string; value: string }[] = [
+  { label: 'All', value: 'All' },
+  { label: 'Full-time', value: 'full_time' },
+  { label: 'Part-time', value: 'part_time' },
+  { label: 'Contract', value: 'contract' },
+  { label: 'Internship', value: 'internship' },
+]
 
 function formatSalary(min: number | null, max: number | null): string | null {
   if (!min && !max) return null
@@ -89,12 +93,30 @@ function formatPostedDate(isoDate: string): string {
   return `${Math.floor(diff / 30)}mo ago`
 }
 
+function formatEmploymentType(type: string | null): string | null {
+  const map: Record<string, string> = {
+    full_time: 'Full-time',
+    part_time: 'Part-time',
+    contract: 'Contract',
+    internship: 'Internship',
+    freelance: 'Freelance',
+  }
+  return type ? (map[type] ?? type) : null
+}
+
+function formatWorkMode(mode: string | null): string | null {
+  const map: Record<string, string> = {
+    remote: 'Remote',
+    hybrid: 'Hybrid',
+    on_site: 'On-site',
+  }
+  return mode ? (map[mode] ?? mode) : null
+}
+
 function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
   const company = job.company_profiles
   const salary = formatSalary(job.salary_min, job.salary_max)
-  const isVerified = company?.is_verified ?? false
-  const trustScore = company?.trust_score ?? 0
-  const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
+  const isVerified = company?.cac_verified ?? false
 
   return (
     <Pressable
@@ -115,49 +137,30 @@ function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
                 className="flex-row items-center gap-0.5 rounded px-1 py-0.5"
                 style={{ backgroundColor: '#0DD4C308' }}
               >
-                <CheckIcon />
+                <ShieldIcon />
                 <Text className="text-teal-500 text-xs font-medium">Verified</Text>
               </View>
             )}
           </View>
         </View>
-
-        {trustScore > 0 && (
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              borderWidth: 2,
-              borderColor: trustColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#09080E',
-            }}
-          >
-            <Text style={{ color: trustColor, fontSize: 11, fontWeight: '700' }}>
-              {trustScore}
-            </Text>
-          </View>
-        )}
       </View>
 
       <View className="flex-row flex-wrap gap-2">
-        {job.location_state && (
+        {job.city && (
           <View className="flex-row items-center gap-1 bg-surface-muted rounded-lg px-2 py-1">
             <MapPinIcon />
-            <Text className="text-slate-400 text-xs">{job.location_state}</Text>
+            <Text className="text-slate-400 text-xs">{job.city}</Text>
           </View>
         )}
         {job.employment_type && (
           <View className="flex-row items-center gap-1 bg-surface-muted rounded-lg px-2 py-1">
             <BriefcaseIcon />
-            <Text className="text-slate-400 text-xs">{job.employment_type}</Text>
+            <Text className="text-slate-400 text-xs">{formatEmploymentType(job.employment_type)}</Text>
           </View>
         )}
         {job.work_mode && (
           <View className="bg-surface-muted rounded-lg px-2 py-1">
-            <Text className="text-slate-400 text-xs">{job.work_mode}</Text>
+            <Text className="text-slate-400 text-xs">{formatWorkMode(job.work_mode)}</Text>
           </View>
         )}
       </View>
@@ -183,21 +186,19 @@ export default function BrowseJobsScreen() {
     queryKey: ['public-jobs', search, activeType],
     queryFn: async () => {
       let query = supabase
-        .from('job_listings')
+        .from('job_postings')
         .select(`
           id,
           title,
           employment_type,
           work_mode,
-          location_state,
+          city,
           salary_min,
           salary_max,
-          salary_currency,
           created_at,
-          company_profiles (
+          company_profiles!company_id(
             company_name,
-            trust_score,
-            is_verified
+            cac_verified
           )
         `)
         .eq('status', 'active')
@@ -264,22 +265,22 @@ export default function BrowseJobsScreen() {
           data={JOB_TYPES}
           horizontal
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item.value}
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => setActiveType(item)}
+              onPress={() => setActiveType(item.value)}
               className="mr-2 rounded-xl px-4 py-2"
               style={{
-                backgroundColor: activeType === item ? '#FF6240' : '#131118',
+                backgroundColor: activeType === item.value ? '#FF6240' : '#131118',
                 borderWidth: 1,
-                borderColor: activeType === item ? '#FF6240' : '#3D3850',
+                borderColor: activeType === item.value ? '#FF6240' : '#3D3850',
               }}
             >
               <Text
                 className="text-sm font-medium"
-                style={{ color: activeType === item ? '#fff' : '#94a3b8' }}
+                style={{ color: activeType === item.value ? '#fff' : '#94a3b8' }}
               >
-                {item}
+                {item.label}
               </Text>
             </Pressable>
           )}

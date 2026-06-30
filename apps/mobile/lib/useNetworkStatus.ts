@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppState, type AppStateStatus } from 'react-native'
+import { AppState, Platform, type AppStateStatus } from 'react-native'
 
 const CHECK_INTERVAL_MS = 5_000
 const TIMEOUT_MS = 4_000
 
 async function checkConnectivity(): Promise<boolean> {
+  // On web, navigator.onLine is reliable and avoids CORS errors from cross-origin pings
+  if (Platform.OS === 'web') {
+    if (typeof navigator !== 'undefined') return navigator.onLine
+    return true
+  }
+
   try {
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -37,9 +43,19 @@ export function useNetworkStatus() {
       if (state === 'active') runCheck()
     })
 
+    // On web, also listen to the browser's native online/offline events
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('online', runCheck)
+      window.addEventListener('offline', runCheck)
+    }
+
     return () => {
       clearInterval(intervalRef.current)
       sub.remove()
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.removeEventListener('online', runCheck)
+        window.removeEventListener('offline', runCheck)
+      }
     }
   }, [])
 
