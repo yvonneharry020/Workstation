@@ -128,12 +128,12 @@ export default function CandidateSupportTicketScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0D0C14]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#F5F0E8]" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-3 border-b border-[#1E1B2E] flex-row items-center gap-3">
+      <View className="px-4 py-3 border-b border-[#DDD6C9] flex-row items-center gap-3">
         <TouchableOpacity
           onPress={() => view === 'new' ? setView('list') : router.back()}
-          className="w-9 h-9 items-center justify-center rounded-full bg-[#1E1B2E]"
+          className="w-9 h-9 items-center justify-center rounded-full bg-[#EDE7DB]"
         >
           <Text className="text-[#94A3B8] text-lg">←</Text>
         </TouchableOpacity>
@@ -171,7 +171,7 @@ export default function CandidateSupportTicketScreen() {
             renderItem={({ item: t }) => {
               const s = STATUS_CONFIG[t.status]
               return (
-                <View className="bg-[#13111F] border border-[#1E1B2E] rounded-2xl p-4">
+                <View className="bg-[#F0EBE1] border border-[#DDD6C9] rounded-2xl p-4">
                   <View className="flex-row items-start justify-between mb-2">
                     <View className="flex-1 mr-3">
                       <Text className="text-[10px] font-mono text-[#475569] mb-0.5">{t.ticket_number}</Text>
@@ -186,13 +186,13 @@ export default function CandidateSupportTicketScreen() {
                   </View>
                   <Text className="text-xs text-[#475569] mb-3 leading-relaxed" numberOfLines={2}>{t.description}</Text>
                   <View className="flex-row items-center justify-between">
-                    <View className="px-2 py-0.5 rounded bg-[#1E1B2E]">
+                    <View className="px-2 py-0.5 rounded bg-[#EDE7DB]">
                       <Text className="text-[10px] text-[#64748B] capitalize">{t.category.replace('_', ' ')}</Text>
                     </View>
                     <Text className="text-[10px] text-[#475569] font-mono">{formatDate(t.created_at)}</Text>
                   </View>
                   {t.status === 'resolved' && t.resolution_note && (
-                    <View className="mt-3 pt-3 border-t border-[#1E1B2E]">
+                    <View className="mt-3 pt-3 border-t border-[#DDD6C9]">
                       <Text className="text-[10px] text-[#10B981] font-semibold mb-0.5">Resolution</Text>
                       <Text className="text-xs text-[#64748B]">{t.resolution_note}</Text>
                     </View>
@@ -208,24 +208,24 @@ export default function CandidateSupportTicketScreen() {
           <Text className="text-xs text-[#475569] mb-4">Describe your issue and we'll assign it to the right team.</Text>
 
           {/* Subject */}
-          <Text className="text-xs font-semibold text-[#94A3B8] mb-1.5">Subject *</Text>
+          <Text className="text-xs font-semibold text-[#475569] mb-1.5">Subject *</Text>
           <TextInput
             value={subject}
             onChangeText={setSubject}
             placeholder="Brief summary of your issue"
             placeholderTextColor="#475569"
             maxLength={120}
-            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-4"
+            className="bg-[#F0EBE1] border border-[#DDD6C9] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-4"
           />
 
           {/* Category */}
-          <Text className="text-xs font-semibold text-[#94A3B8] mb-1.5">Category *</Text>
+          <Text className="text-xs font-semibold text-[#475569] mb-1.5">Category *</Text>
           <View className="flex-row flex-wrap gap-2 mb-4">
             {CATEGORIES.map(c => (
               <TouchableOpacity
                 key={c.value}
                 onPress={() => setCategory(c.value)}
-                className={`px-3 py-1.5 rounded-lg border ${category === c.value ? 'bg-[#FF6240] border-[#FF6240]' : 'bg-[#13111F] border-[#1E1B2E]'}`}
+                className={`px-3 py-1.5 rounded-lg border ${category === c.value ? 'bg-[#FF6240] border-[#FF6240]' : 'bg-[#F0EBE1] border-[#DDD6C9]'}`}
               >
                 <Text className={`text-xs font-semibold ${category === c.value ? 'text-[#1A1625]' : 'text-[#64748B]'}`}>{c.label}</Text>
               </TouchableOpacity>
@@ -233,17 +233,17 @@ export default function CandidateSupportTicketScreen() {
           </View>
 
           {/* Description */}
-          <Text className="text-xs font-semibold text-[#94A3B8] mb-1.5">Description *</Text>
+          <Text className="text-xs font-semibold text-[#475569] mb-1.5">Description *</Text>
           <TextInput
             value={description}
             onChangeText={setDescription}
             placeholder="Explain your issue in detail — the more info, the faster we can help"
-            placeholderTextColor="#475569"
+            placeholderTextColor="#94A3B8"
             multiline
             numberOfLines={6}
             maxLength={2000}
             textAlignVertical="top"
-            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-2"
+            className="bg-[#F0EBE1] border border-[#DDD6C9] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-2"
             style={{ minHeight: 140 }}
           />
           <Text className="text-[10px] text-[#475569] text-right mb-6">{description.length}/2000</Text>
@@ -251,7 +251,7 @@ export default function CandidateSupportTicketScreen() {
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={submitting || !subject.trim() || !description.trim()}
-            className={`py-4 rounded-xl items-center ${submitting || !subject.trim() || !description.trim() ? 'bg-[#1E1B2E]' : 'bg-[#FF6240]'}`}
+            className={`py-4 rounded-xl items-center ${submitting || !subject.trim() || !description.trim() ? 'bg-[#DDD6C9]' : 'bg-[#FF6240]'}`}
           >
             {submitting ? (
               <ActivityIndicator color="#fff" />

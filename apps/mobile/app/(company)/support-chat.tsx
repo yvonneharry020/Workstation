@@ -334,7 +334,7 @@ export default function CompanySupportChatScreen() {
     setMessages(prev => [...prev, optimisticMsg])
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const { data: inserted, error } = await supabase.from('chat_messages').insert({
       thread_id: thread.id,
       sender_id: user?.id ?? null,
       sender_type: 'user',
@@ -344,16 +344,17 @@ export default function CompanySupportChatScreen() {
       attachment_url: null,
       attachment_type: null,
       attachment_name: null,
-    })
+    }).select('id').single()
 
-    if (!error) {
+    if (!error && inserted) {
+      setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? { ...m, id: (inserted as { id: string }).id } : m))
       await supabase.from('chat_threads').update({
         last_message: content,
         last_message_at: new Date().toISOString(),
         unread_admin: 1,
       }).eq('id', thread.id)
       logEvent({ event: 'company.support_message_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
-    } else {
+    } else if (error) {
       setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
       Alert.alert('Error', 'Failed to send message. Please try again.')
       setInput(content)

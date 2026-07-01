@@ -277,7 +277,7 @@ export default function CandidatePending() {
 
           {/* ── Boost CTA ── */}
           <Animated.View entering={FadeInUp.delay(420).duration(400)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#180C00', borderRadius: 20, borderWidth: 1, borderColor: '#FF624030', padding: 20 }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 20, borderWidth: 1, borderColor: '#FF624030', padding: 20 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18 }}>⚡</Text>

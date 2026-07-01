@@ -91,14 +91,16 @@ export default function OtpVerifyScreen() {
       if (mode === 'reset') {
         router.replace('/(auth)/reset-password')
       } else if (mode === 'company_signup') {
-        router.replace({
-          pathname: '/(onboarding)/company/step-2' as never,
-          params: {
-            rcNumber: rcNumber ?? '',
-            businessEmail: businessEmail ?? '',
-            phone: phone ?? '',
-          },
-        })
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('company_profiles').upsert({
+            id: user.id,
+            business_email: businessEmail ?? user.email ?? '',
+            phone: phone ?? user.user_metadata?.phone ?? '',
+            rc_number: rcNumber ?? '',
+          }, { onConflict: 'id' })
+        }
+        router.replace('/(company)/' as never)
       } else {
         router.replace('/(auth)/welcome')
       }

@@ -199,7 +199,11 @@ export default function CandidateSupportChatScreen() {
         event: 'INSERT', schema: 'public', table: 'chat_messages',
         filter: `thread_id=eq.${thread.id}`,
       }, (payload) => {
-        setMessages(prev => [...prev, payload.new as Message])
+        const incoming = payload.new as Message
+        setMessages(prev => {
+          if (prev.some(m => m.id === incoming.id)) return prev
+          return [...prev, incoming]
+        })
         setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
       })
       .subscribe()
@@ -312,10 +316,28 @@ export default function CandidateSupportChatScreen() {
     setSending(true)
 
     const { data: { user } } = await supabase.auth.getUser()
-    const profile = await supabase.from('candidate_profiles').select('full_name').eq('user_id', user?.id ?? '').maybeSingle()
-    const name = profile?.data?.full_name ?? user?.email?.split('@')[0] ?? 'Candidate'
+    const profile = await supabase.from('candidate_profiles').select('first_name, last_name').eq('id', user?.id ?? '').maybeSingle()
+    const name = profile?.data
+      ? `${profile.data.first_name ?? ''} ${profile.data.last_name ?? ''}`.trim() || (user?.email?.split('@')[0] ?? 'Candidate')
+      : (user?.email?.split('@')[0] ?? 'Candidate')
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const optimisticId = `optimistic-${Date.now()}`
+    const optimisticMsg: Message = {
+      id: optimisticId,
+      created_at: new Date().toISOString(),
+      thread_id: thread.id,
+      sender_type: 'user',
+      sender_name: name,
+      content,
+      is_read: false,
+      attachment_url: null,
+      attachment_type: null,
+      attachment_name: null,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
+
+    const { data: inserted, error } = await supabase.from('chat_messages').insert({
       thread_id: thread.id,
       sender_id: user?.id ?? null,
       sender_type: 'user',
@@ -325,22 +347,23 @@ export default function CandidateSupportChatScreen() {
       attachment_url: null,
       attachment_type: null,
       attachment_name: null,
-    })
+    }).select('id').single()
 
-    if (!error) {
+    if (!error && inserted) {
+      setMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: (inserted as { id: string }).id } : m))
       await supabase.from('chat_threads').update({
         last_message: content,
         last_message_at: new Date().toISOString(),
         unread_admin: 1,
       }).eq('id', thread.id)
       logEvent({ event: 'candidate.support_message_sent', app: 'candidate_app', targetId: thread.id, targetType: 'chat_thread' })
-    } else {
+    } else if (error) {
+      setMessages(prev => prev.filter(m => m.id !== optimisticId))
       Alert.alert('Error', 'Failed to send message. Please try again.')
       setInput(content)
     }
 
     setSending(false)
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
   }
 
   if (loading) {

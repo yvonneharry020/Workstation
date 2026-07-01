@@ -213,9 +213,11 @@ export default function CandidateDashboard() {
   const trustScore = candidate?.trust_scores?.[0]?.score ?? 0
   const completion = candidate?.profile_completion ?? 0
   const isOpenToWork = candidate?.is_open_to_work ?? false
-  const firstName = candidate?.first_name ?? 'there'
-  const fullName = `${candidate?.first_name ?? ''} ${candidate?.last_name ?? ''}`.trim()
-  const initials = `${(candidate?.first_name ?? 'U')[0]}${(candidate?.last_name ?? '')[0] ?? ''}`.toUpperCase()
+  const metaFirst = user?.user_metadata?.first_name as string | undefined
+  const metaLast = user?.user_metadata?.last_name as string | undefined
+  const firstName = candidate?.first_name ?? metaFirst ?? 'there'
+  const fullName = `${candidate?.first_name ?? metaFirst ?? ''} ${candidate?.last_name ?? metaLast ?? ''}`.trim()
+  const initials = `${(candidate?.first_name ?? metaFirst ?? 'U')[0]}${(candidate?.last_name ?? metaLast ?? '')[0] ?? ''}`.toUpperCase()
   const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
   const trustLabel = trustScore >= 80 ? 'Verified' : trustScore >= 50 ? 'Partial' : 'Unverified'
 

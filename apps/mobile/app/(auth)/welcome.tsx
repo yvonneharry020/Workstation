@@ -199,7 +199,7 @@ export default function WelcomeScreen() {
           <Pressable
             onPress={() => router.push('/(auth)/login')}
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-70"
-            style={{ backgroundColor: '#1A1825', borderWidth: 1, borderColor: '#2A2738', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
+            style={{ backgroundColor: '#F0EBE1', borderWidth: 1.5, borderColor: '#DDD6C9', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
             <Text className="text-[#1A1625] font-semibold text-base" style={{ color: '#1A1625', fontWeight: '600', fontSize: 16 }}>Sign in</Text>
           </Pressable>
