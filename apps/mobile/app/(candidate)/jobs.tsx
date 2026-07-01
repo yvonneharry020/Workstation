@@ -273,9 +273,9 @@ export default function JobsScreen() {
 
       <ScrollView
         horizontal
-
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 8 }}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8, gap: 8 }}
       >
         {FILTERS.map((f) => (
           <Pressable

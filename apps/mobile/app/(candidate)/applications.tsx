@@ -290,7 +290,8 @@ export default function ApplicationsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 8 }}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8, gap: 8 }}
       >
         {FILTERS.map((f) => {
           const isActive = activeFilter === f.key

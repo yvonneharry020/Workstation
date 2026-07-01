@@ -4,25 +4,36 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
+import { supabase } from '@/lib/supabase'
 
 const TOTAL_STEPS = 5
 const OTP_LENGTH = 6
 const RESEND_COOLDOWN = 60
 
-const IS_DEV_MOCK = process.env.EXPO_PUBLIC_MOCK_VERIFICATION === 'true'
-const DEV_OTP = '123456'
-
-function PhoneIcon() {
+function MailIcon() {
   return (
     <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#0DD4C3" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.07h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.7a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+      <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <Path d="M22 6l-10 7L2 6" />
     </Svg>
   )
 }
 
 export default function CandidateStep2() {
-  const params = useLocalSearchParams<{ phone?: string }>()
-  const phone = params.phone ?? ''
+  const params = useLocalSearchParams<{
+    email?: string
+    firstName?: string
+    lastName?: string
+    otherNames?: string
+    dateOfBirth?: string
+    gender?: string
+    phone?: string
+  }>()
+
+  const email = params.email ?? ''
+  const maskedEmail = email
+    ? email.replace(/^(.{2})(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(Math.max(0, b.length)) + c)
+    : 'your email'
 
   const [otp, setOtp] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
@@ -60,44 +71,67 @@ export default function CandidateStep2() {
       Alert.alert('Enter the full code', 'Please enter all 6 digits.')
       return
     }
+    if (!email) {
+      Alert.alert('Error', 'Missing email address. Please go back and try again.')
+      return
+    }
 
     setIsVerifying(true)
     try {
-      if (IS_DEV_MOCK) {
-        if (otp !== DEV_OTP) {
-          Alert.alert('Incorrect code', 'In dev mode, use 123456.')
-          setOtp('')
-          return
-        }
-        await new Promise((r) => setTimeout(r, 800))
-        router.push('/(onboarding)/candidate/step-3')
+      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+      })
+
+      if (verifyError) {
+        Alert.alert('Invalid code', verifyError.message || 'The code you entered is incorrect or has expired.')
+        setOtp('')
         return
       }
 
-      // Production: Termii verification via backend
-      // For now route to next step — real OTP call wired at backend level
-      await new Promise((r) => setTimeout(r, 600))
+      const userId = verifyData.user?.id
+      if (userId) {
+        await supabase.from('candidate_profiles').upsert({
+          id: userId,
+          first_name: params.firstName || null,
+          last_name: params.lastName || null,
+          other_names: params.otherNames || null,
+          date_of_birth: params.dateOfBirth || null,
+          gender: params.gender || null,
+        })
+
+        if (params.phone) {
+          await supabase.from('profiles').update({ phone: params.phone }).eq('id', userId)
+        }
+      }
+
       router.push('/(onboarding)/candidate/step-3')
+    } catch {
+      Alert.alert('Error', 'Something went wrong. Please try again.')
     } finally {
       setIsVerifying(false)
     }
   }
 
   const handleResend = async () => {
+    if (!email) return
     setIsResending(true)
     try {
-      await new Promise((r) => setTimeout(r, 600))
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      if (error) {
+        Alert.alert('Could not resend', error.message)
+        return
+      }
       setOtp('')
       startCountdown()
-      Alert.alert('Code resent', IS_DEV_MOCK ? 'Dev mode: use 123456' : 'A new code has been sent.')
+      Alert.alert('Code resent', `A new verification code has been sent to ${maskedEmail}`)
+    } catch {
+      Alert.alert('Error', 'Could not resend the code. Please try again.')
     } finally {
       setIsResending(false)
     }
   }
-
-  const maskedPhone = phone
-    ? phone.replace(/(\d{3})(\d+)(\d{4})$/, (_, a, b, c) => a + '*'.repeat(b.length) + c)
-    : 'your phone number'
 
   const digits = otp.split('').concat(Array(OTP_LENGTH - otp.length).fill(''))
 
@@ -128,7 +162,7 @@ export default function CandidateStep2() {
           className="bg-surface-card border border-surface-border rounded-2xl items-center justify-center mb-5"
           style={{ width: 64, height: 64 }}
         >
-          <PhoneIcon />
+          <MailIcon />
         </View>
         <Text
           style={{
@@ -140,19 +174,12 @@ export default function CandidateStep2() {
             marginBottom: 8,
           }}
         >
-          Verify your phone
+          Verify your email
         </Text>
         <Text className="text-slate-400 text-sm text-center leading-5 px-4">
           We sent a 6-digit code to{'\n'}
-          <Text className="text-white font-medium">{maskedPhone}</Text>
+          <Text className="text-white font-medium">{maskedEmail}</Text>
         </Text>
-        {IS_DEV_MOCK && (
-          <View className="mt-3 bg-surface-card border border-surface-border rounded-xl px-4 py-2">
-            <Text style={{ color: '#F59E0B', fontSize: 12, textAlign: 'center' }}>
-              Dev mode — use code: 123456
-            </Text>
-          </View>
-        )}
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(100).duration(400)}>
@@ -233,7 +260,7 @@ export default function CandidateStep2() {
         </View>
 
         <Text className="text-slate-600 text-xs text-center mt-4">
-          Code expires in 15 minutes · Wrong number?{' '}
+          Code expires in 10 minutes · Wrong email?{' '}
           <Text className="text-primary-400" onPress={() => router.back()}>Go back</Text>
         </Text>
       </Animated.View>

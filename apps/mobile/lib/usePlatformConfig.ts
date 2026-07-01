@@ -16,8 +16,8 @@ const DEFAULT: PlatformConfig = {
 
 function compareVersions(a: string, b: string): number {
   const parse = (v: string) => v.split('.').map(Number)
-  const [aMajor, aMinor = 0, aPatch = 0] = parse(a)
-  const [bMajor, bMinor = 0, bPatch = 0] = parse(b)
+  const [aMajor = 0, aMinor = 0, aPatch = 0] = parse(a)
+  const [bMajor = 0, bMinor = 0, bPatch = 0] = parse(b)
   if (aMajor !== bMajor) return aMajor - bMajor
   if (aMinor !== bMinor) return aMinor - bMinor
   return aPatch - bPatch

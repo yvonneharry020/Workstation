@@ -28,7 +28,7 @@ async function checkConnectivity(): Promise<boolean> {
 
 export function useNetworkStatus() {
   const [isOnline, setIsOnline] = useState(true)
-  const intervalRef = useRef<ReturnType<typeof setInterval>>()
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
 
   const runCheck = async () => {
     const online = await checkConnectivity()

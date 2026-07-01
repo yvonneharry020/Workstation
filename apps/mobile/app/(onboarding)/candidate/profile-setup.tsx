@@ -136,14 +136,11 @@ export default function CandidateProfileSetup() {
     try {
       if (user?.id) {
         await supabase.from('candidate_profiles').update({
-          job_categories: selectedCategories,
-          years_experience: parseInt(yearsExperience),
-          salary_min: minSalary ? parseInt(minSalary) * 1000 : null,
-          salary_max: maxSalary ? parseInt(maxSalary) * 1000 : null,
+          experience_years: parseInt(yearsExperience),
+          desired_salary_min: minSalary ? parseInt(minSalary) * 1000 : null,
+          desired_salary_max: maxSalary ? parseInt(maxSalary) * 1000 : null,
           preferred_work_mode: workMode,
-          availability_status: availability,
           bio: bio.trim() || null,
-          profile_complete: true,
         }).eq('id', user.id)
       }
 

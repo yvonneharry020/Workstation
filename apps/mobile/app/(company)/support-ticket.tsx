@@ -95,7 +95,7 @@ export default function CompanySupportTicketScreen() {
     }
     setSubmitting(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const profile = await supabase.from('company_profiles').select('company_name').eq('user_id', user?.id ?? '').maybeSingle()
+    const profile = await supabase.from('company_profiles').select('company_name').eq('id', user?.id ?? '').maybeSingle()
     const name = profile?.data?.company_name ?? user?.email?.split('@')[0] ?? 'Company'
 
     const { data, error } = await supabase.from('support_tickets').insert({

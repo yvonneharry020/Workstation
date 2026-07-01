@@ -157,23 +157,18 @@ export default function CandidateStep1() {
         return
       }
 
-      const userId = authData.user?.id
-      if (userId) {
-        await Promise.all([
-          supabase.from('candidate_profiles').upsert({
-            id: userId,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            other_names: data.otherNames || null,
-            date_of_birth: dob,
-            gender: data.gender,
-            state_of_origin: data.stateOfOrigin,
-          }),
-          supabase.from('profiles').update({ phone: data.phone }).eq('id', userId),
-        ])
-      }
-
-      router.push('/(onboarding)/candidate/step-2')
+      router.push({
+        pathname: '/(onboarding)/candidate/step-2' as never,
+        params: {
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          otherNames: data.otherNames || '',
+          dateOfBirth: dob,
+          gender: data.gender,
+          phone: data.phone,
+        },
+      })
     } catch {
       Alert.alert('Error', 'Something went wrong. Please try again.')
     } finally {
@@ -320,7 +315,7 @@ export default function CandidateStep1() {
                   onChangeText={onChange}
                   error={errors.phone?.message}
                   keyboardType="phone-pad"
-                  hint="Nigerian number only — we'll verify this via SMS"
+                  hint="Nigerian number only"
                 />
               )}
             />

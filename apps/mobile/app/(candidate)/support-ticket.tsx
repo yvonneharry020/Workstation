@@ -97,8 +97,8 @@ export default function CandidateSupportTicketScreen() {
     }
     setSubmitting(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const profile = await supabase.from('candidate_profiles').select('full_name').eq('user_id', user?.id ?? '').maybeSingle()
-    const name = profile?.data?.full_name ?? user?.email?.split('@')[0] ?? 'Candidate'
+    const profile = await supabase.from('candidate_profiles').select('first_name, last_name').eq('id', user?.id ?? '').maybeSingle()
+    const name = profile?.data ? `${profile.data.first_name ?? ''} ${profile.data.last_name ?? ''}`.trim() || (user?.email?.split('@')[0] ?? 'Candidate') : (user?.email?.split('@')[0] ?? 'Candidate')
 
     const { data, error } = await supabase.from('support_tickets').insert({
       submitted_by: user?.id ?? null,

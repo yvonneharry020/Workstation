@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   View,
   Text,
@@ -13,8 +12,6 @@ import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
-
-type NotificationFilter = 'all' | 'applications' | 'interviews' | 'badges'
 
 type NotificationType =
   | 'new_application'
@@ -36,15 +33,15 @@ interface Notification {
   created_at: string
 }
 
-const TYPE_CONFIG: Record<NotificationType, { color: string; filter: NotificationFilter }> = {
-  new_application: { color: '#FF6240', filter: 'applications' },
-  application_status_changed: { color: '#FF6240', filter: 'applications' },
-  email_opened: { color: '#0DD4C3', filter: 'applications' },
-  interview_scheduled: { color: '#F59E0B', filter: 'interviews' },
-  badge_received: { color: '#22C55E', filter: 'badges' },
-  badge_revoked: { color: '#EF4444', filter: 'badges' },
-  verification_approved: { color: '#22C55E', filter: 'all' },
-  verification_rejected: { color: '#EF4444', filter: 'all' },
+const TYPE_CONFIG: Record<NotificationType, { color: string }> = {
+  new_application: { color: '#FF6240' },
+  application_status_changed: { color: '#FF6240' },
+  email_opened: { color: '#0DD4C3' },
+  interview_scheduled: { color: '#F59E0B' },
+  badge_received: { color: '#22C55E' },
+  badge_revoked: { color: '#EF4444' },
+  verification_approved: { color: '#22C55E' },
+  verification_rejected: { color: '#EF4444' },
 }
 
 function NotificationIcon({ type, color }: { type: NotificationType; color: string }) {
@@ -97,17 +94,9 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`
 }
 
-const FILTERS: { key: NotificationFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'applications', label: 'Applications' },
-  { key: 'interviews', label: 'Interviews' },
-  { key: 'badges', label: 'Badges' },
-]
-
 export default function NotificationsScreen() {
   const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
-  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all')
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -149,11 +138,6 @@ export default function NotificationsScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
-  })
-
-  const filtered = (notifications ?? []).filter((n) => {
-    if (activeFilter === 'all') return true
-    return TYPE_CONFIG[n.type]?.filter === activeFilter
   })
 
   const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length
@@ -220,33 +204,13 @@ export default function NotificationsScreen() {
         )}
       </View>
 
-      <View style={{ flexDirection: 'row', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10, gap: 8 }}>
-        {FILTERS.map((f) => (
-          <Pressable
-            key={f.key}
-            onPress={() => setActiveFilter(f.key)}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderRadius: 20,
-              backgroundColor: activeFilter === f.key ? '#FF6240' : '#131118',
-              borderWidth: 1,
-              borderColor: activeFilter === f.key ? '#FF6240' : '#1E1B2E',
-            }}
-            className="active:opacity-80"
-          >
-            <Text style={{ color: activeFilter === f.key ? '#fff' : '#64748B', fontSize: 13, fontWeight: '600' }}>{f.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : (
         <FlatList
-          data={filtered}
+          data={notifications ?? []}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 48 }}
@@ -259,7 +223,7 @@ export default function NotificationsScreen() {
                 </Svg>
               </View>
               <Text style={{ color: '#475569', fontSize: 14, fontWeight: '500' }}>
-                {activeFilter === 'all' ? 'No notifications yet' : `No ${activeFilter} notifications`}
+                No notifications yet
               </Text>
             </View>
           }

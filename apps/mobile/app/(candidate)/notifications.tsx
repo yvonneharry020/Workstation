@@ -6,11 +6,9 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native'
-import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import Animated, { FadeInDown } from 'react-native-reanimated'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -34,16 +32,6 @@ interface NotificationItem {
   action_url: string | null
   created_at: string
 }
-
-type FilterKey = 'all' | 'application_update' | 'interview_scheduled' | 'badge_issued' | 'system'
-
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'application_update', label: 'Applications' },
-  { key: 'interview_scheduled', label: 'Interviews' },
-  { key: 'badge_issued', label: 'Badges' },
-  { key: 'system', label: 'System' },
-]
 
 const NOTIF_CONFIGS: Record<NotificationType, { color: string; emoji: string }> = {
   profile_viewed:      { color: '#0DD4C3', emoji: '👁' },
@@ -133,8 +121,6 @@ function NotifCard({ item, onPress }: { item: NotificationItem; onPress: () => v
 
 export default function NotificationsScreen() {
   const user = useAuthStore((s) => s.user)
-  const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
-
   const { data: notifications = [], isLoading, refetch, isRefetching } = useQuery<NotificationItem[]>({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
@@ -150,10 +136,6 @@ export default function NotificationsScreen() {
     enabled: !!user?.id,
     staleTime: 1000 * 30,
   })
-
-  const filtered = activeFilter === 'all'
-    ? notifications
-    : notifications.filter((n) => n.type === activeFilter)
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
@@ -210,44 +192,13 @@ export default function NotificationsScreen() {
         ) : null}
       </View>
 
-      {/* Filter tabs */}
-      <Animated.View entering={FadeInDown.duration(300)}>
-        <FlatList
-          data={FILTERS}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(f) => f.key}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 14, gap: 8 }}
-          renderItem={({ item: f }) => {
-            const isActive = activeFilter === f.key
-            return (
-              <Pressable
-                onPress={() => setActiveFilter(f.key)}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 7,
-                  borderRadius: 20,
-                  backgroundColor: isActive ? '#FF6240' : '#131118',
-                  borderWidth: 1,
-                  borderColor: isActive ? '#FF6240' : '#1E1B2E',
-                }}
-              >
-                <Text style={{ color: isActive ? '#fff' : '#94A3B8', fontSize: 13, fontWeight: isActive ? '600' : '400' }}>
-                  {f.label}
-                </Text>
-              </Pressable>
-            )
-          }}
-        />
-      </Animated.View>
-
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : (
         <FlatList
-          data={filtered}
+          data={notifications}
           keyExtractor={(n) => n.id}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}

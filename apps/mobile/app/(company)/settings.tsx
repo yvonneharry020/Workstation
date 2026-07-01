@@ -224,7 +224,7 @@ export default function SettingsScreen() {
                   <Circle cx="12" cy="12" r="3" />
                 </Svg>
               }
-              onPress={() => router.push('/(company)/profile/index' as never)}
+              onPress={() => router.push('/(company)/profile/' as never)}
             />
             <Divider />
             <SettingRow

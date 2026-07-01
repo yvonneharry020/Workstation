@@ -19,7 +19,13 @@ function LockIcon() {
 const OTP_LENGTH = 6
 
 export default function OtpVerifyScreen() {
-  const { email, mode } = useLocalSearchParams<{ email: string; mode: string }>()
+  const { email, mode, rcNumber, businessEmail, phone } = useLocalSearchParams<{
+    email: string
+    mode: string
+    rcNumber?: string
+    businessEmail?: string
+    phone?: string
+  }>()
   const [otp, setOtp] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -61,6 +67,15 @@ export default function OtpVerifyScreen() {
 
       if (mode === 'reset') {
         router.replace('/(auth)/reset-password')
+      } else if (mode === 'company_signup') {
+        router.replace({
+          pathname: '/(onboarding)/company/step-2' as never,
+          params: {
+            rcNumber: rcNumber ?? '',
+            businessEmail: businessEmail ?? '',
+            phone: phone ?? '',
+          },
+        })
       } else {
         router.replace('/(auth)/welcome')
       }

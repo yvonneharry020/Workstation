@@ -92,22 +92,16 @@ export default function CompanyStep1() {
         return
       }
 
-      const userId = signUpData.user?.id
-
-      if (userId) {
-        await supabase.from('company_profiles').upsert({
-          id: userId,
-          rc_number: data.rcNumber.toUpperCase(),
-          business_email: data.businessEmail,
-        })
-
-        await supabase
-          .from('profiles')
-          .update({ phone: data.phone })
-          .eq('id', userId)
-      }
-
-      router.replace('/(company)/' as never)
+      router.push({
+        pathname: '/(auth)/otp-verify' as never,
+        params: {
+          email: data.personalEmail,
+          mode: 'company_signup',
+          rcNumber: data.rcNumber.toUpperCase(),
+          businessEmail: data.businessEmail,
+          phone: data.phone,
+        },
+      })
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {

@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, {
   FadeInDown,
@@ -117,11 +117,21 @@ function DirectorBadge({ name }: { name: string }) {
 }
 
 export default function CompanyStep2() {
+  const params = useLocalSearchParams<{
+    rcNumber?: string
+    businessEmail?: string
+    phone?: string
+  }>()
+
   const [verifyState, setVerifyState] = useState<VerifyState>('idle')
   const [cacResult, setCacResult] = useState<CACResult | null>(null)
-  const [rcNumber, setRcNumber] = useState('')
+  const [rcNumber, setRcNumber] = useState(params.rcNumber ?? '')
 
   useEffect(() => {
+    if (params.rcNumber) {
+      setRcNumber(params.rcNumber)
+      return
+    }
     const loadRcNumber = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       if (!currentUser?.id) return
@@ -133,7 +143,7 @@ export default function CompanyStep2() {
       if (data?.rc_number) setRcNumber(data.rc_number)
     }
     loadRcNumber()
-  }, [])
+  }, [params.rcNumber])
 
   const handleVerify = async () => {
     setVerifyState('loading')
@@ -172,8 +182,18 @@ export default function CompanyStep2() {
 
       await supabase
         .from('company_profiles')
-        .update({ cac_verified: true, cac_verified_at: new Date().toISOString() })
-        .eq('id', currentUser.id)
+        .upsert({
+          id: currentUser.id,
+          company_name: mockResult.companyName,
+          rc_number: rcNumber,
+          business_email: params.businessEmail || '',
+          cac_verified: true,
+          cac_verified_at: new Date().toISOString(),
+        }, { onConflict: 'id' })
+
+      if (params.phone) {
+        await supabase.from('profiles').update({ phone: params.phone }).eq('id', currentUser.id)
+      }
 
       setCacResult(mockResult)
       setVerifyState('success')

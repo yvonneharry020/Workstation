@@ -133,13 +133,13 @@ export default function Index() {
 
   if (role === 'candidate') {
     return isOnboardingComplete
-      ? <Redirect href="/(candidate)/" />
+      ? <Redirect href={'/(candidate)/' as never} />
       : <Redirect href="/(onboarding)/candidate/step-1" />
   }
 
   if (role === 'company') {
     return isOnboardingComplete
-      ? <Redirect href="/(company)/" />
+      ? <Redirect href={'/(company)/' as never} />
       : <Redirect href="/(onboarding)/company/step-1" />
   }
 

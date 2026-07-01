@@ -278,7 +278,7 @@ export default function CandidateApproved() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(600).duration(400)} className="items-center mt-4">
-          <Pressable onPress={() => router.replace('/(candidate)/')}>
+          <Pressable onPress={() => router.replace('/(candidate)/' as never)}>
             <Text className="text-slate-500 text-sm">Go to dashboard →</Text>
           </Pressable>
         </Animated.View>
