@@ -21,9 +21,10 @@ function LockIcon() {
 const OTP_LENGTH = 8
 
 export default function OtpVerifyScreen() {
-  const { email, mode, rcNumber, businessEmail, phone } = useLocalSearchParams<{
+  const { email, mode, companyName, rcNumber, businessEmail, phone } = useLocalSearchParams<{
     email: string
     mode: string
+    companyName?: string
     rcNumber?: string
     businessEmail?: string
     phone?: string
@@ -79,7 +80,7 @@ export default function OtpVerifyScreen() {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'email',
+        type: mode === 'reset' ? 'recovery' : 'signup',
       })
 
       if (error) {
@@ -95,6 +96,7 @@ export default function OtpVerifyScreen() {
         if (user) {
           await supabase.from('company_profiles').upsert({
             id: user.id,
+            company_name: companyName ?? user.user_metadata?.company_name ?? '',
             business_email: businessEmail ?? user.email ?? '',
             phone: phone ?? user.user_metadata?.phone ?? '',
             rc_number: rcNumber ?? '',

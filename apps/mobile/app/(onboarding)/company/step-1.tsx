@@ -20,7 +20,7 @@ import { Input as FormInput } from '@/components/ui/Input'
 const PERSONAL_EMAIL_DOMAINS = /^.+@(gmail|yahoo|hotmail|outlook|icloud)\./i
 
 const schema = z.object({
-  fullName: z.string().min(2, 'Enter your full legal name'),
+  companyName: z.string().min(2, 'Enter your company name'),
   personalEmail: z
     .string()
     .email('Enter a valid personal email address'),
@@ -60,7 +60,7 @@ export default function CompanyStep1() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      fullName: '',
+      companyName: '',
       personalEmail: '',
       businessEmail: '',
       phone: '',
@@ -88,7 +88,7 @@ export default function CompanyStep1() {
         options: {
           data: {
             role: 'company',
-            full_name: data.fullName,
+            company_name: data.companyName,
             phone: data.phone,
           },
         },
@@ -99,11 +99,19 @@ export default function CompanyStep1() {
         return
       }
 
+      // Supabase returns HTTP 200 with an empty identities array when the email
+      // is already confirmed — no verification email is sent in that case.
+      if (signUpData.user && (!signUpData.user.identities || signUpData.user.identities.length === 0)) {
+        setSubmitError('An account with this email already exists. Please sign in instead.')
+        return
+      }
+
       router.push({
         pathname: '/(auth)/otp-verify' as never,
         params: {
           email: data.personalEmail,
           mode: 'company_signup',
+          companyName: data.companyName,
           rcNumber: data.rcNumber.toUpperCase(),
           businessEmail: data.businessEmail,
           phone: data.phone,
@@ -146,20 +154,20 @@ export default function CompanyStep1() {
 
           <Text className="text-[#1A1625] text-3xl font-bold mb-2">Register your company</Text>
           <Text className="text-slate-400 text-base mb-8">
-            You'll verify your RC number in the next step. All details must match your CAC registration.
+            Enter your company details. You'll verify your RC number in the next step.
           </Text>
 
           <View className="gap-4 mb-6">
             <Controller
               control={control}
-              name="fullName"
+              name="companyName"
               render={({ field: { onChange, value } }) => (
                 <FormInput
-                  label="Your full legal name"
-                  placeholder="Chioma Nwosu"
+                  label="Company name"
+                  placeholder="e.g. Tresco Foods Ltd"
                   value={value}
                   onChangeText={onChange}
-                  error={errors.fullName?.message}
+                  error={errors.companyName?.message}
                   autoCapitalize="words"
                 />
               )}
