@@ -67,10 +67,10 @@ function CvCard({ cv, onDelete }: { cv: CvVersion; onDelete: (id: string) => voi
     >
       <View className="flex-row items-start justify-between mb-3">
         <View className="flex-1 mr-4">
-          <Text className="text-white font-bold text-base">{cv.name}</Text>
+          <Text className="text-[#1A1625] font-bold text-base">{cv.name}</Text>
           <Text className="text-slate-500 text-xs mt-1">{templateName} · Updated {timeAgo(cv.updated_at)}</Text>
         </View>
-        <View style={{ width: 36, height: 48, borderRadius: 6, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 36, height: 48, borderRadius: 6, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ color: '#FF6240', fontSize: 8, fontWeight: '700' }}>PDF</Text>
         </View>
       </View>
@@ -79,7 +79,7 @@ function CvCard({ cv, onDelete }: { cv: CvVersion; onDelete: (id: string) => voi
         <Pressable
           onPress={() => router.push(`/(candidate)/cv/edit?versionId=${cv.id}` as Parameters<typeof router.push>[0])}
           className="flex-row items-center gap-1.5 active:opacity-70"
-          style={{ flex: 1, backgroundColor: '#1E1B2E', borderRadius: 10, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' }}
+          style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' }}
         >
           <EditIcon />
           <Text className="text-slate-300 text-xs font-semibold">Edit</Text>
@@ -88,7 +88,7 @@ function CvCard({ cv, onDelete }: { cv: CvVersion; onDelete: (id: string) => voi
         <Pressable
           onPress={() => Alert.alert('Coming soon', 'PDF download will be available in the next update.')}
           className="flex-row items-center gap-1.5 active:opacity-70"
-          style={{ flex: 1, backgroundColor: '#1E1B2E', borderRadius: 10, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' }}
+          style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' }}
         >
           <DownloadIcon />
           <Text className="text-slate-300 text-xs font-semibold">Download</Text>
@@ -142,7 +142,7 @@ export default function CvVersionsScreen() {
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text className="text-white text-base font-semibold">My CVs</Text>
+        <Text className="text-[#1A1625] text-base font-semibold">My CVs</Text>
         <Pressable
           onPress={() => router.push('/(candidate)/cv' as Parameters<typeof router.push>[0])}
           hitSlop={12}
@@ -166,14 +166,14 @@ export default function CvVersionsScreen() {
           ) : (
             <View className="py-16 items-center px-6">
               <View
-                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
+                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
               >
                 <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                   <Path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <Path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
                 </Svg>
               </View>
-              <Text className="text-white text-base font-semibold text-center mb-2">No CVs yet</Text>
+              <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">No CVs yet</Text>
               <Text className="text-slate-400 text-sm text-center leading-5 mb-6">
                 Create your first CV from one of our professional templates.
               </Text>
@@ -181,7 +181,7 @@ export default function CvVersionsScreen() {
                 onPress={() => router.push('/(candidate)/cv' as Parameters<typeof router.push>[0])}
                 className="bg-primary-500 rounded-2xl px-8 py-4 active:opacity-80"
               >
-                <Text className="text-white font-semibold">Create CV</Text>
+                <Text className="text-[#1A1625] font-semibold">Create CV</Text>
               </Pressable>
             </View>
           )

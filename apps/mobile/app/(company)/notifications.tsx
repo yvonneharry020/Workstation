@@ -161,13 +161,13 @@ export default function NotificationsScreen() {
             alignItems: 'flex-start',
             gap: 12,
             padding: 14,
-            backgroundColor: isUnread ? '#FF624006' : '#131118',
+            backgroundColor: isUnread ? '#FF624006' : '#EDE7DB',
             borderRadius: 14,
             borderWidth: 1,
-            borderColor: isUnread ? '#FF624020' : '#1E1B2E',
+            borderColor: isUnread ? '#FF624020' : '#DDD6C9',
             marginBottom: 8,
             borderLeftWidth: isUnread ? 3 : 1,
-            borderLeftColor: isUnread ? color : '#1E1B2E',
+            borderLeftColor: isUnread ? color : '#DDD6C9',
           }}
           className="active:opacity-80"
         >
@@ -175,7 +175,7 @@ export default function NotificationsScreen() {
             <NotificationIcon type={item.type} color={color} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: isUnread ? '#fff' : '#CBD5E1', fontSize: 14, fontWeight: isUnread ? '600' : '400', marginBottom: 3, lineHeight: 19 }}>
+            <Text style={{ color: isUnread ? '#1A1625' : '#2D2640', fontSize: 14, fontWeight: isUnread ? '600' : '400', marginBottom: 3, lineHeight: 19 }}>
               {item.title}
             </Text>
             <Text style={{ color: '#64748B', fontSize: 12, lineHeight: 17 }} numberOfLines={2}>{item.body}</Text>
@@ -192,7 +192,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Notifications</Text>
+        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Notifications</Text>
         {unreadCount > 0 && (
           <Pressable
             onPress={() => markAllReadMutation.mutate()}
@@ -217,7 +217,7 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View className="items-center justify-center py-20">
-              <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                   <Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" />
                 </Svg>

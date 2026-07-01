@@ -48,13 +48,13 @@ function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
         width: 44,
         height: 24,
         borderRadius: 12,
-        backgroundColor: value ? '#FF6240' : '#3D3850',
+        backgroundColor: value ? '#FF6240' : '#C8BFB0',
         padding: 2,
         justifyContent: 'center',
         alignItems: value ? 'flex-end' : 'flex-start',
       }}
     >
-      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
+      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#1A1625' }} />
     </Pressable>
   )
 }
@@ -95,11 +95,11 @@ function SettingToggleRow({
         justifyContent: 'space-between',
         paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: '#1E1B2E',
+        borderBottomColor: '#DDD6C9',
       }}
     >
       <View style={{ flex: 1, marginRight: 16 }}>
-        <Text style={{ color: '#fff', fontSize: 14 }}>{label}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 14 }}>{label}</Text>
         {sublabel ? (
           <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{sublabel}</Text>
         ) : null}
@@ -111,9 +111,9 @@ function SettingToggleRow({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+    <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
       <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }}>{label}</Text>
-      <Text style={{ color: '#94A3B8', fontSize: 14 }}>{value}</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 14 }}>{value}</Text>
     </View>
   )
 }
@@ -122,7 +122,7 @@ function ActionRow({ label, onPress, destructive }: { label: string; onPress: ()
   return (
     <Pressable
       onPress={onPress}
-      style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}
+      style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
     >
       <Text style={{ color: destructive ? '#EF4444' : '#FF6240', fontSize: 14, fontWeight: '500' }}>
         {label}
@@ -240,9 +240,9 @@ export default function SettingsScreen() {
         paddingTop: 8,
         paddingBottom: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#1E1B2E',
+        borderBottomColor: '#DDD6C9',
       }}>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Settings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Settings</Text>
       </View>
 
       <ScrollView
@@ -252,14 +252,14 @@ export default function SettingsScreen() {
       >
         {/* Account */}
         <SectionHeader title="Account" />
-        <View style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
           <InfoRow label="Email address" value={user?.email ?? '—'} />
           <ActionRow label="Change password →" onPress={changePassword} />
         </View>
 
         {/* Push notifications */}
         <SectionHeader title="Push Notifications" />
-        <View style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
           <SettingToggleRow
             label="Profile viewed"
             sublabel="When a company views your profile"
@@ -300,7 +300,7 @@ export default function SettingsScreen() {
 
         {/* Email notifications */}
         <SectionHeader title="Email Notifications" />
-        <View style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
           <SettingToggleRow
             label="Application updates"
             value={prefs.email_application}
@@ -332,7 +332,7 @@ export default function SettingsScreen() {
         <View style={{
           backgroundColor: '#ffffff08',
           borderWidth: 1,
-          borderColor: '#1E1B2E',
+          borderColor: '#DDD6C9',
           borderRadius: 16,
           paddingHorizontal: 16,
           overflow: 'hidden',

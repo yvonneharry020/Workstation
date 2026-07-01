@@ -114,10 +114,10 @@ function PlanCard({ plan }: { plan: Plan }) {
     <Animated.View
       entering={FadeInDown.delay(100).duration(300)}
       style={{
-        backgroundColor: '#131118',
+        backgroundColor: '#EDE7DB',
         borderRadius: 18,
         borderWidth: plan.isCurrent ? 1 : 1.5,
-        borderColor: plan.isCurrent ? '#1E1B2E' : `${plan.color}40`,
+        borderColor: plan.isCurrent ? '#DDD6C9' : `${plan.color}40`,
         padding: 20,
         marginBottom: 14,
       }}
@@ -125,7 +125,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <View>
           <Text style={{ color: plan.color, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>{plan.name}</Text>
-          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800' }}>{plan.price}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '800' }}>{plan.price}</Text>
           <Text style={{ color: '#475569', fontSize: 12 }}>{plan.period}</Text>
         </View>
         {plan.isCurrent && (
@@ -139,7 +139,7 @@ function PlanCard({ plan }: { plan: Plan }) {
         {plan.features.map((feature, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {feature.included ? <CheckIcon color={plan.color} /> : <XIcon />}
-            <Text style={{ color: feature.included ? '#CBD5E1' : '#334155', fontSize: 13, flex: 1 }}>{feature.text}</Text>
+            <Text style={{ color: feature.included ? '#2D2640' : '#334155', fontSize: 13, flex: 1 }}>{feature.text}</Text>
           </View>
         ))}
       </View>
@@ -163,37 +163,37 @@ export default function BillingScreen() {
       <View className="flex-row items-center px-5 py-4 border-b border-surface-border gap-3">
         <Pressable
           onPress={() => router.back()}
-          style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+          style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#DDD6C9' }}
           className="active:opacity-70"
         >
           <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Billing & Plans</Text>
+        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Billing & Plans</Text>
       </View>
 
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}>
 
         <Animated.View
           entering={FadeInDown.delay(50).duration(300)}
-          style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 24 }}
+          style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 24 }}
         >
           <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>Current plan</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Free</Text>
+              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Free</Text>
               <Text style={{ color: '#475569', fontSize: 12, marginTop: 2 }}>No billing cycle</Text>
             </View>
             <View style={{ backgroundColor: '#64748B20', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 }}>
               <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700' }}>Active</Text>
             </View>
           </View>
-          <View style={{ height: 1, backgroundColor: '#1E1B2E', marginVertical: 12 }} />
+          <View style={{ height: 1, backgroundColor: '#DDD6C9', marginVertical: 12 }} />
           <Text style={{ color: '#475569', fontSize: 12 }}>Upgrade your plan to unlock more jobs, applicants, and features.</Text>
         </Animated.View>
 
-        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Available plans</Text>
+        <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Available plans</Text>
 
         {PLANS.map((plan) => (
           <PlanCard key={plan.id} plan={plan} />
@@ -201,9 +201,9 @@ export default function BillingScreen() {
 
         <Animated.View
           entering={FadeInDown.delay(400).duration(300)}
-          style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginTop: 8 }}
+          style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginTop: 8 }}
         >
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>Invoice history</Text>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>Invoice history</Text>
           <Text style={{ color: '#475569', fontSize: 13 }}>No invoices yet — upgrades will appear here.</Text>
         </Animated.View>
 
@@ -211,7 +211,7 @@ export default function BillingScreen() {
           <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600', marginBottom: 4 }}>Enterprise enquiries</Text>
           <Text style={{ color: '#64748B', fontSize: 12, lineHeight: 18 }}>
             Need custom pricing, API access, or dedicated support?{'\n'}
-            Email us at <Text style={{ color: '#fff' }}>billing@workstation.ng</Text>
+            Email us at <Text style={{ color: '#1A1625' }}>billing@workstation.ng</Text>
           </Text>
         </View>
       </ScrollView>

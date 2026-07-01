@@ -161,12 +161,12 @@ export default function ApplicationSubmittedScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).duration(400)} className="items-center mb-8">
-          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center', marginBottom: 8 }}>
+          <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center', marginBottom: 8 }}>
             Application submitted!
           </Text>
           <Text className="text-slate-400 text-sm text-center leading-5 px-4">
-            Your application was sent to <Text className="text-white font-medium">{companyName}</Text> for{' '}
-            <Text className="text-white font-medium">{jobInfo?.title}</Text>
+            Your application was sent to <Text className="text-[#1A1625] font-medium">{companyName}</Text> for{' '}
+            <Text className="text-[#1A1625] font-medium">{jobInfo?.title}</Text>
           </Text>
         </Animated.View>
 
@@ -174,7 +174,7 @@ export default function ApplicationSubmittedScreen() {
         <Animated.View entering={FadeInUp.delay(500).duration(400)} className="w-full mb-4">
           <View className="bg-surface-card border border-surface-border rounded-2xl p-4">
             <Text className="text-slate-400 text-xs mb-2">Application reference</Text>
-            <Text style={{ color: '#fff', fontFamily: 'monospace', fontSize: 20, fontWeight: '700', letterSpacing: 2 }}>
+            <Text style={{ color: '#1A1625', fontFamily: 'monospace', fontSize: 20, fontWeight: '700', letterSpacing: 2 }}>
               #{appRef}
             </Text>
             <Text className="text-slate-500 text-xs mt-1">Save this for your records</Text>
@@ -191,7 +191,7 @@ export default function ApplicationSubmittedScreen() {
               Tracking your application
             </Text>
             <Text className="text-slate-400 text-sm leading-5">
-              You'll get a notification when <Text className="text-white font-medium">{companyName}</Text> opens your
+              You'll get a notification when <Text className="text-[#1A1625] font-medium">{companyName}</Text> opens your
               application email. Track the full status in My Applications.
             </Text>
           </View>
@@ -203,7 +203,7 @@ export default function ApplicationSubmittedScreen() {
             onPress={() => router.replace('/(candidate)/applications')}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">Track my application</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Track my application</Text>
           </Pressable>
           <Pressable
             onPress={() => router.replace('/(candidate)/jobs')}

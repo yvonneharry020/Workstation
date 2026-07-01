@@ -33,7 +33,7 @@ interface VerificationData {
 }
 
 const STATUS_CONFIG: Record<VerificationStatus, { label: string; color: string; bg: string; icon: 'check' | 'clock' | 'dot' | 'x' }> = {
-  not_started:           { label: 'Not started',       color: '#475569', bg: '#1E1B2E',   icon: 'dot' },
+  not_started:           { label: 'Not started',       color: '#475569', bg: '#DDD6C9',   icon: 'dot' },
   pending:               { label: 'Pending',            color: '#F59E0B', bg: '#78350F20', icon: 'clock' },
   in_review:             { label: 'In review',          color: '#818CF8', bg: '#312E8120', icon: 'clock' },
   approved:              { label: 'Verified',           color: '#22C55E', bg: '#14532D20', icon: 'check' },
@@ -103,15 +103,15 @@ function StepRow({
         alignItems: 'center',
         gap: 12,
         padding: 14,
-        backgroundColor: '#131118',
+        backgroundColor: '#EDE7DB',
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#1E1B2E',
+        borderColor: '#DDD6C9',
         marginBottom: 8,
       }}
     >
       <StatusDot status={status} />
-      <Text style={{ flex: 1, color: '#E2E8F0', fontSize: 14, fontWeight: '500' }}>{label}</Text>
+      <Text style={{ flex: 1, color: '#1A1625', fontSize: 14, fontWeight: '500' }}>{label}</Text>
       <View style={{ backgroundColor: config.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
         <Text style={{ color: config.color, fontSize: 11, fontWeight: '600' }}>{config.label}</Text>
       </View>
@@ -211,7 +211,7 @@ export default function CompanyPendingScreen() {
               <Path d="M20 6L9 17l-5-5" />
             </Svg>
           </View>
-          <Text className="text-white text-2xl font-bold text-center mb-2">Company approved!</Text>
+          <Text className="text-[#1A1625] text-2xl font-bold text-center mb-2">Company approved!</Text>
           <Text className="text-slate-400 text-sm text-center leading-5">
             Taking you to your dashboard…
           </Text>
@@ -236,12 +236,12 @@ export default function CompanyPendingScreen() {
           </View>
 
           <Animated.View entering={FadeInDown.duration(400)} className="items-center">
-            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center', marginBottom: 8 }}>
+            <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '700', letterSpacing: -0.3, textAlign: 'center', marginBottom: 8 }}>
               Verification in progress
             </Text>
             <Text className="text-slate-400 text-sm text-center leading-5 px-4">
               Your application is being reviewed. This typically takes{' '}
-              <Text className="text-white font-medium">24–48 hours</Text>. We'll notify you when it's done.
+              <Text className="text-[#1A1625] font-medium">24–48 hours</Text>. We'll notify you when it's done.
             </Text>
           </Animated.View>
         </View>
@@ -252,7 +252,7 @@ export default function CompanyPendingScreen() {
               <Text className="text-slate-400 text-xs font-medium uppercase tracking-wider">Trust Score so far</Text>
               <Text style={{ color: '#FF6240', fontSize: 20, fontWeight: '800' }}>{trustScore}/100</Text>
             </View>
-            <View style={{ height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden' }}>
+            <View style={{ height: 6, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden' }}>
               <View style={{ height: '100%', width: `${trustScore}%`, backgroundColor: '#FF6240', borderRadius: 3 }} />
             </View>
             <Text className="text-slate-500 text-xs mt-2">
@@ -285,7 +285,7 @@ export default function CompanyPendingScreen() {
               • You'll receive an email and push notification when your verification is complete{'\n'}
               • Check back here anytime to see your progress{'\n'}
               • If any documents are rejected, you'll be notified with specific reasons and can resubmit{'\n'}
-              • Questions? Email <Text className="text-white">support@workstation.ng</Text>
+              • Questions? Email <Text className="text-[#1A1625]">support@workstation.ng</Text>
             </Text>
           </View>
 

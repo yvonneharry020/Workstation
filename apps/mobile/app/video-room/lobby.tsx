@@ -33,7 +33,7 @@ function BackIcon() {
 
 function CameraIcon({ active }: { active: boolean }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#FF6240' : '#94A3B8'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#FF6240' : '#5A4F6E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M23 7l-7 5 7 5V7z" />
       <Rect x={1} y={5} width={15} height={14} rx={2} ry={2} />
     </Svg>
@@ -42,7 +42,7 @@ function CameraIcon({ active }: { active: boolean }) {
 
 function MicIcon({ active }: { active: boolean }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#FF6240' : '#94A3B8'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#FF6240' : '#5A4F6E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
       <Path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
     </Svg>
@@ -151,19 +151,19 @@ export default function PreMeetingLobbyScreen() {
   const userInitial = displayName.trim().charAt(0).toUpperCase() || '?'
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#3D3850' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#C8BFB0' }}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <BackIcon />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>Pre-Interview Lobby</Text>
-            <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }}>
+            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Pre-Interview Lobby</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 1 }}>
               {hostMode ? 'You are the host' : 'Waiting for host to admit you'}
             </Text>
           </View>
@@ -174,8 +174,8 @@ export default function PreMeetingLobbyScreen() {
           {/* Camera Preview */}
           <Animated.View entering={FadeInDown.duration(400).delay(100)} style={{ paddingHorizontal: 20, marginTop: 24, marginBottom: 20 }}>
             <View style={{
-              height: 220, borderRadius: 20, backgroundColor: '#131118',
-              borderWidth: 1, borderColor: '#3D3850',
+              height: 220, borderRadius: 20, backgroundColor: '#EDE7DB',
+              borderWidth: 1, borderColor: '#C8BFB0',
               alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden',
             }}>
@@ -189,7 +189,7 @@ export default function PreMeetingLobbyScreen() {
               }}>
                 <Text style={{ color: '#FF6240', fontSize: 32, fontWeight: '800' }}>{userInitial}</Text>
               </View>
-              <Text style={{ color: '#94A3B8', fontSize: 13 }}>{displayName || 'Your name'}</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 13 }}>{displayName || 'Your name'}</Text>
               <View style={{ position: 'absolute', bottom: 12, left: 12, flexDirection: 'row', gap: 8 }}>
                 <View style={{
                   backgroundColor: cameraReady ? '#052E1680' : '#2A263880',
@@ -197,7 +197,7 @@ export default function PreMeetingLobbyScreen() {
                   flexDirection: 'row', alignItems: 'center', gap: 4,
                 }}>
                   <CameraIcon active={cameraReady} />
-                  <Text style={{ color: cameraReady ? '#22C55E' : '#94A3B8', fontSize: 11, fontWeight: '600' }}>
+                  <Text style={{ color: cameraReady ? '#22C55E' : '#5A4F6E', fontSize: 11, fontWeight: '600' }}>
                     {cameraReady ? 'Camera OK' : 'Camera'}
                   </Text>
                 </View>
@@ -207,7 +207,7 @@ export default function PreMeetingLobbyScreen() {
                   flexDirection: 'row', alignItems: 'center', gap: 4,
                 }}>
                   <MicIcon active={micReady} />
-                  <Text style={{ color: micReady ? '#22C55E' : '#94A3B8', fontSize: 11, fontWeight: '600' }}>
+                  <Text style={{ color: micReady ? '#22C55E' : '#5A4F6E', fontSize: 11, fontWeight: '600' }}>
                     {micReady ? 'Mic OK' : 'Mic'}
                   </Text>
                 </View>
@@ -217,7 +217,7 @@ export default function PreMeetingLobbyScreen() {
 
           {/* Device Test Buttons */}
           <Animated.View entering={FadeInDown.duration(400).delay(200)} style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
               Device Check
             </Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -226,14 +226,14 @@ export default function PreMeetingLobbyScreen() {
                 style={({ pressed }) => ({
                   flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                   gap: 6, paddingVertical: 12, borderRadius: 12,
-                  backgroundColor: cameraReady ? '#052E16' : '#131118',
-                  borderWidth: 1.5, borderColor: cameraReady ? '#15803D' : '#3D3850',
+                  backgroundColor: cameraReady ? '#052E16' : '#EDE7DB',
+                  borderWidth: 1.5, borderColor: cameraReady ? '#15803D' : '#C8BFB0',
                   opacity: pressed ? 0.75 : 1,
                 })}
               >
                 {cameraReady && <CheckIcon />}
                 <CameraIcon active={cameraReady} />
-                <Text style={{ color: cameraReady ? '#22C55E' : '#E2E8F0', fontSize: 13, fontWeight: '600' }}>
+                <Text style={{ color: cameraReady ? '#22C55E' : '#1A1625', fontSize: 13, fontWeight: '600' }}>
                   {cameraReady ? 'Camera OK' : 'Test Camera'}
                 </Text>
               </Pressable>
@@ -242,14 +242,14 @@ export default function PreMeetingLobbyScreen() {
                 style={({ pressed }) => ({
                   flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
                   gap: 6, paddingVertical: 12, borderRadius: 12,
-                  backgroundColor: micReady ? '#052E16' : '#131118',
-                  borderWidth: 1.5, borderColor: micReady ? '#15803D' : '#3D3850',
+                  backgroundColor: micReady ? '#052E16' : '#EDE7DB',
+                  borderWidth: 1.5, borderColor: micReady ? '#15803D' : '#C8BFB0',
                   opacity: pressed ? 0.75 : 1,
                 })}
               >
                 {micReady && <CheckIcon />}
                 <MicIcon active={micReady} />
-                <Text style={{ color: micReady ? '#22C55E' : '#E2E8F0', fontSize: 13, fontWeight: '600' }}>
+                <Text style={{ color: micReady ? '#22C55E' : '#1A1625', fontSize: 13, fontWeight: '600' }}>
                   {micReady ? 'Mic OK' : 'Test Mic'}
                 </Text>
               </Pressable>
@@ -258,17 +258,17 @@ export default function PreMeetingLobbyScreen() {
 
           {/* Display Name */}
           <Animated.View entering={FadeInDown.duration(400).delay(300)} style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>Your display name</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>Your display name</Text>
             <TextInput
               value={displayName}
               onChangeText={setDisplayName}
               placeholder="Enter your name"
               placeholderTextColor="#475569"
               style={{
-                height: 52, backgroundColor: '#131118', borderWidth: 1.5,
-                borderColor: displayName ? '#564F6A' : '#3D3850',
+                height: 52, backgroundColor: '#EDE7DB', borderWidth: 1.5,
+                borderColor: displayName ? '#564F6A' : '#C8BFB0',
                 borderRadius: 16, paddingHorizontal: 16,
-                color: '#E2E8F0', fontSize: 15,
+                color: '#1A1625', fontSize: 15,
               }}
               maxLength={40}
             />
@@ -276,17 +276,17 @@ export default function PreMeetingLobbyScreen() {
 
           {/* In Meeting Already */}
           <Animated.View entering={FadeInDown.duration(400).delay(350)} style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>
               In the room
             </Text>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#3D3850', padding: 16 }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#C8BFB0', padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#0DD4C320', borderWidth: 1.5, borderColor: '#0DD4C3', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ color: '#0DD4C3', fontSize: 14, fontWeight: '700' }}>H</Text>
                 </View>
                 <View>
-                  <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600' }}>Host (Recruiting Team)</Text>
-                  <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }}>Waiting for you</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>Host (Recruiting Team)</Text>
+                  <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 1 }}>Waiting for you</Text>
                 </View>
                 <View style={{ marginLeft: 'auto', backgroundColor: '#052E16', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
                   <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '600' }}>Live</Text>
@@ -299,7 +299,7 @@ export default function PreMeetingLobbyScreen() {
           {hostMode && waitingList.length > 0 && (
             <Animated.View entering={FadeInUp.duration(400)} style={{ paddingHorizontal: 20, marginBottom: 20 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
                   Waiting to join
                 </Text>
                 <View style={{ backgroundColor: '#FF624020', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
@@ -309,17 +309,17 @@ export default function PreMeetingLobbyScreen() {
               <View style={{ gap: 8 }}>
                 {waitingList.map((participant) => (
                   <View key={participant.id} style={{
-                    backgroundColor: '#131118', borderRadius: 14, borderWidth: 1,
-                    borderColor: '#3D3850', padding: 14,
+                    backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1,
+                    borderColor: '#C8BFB0', padding: 14,
                     flexDirection: 'row', alignItems: 'center', gap: 12,
                   }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#2A2638', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ color: '#E2E8F0', fontSize: 16, fontWeight: '700' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#D4CCBE', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>
                         {participant.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>{participant.name}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>{participant.name}</Text>
                       <Text style={{ color: '#475569', fontSize: 11, marginTop: 1 }}>Waiting · {Math.round((Date.now() - participant.joinedAt.getTime()) / 60000)}m ago</Text>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -356,7 +356,7 @@ export default function PreMeetingLobbyScreen() {
               <Circle cx={12} cy={12} r={10} />
               <Path d="M12 8v4M12 16h.01" />
             </Svg>
-            <Text style={{ color: '#E2E8F0', fontSize: 12, flex: 1, lineHeight: 18 }}>
+            <Text style={{ color: '#1A1625', fontSize: 12, flex: 1, lineHeight: 18 }}>
               This interview may be recorded by the company for review purposes. By joining, you consent to recording.
             </Text>
           </Animated.View>
@@ -365,7 +365,7 @@ export default function PreMeetingLobbyScreen() {
         {/* Join Button — sticky bottom */}
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          backgroundColor: '#09080E', borderTopWidth: 1, borderTopColor: '#3D3850',
+          backgroundColor: '#F5F0E8', borderTopWidth: 1, borderTopColor: '#C8BFB0',
           paddingHorizontal: 20, paddingBottom: 34, paddingTop: 16,
         }}>
           <Pressable
@@ -373,7 +373,7 @@ export default function PreMeetingLobbyScreen() {
             disabled={!canJoin || isJoining}
             style={({ pressed }) => ({
               height: 52, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
-              backgroundColor: canJoin ? '#FF6240' : '#2A2638',
+              backgroundColor: canJoin ? '#FF6240' : '#D4CCBE',
               opacity: pressed ? 0.85 : (!canJoin || isJoining) ? 0.5 : 1,
               shadowColor: '#FF6240',
               shadowOffset: { width: 0, height: 0 },
@@ -382,7 +382,7 @@ export default function PreMeetingLobbyScreen() {
               elevation: canJoin ? 8 : 0,
             })}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+            <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>
               {isJoining ? 'Joining…' : "I'm Ready — Join Meeting"}
             </Text>
           </Pressable>

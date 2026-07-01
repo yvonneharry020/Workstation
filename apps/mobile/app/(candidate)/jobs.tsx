@@ -100,7 +100,7 @@ function WorkModePill({ mode }: { mode: string }) {
     hybrid: { bg: '#F59E0B20', text: '#F59E0B' },
     on_site: { bg: '#6366F120', text: '#818CF8' },
   }
-  const color = colors[mode] ?? { bg: '#1E1B2E', text: '#94A3B8' }
+  const color = colors[mode] ?? { bg: '#DDD6C9', text: '#5A4F6E' }
   return (
     <View style={{ backgroundColor: color.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
       <Text style={{ color: color.text, fontSize: 11, fontWeight: '600' }}>{formatLabel(mode)}</Text>
@@ -124,12 +124,12 @@ function JobCard({
     hybrid: { bg: '#F59E0B20', text: '#F59E0B' },
     on_site: { bg: '#6366F120', text: '#818CF8' },
   }
-  const modeStyle = modeColors[job.work_mode] ?? { bg: '#1E1B2E', text: '#94A3B8' }
+  const modeStyle = modeColors[job.work_mode] ?? { bg: '#DDD6C9', text: '#5A4F6E' }
 
   return (
     <Pressable
       onPress={() => router.push(`/(candidate)/jobs/${job.id}`)}
-      style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 12, overflow: 'hidden' }}
+      style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 12, overflow: 'hidden' }}
     >
       {/* Top row: logo + title + bookmark */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
@@ -141,7 +141,7 @@ function JobCard({
           </View>
         )}
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', lineHeight: 21, marginBottom: 3 }} numberOfLines={2}>{job.title}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700', lineHeight: 21, marginBottom: 3 }} numberOfLines={2}>{job.title}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ color: '#64748B', fontSize: 12 }}>{company?.company_name ?? 'Unknown'}</Text>
             {company?.is_verified && (
@@ -162,10 +162,10 @@ function JobCard({
         <View style={{ backgroundColor: modeStyle.bg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: `${modeStyle.text}40` }}>
           <Text style={{ color: modeStyle.text, fontSize: 11, fontWeight: '700' }}>{formatLabel(job.work_mode)}</Text>
         </View>
-        <View style={{ backgroundColor: '#1E1B2E', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
+        <View style={{ backgroundColor: '#DDD6C9', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
           <Text style={{ color: '#64748B', fontSize: 11 }}>{formatLabel(job.employment_type)}</Text>
         </View>
-        <View style={{ backgroundColor: '#1E1B2E', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
+        <View style={{ backgroundColor: '#DDD6C9', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 }}>
           <Text style={{ color: '#64748B', fontSize: 11 }}>{formatLabel(job.experience_level)}</Text>
         </View>
       </View>
@@ -248,19 +248,19 @@ export default function JobsScreen() {
   })
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
-        <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 14 }}>
+        <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 14 }}>
           Browse Jobs 💼
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#0F0D1A', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 16, paddingHorizontal: 14, height: 48 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F0EBE1', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 14, height: 48 }}>
           <SearchIcon />
           <TextInput
             value={searchText}
             onChangeText={handleSearchChange}
             placeholder="Search job titles…"
             placeholderTextColor="#475569"
-            style={{ flex: 1, color: '#fff', fontSize: 14 }}
+            style={{ flex: 1, color: '#1A1625', fontSize: 14 }}
             returnKeyType="search"
           />
           {searchText.length > 0 && (
@@ -285,12 +285,12 @@ export default function JobsScreen() {
               paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
-              backgroundColor: activeFilter === f.value ? '#FF6240' : '#0F0D1A',
+              backgroundColor: activeFilter === f.value ? '#FF6240' : '#F0EBE1',
               borderWidth: 1,
-              borderColor: activeFilter === f.value ? '#FF6240' : '#1E1B2E',
+              borderColor: activeFilter === f.value ? '#FF6240' : '#DDD6C9',
             }}
           >
-            <Text style={{ color: activeFilter === f.value ? '#fff' : '#64748B', fontSize: 13, fontWeight: activeFilter === f.value ? '700' : '400' }}>
+            <Text style={{ color: activeFilter === f.value ? '#1A1625' : '#64748B', fontSize: 13, fontWeight: activeFilter === f.value ? '700' : '400' }}>
               {f.label}
             </Text>
           </Pressable>
@@ -324,7 +324,7 @@ export default function JobsScreen() {
           ListEmptyComponent={
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 }}>
               <Text style={{ fontSize: 36, marginBottom: 14 }}>🔍</Text>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>No jobs found</Text>
+              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>No jobs found</Text>
               <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20, paddingHorizontal: 40 }}>
                 {debouncedSearch.length > 0
                   ? `No results for "${debouncedSearch}". Try different keywords.`

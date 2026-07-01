@@ -65,7 +65,7 @@ export function MaintenanceScreen({ message }: Props) {
       <WrenchIcon />
 
       <View className="items-center gap-2">
-        <Text className="text-white font-display text-2xl text-center">
+        <Text className="text-[#1A1625] font-display text-2xl text-center">
           Down for maintenance
         </Text>
         <Text className="text-slate-400 font-sans text-base text-center leading-relaxed">
@@ -82,7 +82,7 @@ export function MaintenanceScreen({ message }: Props) {
           </View>
           <Text className="text-slate-400 font-sans text-xs">Maintenance in progress</Text>
         </View>
-        <Text className="text-white font-sans text-sm">
+        <Text className="text-[#1A1625] font-sans text-sm">
           Our team is working to restore service. Thank you for your patience.
         </Text>
       </View>

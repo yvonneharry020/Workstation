@@ -43,7 +43,7 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <View style={{ flexDirection: 'row', gap: 3 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <Text key={i} style={{ color: i <= rating ? '#FF6240' : '#3D3850', fontSize: 15 }}>
+        <Text key={i} style={{ color: i <= rating ? '#FF6240' : '#C8BFB0', fontSize: 15 }}>
           ★
         </Text>
       ))}
@@ -79,7 +79,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
           <View
             style={{
               width: 48, height: 48, borderRadius: 12,
-              backgroundColor: '#1E1B2E',
+              backgroundColor: '#DDD6C9',
               alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -91,7 +91,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
 
         <View className="flex-1">
           <View className="flex-row items-center gap-1.5">
-            <Text className="text-white font-semibold text-sm">{company?.company_name ?? 'Unknown company'}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm">{company?.company_name ?? 'Unknown company'}</Text>
             {company?.is_verified && (
               <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#22C55E' }} />
             )}
@@ -138,7 +138,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
         </View>
       )}
 
-      <View className="flex-row items-center pt-2" style={{ borderTopWidth: 1, borderTopColor: '#1E1B2E' }}>
+      <View className="flex-row items-center pt-2" style={{ borderTopWidth: 1, borderTopColor: '#DDD6C9' }}>
         <View className="flex-row items-center gap-1">
           <ShieldIcon />
           <Text style={{ color: '#0DD4C3', fontSize: 11, fontWeight: '600' }}>Cryptographically verified</Text>
@@ -168,7 +168,7 @@ export default function BadgesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 pt-5 pb-2">
-        <Text className="text-white text-2xl font-bold">My Badges</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold">My Badges</Text>
         {badges.length > 0 && (
           <View
             style={{ backgroundColor: '#FF624020', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}
@@ -195,7 +195,7 @@ export default function BadgesScreen() {
               <Text style={{ color: '#0DD4C3', fontSize: 13, fontWeight: '700' }}>Badge Trust Boost</Text>
             </View>
             <Text className="text-slate-400 text-sm leading-5">
-              Each verified badge adds up to <Text className="text-white font-semibold">+5 points</Text> to your trust score (max +25). Badges are cryptographically signed by employers.
+              Each verified badge adds up to <Text className="text-[#1A1625] font-semibold">+5 points</Text> to your trust score (max +25). Badges are cryptographically signed by employers.
             </Text>
           </Animated.View>
         }
@@ -207,13 +207,13 @@ export default function BadgesScreen() {
           ) : (
             <View className="py-16 items-center px-6">
               <View
-                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
+                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
               >
                 <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                   <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </Svg>
               </View>
-              <Text className="text-white text-base font-semibold text-center mb-2">No badges yet</Text>
+              <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">No badges yet</Text>
               <Text className="text-slate-400 text-sm text-center leading-5">
                 Badges are issued by companies you've worked for as cryptographically verified employment records.
               </Text>

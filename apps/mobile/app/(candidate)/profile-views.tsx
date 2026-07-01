@@ -90,15 +90,15 @@ export default function ProfileViewsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-surface">
         <View className="px-5 pt-5 pb-4">
-          <Text className="text-white text-2xl font-bold">Profile Views</Text>
+          <Text className="text-[#1A1625] text-2xl font-bold">Profile Views</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <View
-            style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
+            style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
           >
             <EyeIcon />
           </View>
-          <Text className="text-white text-base font-semibold text-center mb-2">Profile views are hidden</Text>
+          <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">Profile views are hidden</Text>
           <Text className="text-slate-400 text-sm text-center leading-5 mb-6">
             Turn on profile views to see which companies are interested in you.
           </Text>
@@ -107,7 +107,7 @@ export default function ProfileViewsScreen() {
             className="flex-row items-center gap-2 bg-surface-card border border-surface-border rounded-2xl px-5 py-4 active:opacity-80"
           >
             <SettingsIcon />
-            <Text className="text-white text-sm font-semibold">Open privacy settings</Text>
+            <Text className="text-[#1A1625] text-sm font-semibold">Open privacy settings</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -117,7 +117,7 @@ export default function ProfileViewsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="px-5 pt-5 pb-2">
-        <Text className="text-white text-2xl font-bold">Profile Views</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold">Profile Views</Text>
       </View>
 
       <FlatList
@@ -132,7 +132,7 @@ export default function ProfileViewsScreen() {
             className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-4"
           >
             <Text className="text-slate-400 text-xs mb-1">Views this week</Text>
-            <Text className="text-white text-3xl font-bold">{viewsThisWeek}</Text>
+            <Text className="text-[#1A1625] text-3xl font-bold">{viewsThisWeek}</Text>
             <Text className="text-slate-500 text-xs mt-1">{views.length} total views</Text>
           </Animated.View>
         }
@@ -144,11 +144,11 @@ export default function ProfileViewsScreen() {
           ) : (
             <View className="py-16 items-center px-6">
               <View
-                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
+                style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}
               >
                 <EyeIcon />
               </View>
-              <Text className="text-white text-base font-semibold text-center mb-2">No views yet</Text>
+              <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">No views yet</Text>
               <Text className="text-slate-400 text-sm text-center leading-5">
                 Complete your profile and get verified to attract company attention.
               </Text>
@@ -156,14 +156,14 @@ export default function ProfileViewsScreen() {
           )
         }
         renderItem={({ item }) => (
-          <View className="flex-row items-center gap-3 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+          <View className="flex-row items-center gap-3 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
             <View
               style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#0DD4C315', alignItems: 'center', justifyContent: 'center' }}
             >
               <EyeIcon />
             </View>
             <View className="flex-1">
-              <Text className="text-white text-sm font-medium">A verified company viewed your profile</Text>
+              <Text className="text-[#1A1625] text-sm font-medium">A verified company viewed your profile</Text>
               <Text className="text-slate-500 text-xs mt-0.5">{new Date(item.viewed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
             </View>
             <Text className="text-slate-500 text-xs">{timeAgo(item.viewed_at)}</Text>

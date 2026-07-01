@@ -83,19 +83,19 @@ function NotifCard({ item, onPress }: { item: NotificationItem; onPress: () => v
         gap: 12,
         paddingVertical: 14,
         paddingHorizontal: 16,
-        backgroundColor: '#131118',
+        backgroundColor: '#EDE7DB',
         borderRadius: 14,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: item.is_read ? '#1E1B2E' : '#FF624030',
+        borderColor: item.is_read ? '#DDD6C9' : '#FF624030',
         borderLeftWidth: item.is_read ? 1 : 3,
-        borderLeftColor: item.is_read ? '#1E1B2E' : '#FF6240',
+        borderLeftColor: item.is_read ? '#DDD6C9' : '#FF6240',
       }}
     >
       <NotifIcon type={item.type} />
       <View style={{ flex: 1 }}>
         <Text style={{
-          color: '#fff',
+          color: '#1A1625',
           fontSize: 14,
           fontWeight: item.is_read ? '400' : '600',
           marginBottom: 3,
@@ -104,7 +104,7 @@ function NotifCard({ item, onPress }: { item: NotificationItem; onPress: () => v
           {item.title}
         </Text>
         {item.body ? (
-          <Text style={{ color: '#94A3B8', fontSize: 12, lineHeight: 18 }} numberOfLines={2}>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18 }} numberOfLines={2}>
             {item.body}
           </Text>
         ) : null}
@@ -173,7 +173,7 @@ export default function NotificationsScreen() {
         paddingBottom: 12,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Notifications</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Notifications</Text>
           {unreadCount > 0 ? (
             <View style={{
               paddingHorizontal: 7,
@@ -181,13 +181,13 @@ export default function NotificationsScreen() {
               borderRadius: 10,
               backgroundColor: '#FF6240',
             }}>
-              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{unreadCount}</Text>
+              <Text style={{ color: '#1A1625', fontSize: 11, fontWeight: '700' }}>{unreadCount}</Text>
             </View>
           ) : null}
         </View>
         {unreadCount > 0 ? (
           <Pressable onPress={markAllRead} hitSlop={12}>
-            <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500' }}>Mark all read</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500' }}>Mark all read</Text>
           </Pressable>
         ) : null}
       </View>
@@ -215,7 +215,7 @@ export default function NotificationsScreen() {
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingVertical: 60 }}>
               <Text style={{ fontSize: 36, marginBottom: 12 }}>🔔</Text>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 6 }}>
+              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '600', marginBottom: 6 }}>
                 No notifications yet
               </Text>
               <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>

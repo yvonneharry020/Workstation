@@ -76,10 +76,10 @@ function EmailProviderCard({
     <Animated.View
       entering={FadeInDown.duration(350)}
       style={{
-        backgroundColor: '#131118',
+        backgroundColor: '#EDE7DB',
         borderRadius: 16,
         borderWidth: 1.5,
-        borderColor: connectionState === 'connected' ? `${accentColor}40` : '#1E1B2E',
+        borderColor: connectionState === 'connected' ? `${accentColor}40` : '#DDD6C9',
         padding: 16,
         marginBottom: 12,
       }}
@@ -87,7 +87,7 @@ function EmailProviderCard({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {icon}
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>{provider}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '600' }}>{provider}</Text>
           {connectionState === 'connected' && accountName && (
             <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
               {accountName}
@@ -109,10 +109,10 @@ function EmailProviderCard({
             </View>
             <Pressable
               onPress={onDisconnect}
-              style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
+              style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
               className="active:opacity-70"
             >
-              <Text style={{ color: '#94A3B8', fontSize: 12 }}>Remove</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12 }}>Remove</Text>
             </Pressable>
           </View>
         ) : connectionState === 'connecting' ? (
@@ -245,7 +245,7 @@ export default function CompanyStep6() {
         </View>
         <Text className="text-slate-500 text-xs mb-8">Step 6 of {STEPS_TOTAL}</Text>
 
-        <Text className="text-white text-3xl font-bold mb-2">Email integration</Text>
+        <Text className="text-[#1A1625] text-3xl font-bold mb-2">Email integration</Text>
         <Text className="text-slate-400 text-base mb-8">
           Connect your company email to send application notifications directly from your own domain.
         </Text>
@@ -292,7 +292,7 @@ export default function CompanyStep6() {
             onPress={handleContinue}
             className="bg-primary-500 rounded-2xl py-4 items-center mb-4 active:opacity-80"
           >
-            <Text className="text-white font-bold text-base">Continue with connected email</Text>
+            <Text className="text-[#1A1625] font-bold text-base">Continue with connected email</Text>
           </Pressable>
         ) : null}
 

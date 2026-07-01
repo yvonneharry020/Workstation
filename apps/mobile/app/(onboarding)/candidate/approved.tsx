@@ -84,7 +84,7 @@ function TrustScoreRing({ score }: { score: number }) {
           alignItems: 'center',
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800' }}>{score}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800' }}>{score}</Text>
         <Text style={{ color: '#64748B', fontSize: 11 }}>/ 100</Text>
       </View>
     </View>
@@ -172,7 +172,7 @@ export default function CandidateApproved() {
 
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 30,
               fontWeight: '800',
               letterSpacing: -0.5,
@@ -234,9 +234,9 @@ export default function CandidateApproved() {
               onPress={() => router.replace(card.route as Parameters<typeof router.replace>[0])}
               className="flex-row items-center gap-4 rounded-2xl px-5 py-4 mb-3 active:opacity-80"
               style={{
-                backgroundColor: card.primary ? '#FF6240' : '#131118',
+                backgroundColor: card.primary ? '#FF6240' : '#EDE7DB',
                 borderWidth: 1,
-                borderColor: card.primary ? '#FF6240' : '#3D3850',
+                borderColor: card.primary ? '#FF6240' : '#C8BFB0',
               }}
             >
               <View
@@ -254,7 +254,7 @@ export default function CandidateApproved() {
               <View className="flex-1">
                 <Text
                   style={{
-                    color: '#fff',
+                    color: '#1A1625',
                     fontSize: 14,
                     fontWeight: '600',
                     marginBottom: 2,
@@ -272,7 +272,7 @@ export default function CandidateApproved() {
                   {card.desc}
                 </Text>
               </View>
-              <Text style={{ color: card.primary ? '#fff' : '#64748B', fontSize: 18 }}>→</Text>
+              <Text style={{ color: card.primary ? '#1A1625' : '#64748B', fontSize: 18 }}>→</Text>
             </Pressable>
           ))}
         </Animated.View>

@@ -48,7 +48,7 @@ function SplashContent() {
             style={{
               fontSize: 34,
               fontFamily: 'PlusJakartaSans_800ExtraBold',
-              color: '#fff',
+              color: '#1A1625',
               lineHeight: 40,
             }}
           >
@@ -62,7 +62,7 @@ function SplashContent() {
           style={{
             fontSize: 28,
             fontFamily: 'PlusJakartaSans_700Bold',
-            color: '#ffffff',
+            color: '#1A1625',
             letterSpacing: 1.5,
           }}
         >
@@ -100,7 +100,7 @@ function SplashContent() {
               width: 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: i === 0 ? '#FF6240' : '#3D3850',
+              backgroundColor: i === 0 ? '#FF6240' : '#C8BFB0',
             }}
           />
         ))}

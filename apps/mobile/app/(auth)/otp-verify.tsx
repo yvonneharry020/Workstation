@@ -1,10 +1,12 @@
 import { View, Text, TextInput, Pressable, Alert } from 'react-native'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
+
+const RESEND_COOLDOWN = 60
 
 function LockIcon() {
   return (
@@ -16,7 +18,7 @@ function LockIcon() {
   )
 }
 
-const OTP_LENGTH = 6
+const OTP_LENGTH = 8
 
 export default function OtpVerifyScreen() {
   const { email, mode, rcNumber, businessEmail, phone } = useLocalSearchParams<{
@@ -29,7 +31,28 @@ export default function OtpVerifyScreen() {
   const [otp, setOtp] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isResending, setIsResending] = useState(false)
+  const [countdown, setCountdown] = useState(RESEND_COOLDOWN)
   const inputRef = useRef<TextInput>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const startCountdown = useCallback(() => {
+    setCountdown(RESEND_COOLDOWN)
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(timerRef.current!)
+          return 0
+        }
+        return c - 1
+      })
+    }, 1000)
+  }, [])
+
+  useEffect(() => {
+    startCountdown()
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [startCountdown])
 
   const maskedEmail = email
     ? email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + '*'.repeat(b.length) + c)
@@ -42,7 +65,7 @@ export default function OtpVerifyScreen() {
 
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) {
-      Alert.alert('Invalid code', 'Please enter the 6-digit code we sent to your email.')
+      Alert.alert('Invalid code', 'Please enter the 8-digit code we sent to your email.')
       return
     }
 
@@ -86,19 +109,18 @@ export default function OtpVerifyScreen() {
 
   const handleResend = async () => {
     if (!email) return
-
     setIsResending(true)
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false },
-      })
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
       if (error) {
         Alert.alert('Error', 'Could not resend the code. Please try again.')
-      } else {
-        Alert.alert('Code sent', 'A new code has been sent to your email.')
-        setOtp('')
+        return
       }
+      setOtp('')
+      startCountdown()
+      Alert.alert('Code sent', 'A new 8-digit code has been sent to your email.')
+    } catch {
+      Alert.alert('Error', 'Could not resend the code. Please try again.')
     } finally {
       setIsResending(false)
     }
@@ -121,7 +143,7 @@ export default function OtpVerifyScreen() {
         </View>
         <Text
           style={{
-            color: '#fff',
+            color: '#1A1625',
             fontSize: 26,
             fontWeight: '700',
             textAlign: 'center',
@@ -132,8 +154,8 @@ export default function OtpVerifyScreen() {
           Enter your code
         </Text>
         <Text className="text-slate-400 text-sm text-center leading-5 px-4">
-          We sent a 6-digit code to{'\n'}
-          <Text className="text-white font-medium">{maskedEmail}</Text>
+          We sent an 8-digit code to{'\n'}
+          <Text className="text-[#1A1625] font-medium">{maskedEmail}</Text>
         </Text>
       </Animated.View>
 
@@ -149,16 +171,16 @@ export default function OtpVerifyScreen() {
                 width: 46,
                 height: 54,
                 borderRadius: 12,
-                backgroundColor: '#131118',
+                backgroundColor: '#EDE7DB',
                 borderWidth: 1.5,
-                borderColor: digit ? '#FF6240' : otp.length === index ? '#564F6A' : '#3D3850',
+                borderColor: digit ? '#FF6240' : otp.length === index ? '#564F6A' : '#C8BFB0',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
               <Text
                 style={{
-                  color: '#fff',
+                  color: '#1A1625',
                   fontSize: 22,
                   fontWeight: '700',
                   fontFamily: 'JetBrainsMono_700Bold',
@@ -187,21 +209,25 @@ export default function OtpVerifyScreen() {
           className="bg-primary-500 rounded-2xl py-4 items-center mb-5 active:opacity-80"
           style={{ opacity: isVerifying || otp.length !== OTP_LENGTH ? 0.5 : 1 }}
         >
-          <Text className="text-white font-semibold text-base">
+          <Text className="text-[#1A1625] font-semibold text-base">
             {isVerifying ? 'Verifying…' : 'Verify code'}
           </Text>
         </Pressable>
 
         <View className="flex-row justify-center items-center gap-1">
-          <Text className="text-slate-400 text-sm">Didn't receive a code?</Text>
-          <Pressable onPress={handleResend} disabled={isResending} hitSlop={8}>
-            <Text
-              className="text-primary-400 text-sm font-semibold"
-              style={{ opacity: isResending ? 0.5 : 1 }}
-            >
-              {isResending ? 'Sending…' : 'Resend'}
-            </Text>
-          </Pressable>
+          <Text className="text-slate-400 text-sm">Didn't receive it?</Text>
+          {countdown > 0 ? (
+            <Text className="text-slate-500 text-sm">Resend in {countdown}s</Text>
+          ) : (
+            <Pressable onPress={handleResend} disabled={isResending} hitSlop={8}>
+              <Text
+                className="text-primary-400 text-sm font-semibold"
+                style={{ opacity: isResending ? 0.5 : 1 }}
+              >
+                {isResending ? 'Sending…' : 'Resend code'}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <Text className="text-slate-600 text-xs text-center mt-4">

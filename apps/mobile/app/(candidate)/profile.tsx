@@ -89,7 +89,7 @@ function SmallTrustRing({ score }: { score: number }) {
         />
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{score}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '800' }}>{score}</Text>
       </View>
     </View>
   )
@@ -117,7 +117,7 @@ function VerifPill({ label, verified }: { label: string; verified: boolean }) {
 function SectionLabel({ title }: { title: string }) {
   return (
     <Text style={{
-      color: '#94A3B8',
+      color: '#5A4F6E',
       fontSize: 11,
       fontWeight: '700',
       letterSpacing: 1,
@@ -211,7 +211,7 @@ export default function CandidateProfileScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E', alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#FF6240" size="large" />
       </SafeAreaView>
     )
@@ -224,14 +224,14 @@ export default function CandidateProfileScreen() {
   const initials = `${(candidate?.first_name ?? 'U')[0]}${(candidate?.last_name ?? '')[0] ?? ''}`.toUpperCase()
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(350)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 24 }}>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Profile</Text>
           <Pressable
             onPress={() => router.push('/(candidate)/profile/edit')}
             style={{ backgroundColor: '#FF624015', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#FF624030' }}
@@ -242,7 +242,7 @@ export default function CandidateProfileScreen() {
         </Animated.View>
 
         {/* Hero identity card */}
-        <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ backgroundColor: '#0F0D1A', borderRadius: 24, borderWidth: 1, borderColor: '#1E1B2E', padding: 20, marginBottom: 16, alignItems: 'center' }}>
+        <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ backgroundColor: '#F0EBE1', borderRadius: 24, borderWidth: 1, borderColor: '#DDD6C9', padding: 20, marginBottom: 16, alignItems: 'center' }}>
           {/* Avatar */}
           {candidate?.avatar_url ? (
             <Image source={{ uri: candidate.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 14, borderWidth: 3, borderColor: '#FF624040' }} contentFit="cover" />
@@ -252,7 +252,7 @@ export default function CandidateProfileScreen() {
             </View>
           )}
 
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>{fullName}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>{fullName}</Text>
           {candidate?.headline && (
             <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 12 }}>{candidate.headline}</Text>
           )}
@@ -270,11 +270,11 @@ export default function CandidateProfileScreen() {
           </View>
 
           {/* Trust score row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%', backgroundColor: '#131118', borderRadius: 14, padding: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%', backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14 }}>
             <SmallTrustRing score={trustScore} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 }}>Trust Score</Text>
-              <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', lineHeight: 30 }}>
+              <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '800', lineHeight: 30 }}>
                 {trustScore}<Text style={{ color: '#475569', fontSize: 13 }}>/100</Text>
               </Text>
               <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: `${levelColor}20`, borderWidth: 1, borderColor: `${levelColor}40`, alignSelf: 'flex-start', marginTop: 6 }}>
@@ -286,10 +286,10 @@ export default function CandidateProfileScreen() {
 
         {/* About */}
         <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ marginBottom: 16 }}>
-          <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+          <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
             <SectionLabel title="About" />
             {candidate?.bio ? (
-              <Text style={{ color: '#CBD5E1', fontSize: 14, lineHeight: 22 }}>{candidate.bio}</Text>
+              <Text style={{ color: '#2D2640', fontSize: 14, lineHeight: 22 }}>{candidate.bio}</Text>
             ) : (
               <Text style={{ color: '#334155', fontSize: 14, fontStyle: 'italic' }}>No bio added yet.</Text>
             )}
@@ -299,12 +299,12 @@ export default function CandidateProfileScreen() {
         {/* Skills */}
         {skills.length > 0 && (
           <Animated.View entering={FadeInDown.delay(160).duration(350)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <SectionLabel title="Skills" />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {skills.map((s) => (
-                  <View key={s.id} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E' }}>
-                    <Text style={{ color: '#CBD5E1', fontSize: 12, fontWeight: '500' }}>{s.skills?.name ?? ''}</Text>
+                  <View key={s.id} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9' }}>
+                    <Text style={{ color: '#2D2640', fontSize: 12, fontWeight: '500' }}>{s.skills?.name ?? ''}</Text>
                   </View>
                 ))}
               </View>
@@ -315,28 +315,28 @@ export default function CandidateProfileScreen() {
         {/* Work history */}
         {workHistory.length > 0 && (
           <Animated.View entering={FadeInDown.delay(200).duration(350)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <SectionLabel title="Work Experience" />
               {workHistory.map((w, idx) => (
                 <View key={w.id} style={{ flexDirection: 'row', gap: 12, marginBottom: idx < workHistory.length - 1 ? 18 : 0 }}>
                   <View style={{ alignItems: 'center' }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 14 }}>💼</Text>
                     </View>
                     {idx < workHistory.length - 1 && (
-                      <View style={{ width: 1, flex: 1, backgroundColor: '#1E1B2E', marginTop: 4 }} />
+                      <View style={{ width: 1, flex: 1, backgroundColor: '#DDD6C9', marginTop: 4 }} />
                     )}
                   </View>
                   <View style={{ flex: 1, paddingBottom: idx < workHistory.length - 1 ? 12 : 0 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1 }}>{w.job_title}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', flex: 1 }}>{w.job_title}</Text>
                       {w.is_current && (
                         <View style={{ backgroundColor: '#22C55E15', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, marginLeft: 8 }}>
                           <Text style={{ color: '#22C55E', fontSize: 10, fontWeight: '700' }}>Current</Text>
                         </View>
                       )}
                     </View>
-                    <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{w.company_name}</Text>
+                    <Text style={{ color: '#5A4F6E', fontSize: 13, marginTop: 2 }}>{w.company_name}</Text>
                     <Text style={{ color: '#475569', fontSize: 12, marginTop: 4 }}>{formatPeriod(w.start_date, w.end_date, w.is_current)}</Text>
                     {w.description && (
                       <Text style={{ color: '#64748B', fontSize: 12, marginTop: 6, lineHeight: 18 }} numberOfLines={3}>{w.description}</Text>
@@ -351,16 +351,16 @@ export default function CandidateProfileScreen() {
         {/* Education */}
         {education.length > 0 && (
           <Animated.View entering={FadeInDown.delay(240).duration(350)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <SectionLabel title="Education" />
               {education.map((e, idx) => (
                 <View key={e.id} style={{ flexDirection: 'row', gap: 12, marginBottom: idx < education.length - 1 ? 16 : 0 }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Text style={{ fontSize: 14 }}>🎓</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{e.degree}</Text>
-                    <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{e.institution}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>{e.degree}</Text>
+                    <Text style={{ color: '#5A4F6E', fontSize: 13, marginTop: 2 }}>{e.institution}</Text>
                     {e.field_of_study && <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{e.field_of_study}</Text>}
                     {(e.start_year || e.end_year) && (
                       <Text style={{ color: '#475569', fontSize: 12, marginTop: 4 }}>{e.start_year} – {e.end_year ?? 'Present'}</Text>
@@ -375,7 +375,7 @@ export default function CandidateProfileScreen() {
         {/* Badges preview */}
         {badges.length > 0 && (
           <Animated.View entering={FadeInDown.delay(280).duration(350)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <SectionLabel title="Badges Earned" />
                 <Pressable onPress={() => router.push('/(candidate)/badges')} hitSlop={10}>
@@ -383,16 +383,16 @@ export default function CandidateProfileScreen() {
                 </Pressable>
               </View>
               {badges.map((b, idx) => (
-                <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: idx > 0 ? 12 : 0, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#1E1B2E' }}>
+                <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: idx > 0 ? 12 : 0, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#DDD6C9' }}>
                   {b.company_profiles?.logo_url ? (
                     <Image source={{ uri: b.company_profiles.logo_url }} style={{ width: 40, height: 40, borderRadius: 10 }} contentFit="cover" />
                   ) : (
-                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 18 }}>🏅</Text>
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{b.role_held}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>{b.role_held}</Text>
                     <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{b.company_profiles?.company_name}</Text>
                   </View>
                   <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#0DD4C315', borderWidth: 1, borderColor: '#0DD4C330' }}>
@@ -407,18 +407,18 @@ export default function CandidateProfileScreen() {
         {/* Links */}
         {(candidate?.github_url || candidate?.linkedin_url || candidate?.portfolio_url) && (
           <Animated.View entering={FadeInDown.delay(320).duration(350)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <SectionLabel title="Links" />
               {[
                 { url: candidate?.github_url, emoji: '🐙', label: 'GitHub' },
                 { url: candidate?.linkedin_url, emoji: '💼', label: 'LinkedIn' },
                 { url: candidate?.portfolio_url, emoji: '🌐', label: 'Portfolio' },
               ].filter((l) => l.url).map((link, idx, arr) => (
-                <View key={link.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#1E1B2E' }}>
+                <View key={link.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#DDD6C9' }}>
                   <Text style={{ fontSize: 16 }}>{link.emoji}</Text>
                   <View>
                     <Text style={{ color: '#475569', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>{link.label}</Text>
-                    <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{link.url}</Text>
+                    <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{link.url}</Text>
                   </View>
                 </View>
               ))}

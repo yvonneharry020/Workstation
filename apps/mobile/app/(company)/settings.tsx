@@ -67,12 +67,12 @@ function SettingRow({
   const inner = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 13 }}>
       {icon && (
-        <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: iconBg ?? '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: iconBg ?? '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
           {icon}
         </View>
       )}
       <View style={{ flex: 1 }}>
-        <Text style={{ color: danger ? '#EF4444' : '#E2E8F0', fontSize: 14, fontWeight: '500' }}>{label}</Text>
+        <Text style={{ color: danger ? '#EF4444' : '#1A1625', fontSize: 14, fontWeight: '500' }}>{label}</Text>
         {sub && <Text style={{ color: '#475569', fontSize: 12, marginTop: 1 }}>{sub}</Text>}
       </View>
       {right ?? (onPress ? <ChevronRightIcon /> : null)}
@@ -98,14 +98,14 @@ function SectionHeader({ label }: { label: string }) {
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', overflow: 'hidden' }}>
+    <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', overflow: 'hidden' }}>
       {children}
     </View>
   )
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: '#1E1B2E', marginLeft: 58 }} />
+  return <View style={{ height: 1, backgroundColor: '#DDD6C9', marginLeft: 58 }} />
 }
 
 export default function SettingsScreen() {
@@ -204,7 +204,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Settings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Settings</Text>
         {profile?.company_name && (
           <Text style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>{profile.company_name}</Text>
         )}
@@ -256,7 +256,7 @@ export default function SettingsScreen() {
               label="Gmail integration"
               sub={profile?.gmail_connected ? (profile.gmail_account ?? 'Connected') : 'Not connected'}
               right={
-                <View style={{ backgroundColor: profile?.gmail_connected ? '#22C55E20' : '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                <View style={{ backgroundColor: profile?.gmail_connected ? '#22C55E20' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                   <Text style={{ color: profile?.gmail_connected ? '#22C55E' : '#64748B', fontSize: 11, fontWeight: '600' }}>
                     {profile?.gmail_connected ? 'Connected' : 'Connect'}
                   </Text>
@@ -269,7 +269,7 @@ export default function SettingsScreen() {
               label="Outlook integration"
               sub={profile?.outlook_connected ? (profile.outlook_account ?? 'Connected') : 'Not connected'}
               right={
-                <View style={{ backgroundColor: profile?.outlook_connected ? '#22C55E20' : '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                <View style={{ backgroundColor: profile?.outlook_connected ? '#22C55E20' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                   <Text style={{ color: profile?.outlook_connected ? '#22C55E' : '#64748B', fontSize: 11, fontWeight: '600' }}>
                     {profile?.outlook_connected ? 'Connected' : 'Connect'}
                   </Text>
@@ -290,7 +290,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={prefs?.push_enabled ?? true}
                   onValueChange={toggleSwitch('push_enabled')}
-                  trackColor={{ false: '#1E1B2E', true: '#FF6240' }}
+                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
                   thumbColor="#fff"
                 />
               }
@@ -302,7 +302,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={prefs?.email_new_application ?? true}
                   onValueChange={toggleSwitch('email_new_application')}
-                  trackColor={{ false: '#1E1B2E', true: '#FF6240' }}
+                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
                   thumbColor="#fff"
                 />
               }
@@ -314,7 +314,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={prefs?.email_status_change ?? true}
                   onValueChange={toggleSwitch('email_status_change')}
-                  trackColor={{ false: '#1E1B2E', true: '#FF6240' }}
+                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
                   thumbColor="#fff"
                 />
               }
@@ -326,7 +326,7 @@ export default function SettingsScreen() {
                 <Switch
                   value={prefs?.email_interview_reminder ?? true}
                   onValueChange={toggleSwitch('email_interview_reminder')}
-                  trackColor={{ false: '#1E1B2E', true: '#FF6240' }}
+                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
                   thumbColor="#fff"
                 />
               }
@@ -400,7 +400,7 @@ export default function SettingsScreen() {
           </SectionCard>
         </Animated.View>
 
-        <Text style={{ color: '#1E1B2E', fontSize: 11, textAlign: 'center', marginTop: 28 }}>Workstation v1.0 · Lagos, Nigeria</Text>
+        <Text style={{ color: '#DDD6C9', fontSize: 11, textAlign: 'center', marginTop: 28 }}>Workstation v1.0 · Lagos, Nigeria</Text>
       </ScrollView>
     </SafeAreaView>
   )

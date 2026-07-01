@@ -115,7 +115,7 @@ function EntryForm({
   const isCurrent = watch('isCurrent')
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -126,7 +126,7 @@ function EntryForm({
           keyboardShouldPersistTaps="handled"
         >
           <View className="flex-row items-center justify-between py-5">
-            <Text className="text-white text-base font-semibold">
+            <Text className="text-[#1A1625] text-base font-semibold">
               {initial ? 'Edit experience' : 'Add experience'}
             </Text>
             <Pressable onPress={onCancel} hitSlop={12}>
@@ -173,13 +173,13 @@ function EntryForm({
                 onPress={() => onChange(!value)}
                 className="flex-row items-center justify-between bg-surface-card border border-surface-border rounded-xl px-4 py-4 mb-4"
               >
-                <Text className="text-white text-sm">I currently work here</Text>
+                <Text className="text-[#1A1625] text-sm">I currently work here</Text>
                 <View
                   style={{
                     width: 44,
                     height: 24,
                     borderRadius: 12,
-                    backgroundColor: value ? '#FF6240' : '#3D3850',
+                    backgroundColor: value ? '#FF6240' : '#C8BFB0',
                     padding: 2,
                     justifyContent: 'center',
                     alignItems: value ? 'flex-end' : 'flex-start',
@@ -190,7 +190,7 @@ function EntryForm({
                       width: 20,
                       height: 20,
                       borderRadius: 10,
-                      backgroundColor: '#fff',
+                      backgroundColor: '#1A1625',
                     }}
                   />
                 </View>
@@ -293,7 +293,7 @@ function EntryForm({
             onPress={handleSubmit(onSave)}
             className="bg-primary-500 rounded-2xl py-4 items-center mt-2 active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-[#1A1625] font-semibold text-base">
               {initial ? 'Save changes' : 'Add experience'}
             </Text>
           </Pressable>
@@ -381,7 +381,7 @@ export default function CandidateEmploymentHistory() {
         <Animated.View entering={FadeInDown.duration(400)}>
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 26,
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -406,7 +406,7 @@ export default function CandidateEmploymentHistory() {
                 >
                   <View className="flex-row items-start justify-between mb-1">
                     <View className="flex-1 mr-4">
-                      <Text className="text-white text-sm font-semibold">{entry.jobTitle}</Text>
+                      <Text className="text-[#1A1625] text-sm font-semibold">{entry.jobTitle}</Text>
                       <Text className="text-slate-400 text-sm mt-0.5">{entry.companyName}</Text>
                       <Text className="text-slate-500 text-xs mt-1">{formatPeriod(entry)}</Text>
                       {entry.isCurrent && (
@@ -462,7 +462,7 @@ export default function CandidateEmploymentHistory() {
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80 mb-4"
               style={{ opacity: isSaving ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#1A1625] font-semibold text-base">
                 {isSaving ? 'Saving…' : 'Save and continue'}
               </Text>
             </Pressable>

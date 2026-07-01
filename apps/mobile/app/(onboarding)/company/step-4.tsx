@@ -38,7 +38,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1_048_576).toFixed(1)} MB`
 }
 
-function UploadIcon({ color = '#94A3B8' }: { color?: string }) {
+function UploadIcon({ color = '#5A4F6E' }: { color?: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -88,10 +88,10 @@ function DocUploadCard({
     <Animated.View
       entering={FadeInDown.duration(300)}
       style={{
-        backgroundColor: '#131118',
+        backgroundColor: '#EDE7DB',
         borderRadius: 16,
         borderWidth: 1.5,
-        borderColor: slot.uploaded ? '#22C55E40' : '#1E1B2E',
+        borderColor: slot.uploaded ? '#22C55E40' : '#DDD6C9',
         padding: 16,
         marginBottom: 12,
       }}
@@ -99,7 +99,7 @@ function DocUploadCard({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{slot.label}</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>{slot.label}</Text>
             {slot.required && (
               <View style={{ backgroundColor: '#FF624020', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                 <Text style={{ color: '#FF6240', fontSize: 10, fontWeight: '700' }}>Required</Text>
@@ -115,7 +115,7 @@ function DocUploadCard({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#0DD4C308', borderRadius: 10, padding: 10 }}>
           <FileIcon />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#E2E8F0', fontSize: 12, fontWeight: '500' }} numberOfLines={1}>
+            <Text style={{ color: '#1A1625', fontSize: 12, fontWeight: '500' }} numberOfLines={1}>
               {slot.uploaded.name}
             </Text>
             <Text style={{ color: '#64748B', fontSize: 11 }}>{formatBytes(slot.uploaded.size)}</Text>
@@ -146,7 +146,7 @@ function DocUploadCard({
           ) : (
             <>
               <UploadIcon />
-              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500' }}>Upload file</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500' }}>Upload file</Text>
               <Text style={{ color: '#475569', fontSize: 11 }}>PDF, JPG, PNG</Text>
             </>
           )}
@@ -279,7 +279,7 @@ export default function CompanyStep4() {
         </View>
         <Text className="text-slate-500 text-xs mb-8">Step 4 of {STEPS_TOTAL}</Text>
 
-        <Text className="text-white text-3xl font-bold mb-2">Business documents</Text>
+        <Text className="text-[#1A1625] text-3xl font-bold mb-2">Business documents</Text>
         <Text className="text-slate-400 text-base mb-8">
           Upload the documents below. All files go through automated fraud detection before human review.
         </Text>
@@ -317,10 +317,10 @@ export default function CompanyStep4() {
           {isSubmitting ? (
             <View className="flex-row items-center gap-3">
               <ActivityIndicator color="#fff" size="small" />
-              <Text className="text-white font-bold text-base">Saving…</Text>
+              <Text className="text-[#1A1625] font-bold text-base">Saving…</Text>
             </View>
           ) : (
-            <Text className={`font-bold text-base ${canContinue ? 'text-white' : 'text-slate-500'}`}>
+            <Text className={`font-bold text-base ${canContinue ? 'text-[#1A1625]' : 'text-slate-500'}`}>
               Continue to profile setup
             </Text>
           )}

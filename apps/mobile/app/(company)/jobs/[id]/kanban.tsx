@@ -70,8 +70,8 @@ function CandidateCard({
       }
       onLongPress={() => onLongPress(item.id, availableStages)}
       style={{
-        backgroundColor: '#09080E', borderRadius: 12, padding: 12,
-        borderWidth: 1, borderColor: '#1E1B2E', marginBottom: 8,
+        backgroundColor: '#F5F0E8', borderRadius: 12, padding: 12,
+        borderWidth: 1, borderColor: '#DDD6C9', marginBottom: 8,
       }}
       className="active:opacity-80"
     >
@@ -79,11 +79,11 @@ function CandidateCard({
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} contentFit="cover" />
         ) : (
-          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700' }}>{getInitials(name)}</Text>
           </View>
         )}
-        <Text className="flex-1 text-white font-medium text-xs" numberOfLines={2}>{name}</Text>
+        <Text className="flex-1 text-[#1A1625] font-medium text-xs" numberOfLines={2}>{name}</Text>
       </View>
       <Text className="text-slate-500 text-xs">{timeAgo(item.submitted_at)}</Text>
       <Text className="text-slate-600 text-xs mt-1">Hold to move stage</Text>
@@ -173,7 +173,7 @@ export default function KanbanScreen() {
             <ArrowLeftIcon />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-white text-lg font-bold">Kanban Board</Text>
+            <Text className="text-[#1A1625] text-lg font-bold">Kanban Board</Text>
             <Text className="text-slate-400 text-xs" numberOfLines={1}>{jobTitle}</Text>
           </View>
         </View>
@@ -193,8 +193,8 @@ export default function KanbanScreen() {
             <View
               key={col.stage}
               style={{
-                width: COLUMN_WIDTH, backgroundColor: '#131118',
-                borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E',
+                width: COLUMN_WIDTH, backgroundColor: '#EDE7DB',
+                borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9',
                 overflow: 'hidden',
               }}
             >

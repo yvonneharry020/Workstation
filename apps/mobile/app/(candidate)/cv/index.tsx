@@ -67,8 +67,8 @@ function TemplateCard({
         marginBottom: 16,
         borderRadius: 16,
         borderWidth: 2,
-        borderColor: selected ? '#FF6240' : '#1E1B2E',
-        backgroundColor: '#131118',
+        borderColor: selected ? '#FF6240' : '#DDD6C9',
+        backgroundColor: '#EDE7DB',
         overflow: 'hidden',
       }}
       className="active:opacity-80"
@@ -105,7 +105,7 @@ function TemplateCard({
 
       <View className="p-3">
         <View className="flex-row items-center justify-between">
-          <Text className="text-white font-semibold text-sm">{template.name}</Text>
+          <Text className="text-[#1A1625] font-semibold text-sm">{template.name}</Text>
           {template.is_premium && (
             <View style={{ backgroundColor: '#FF624020', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
               <Text style={{ color: '#FF6240', fontSize: 9, fontWeight: '700', letterSpacing: 0.5 }}>PREMIUM</Text>
@@ -119,7 +119,7 @@ function TemplateCard({
 
       {selected && (
         <View style={{ position: 'absolute', top: 10, right: 10, width: 24, height: 24, borderRadius: 12, backgroundColor: '#FF6240', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>
+          <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>✓</Text>
         </View>
       )}
     </Pressable>
@@ -161,7 +161,7 @@ export default function CvTemplateScreen() {
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text className="text-white text-base font-semibold">Choose Template</Text>
+        <Text className="text-[#1A1625] text-base font-semibold">Choose Template</Text>
         <Pressable onPress={() => router.push('/(candidate)/cv/versions' as Parameters<typeof router.push>[0])} hitSlop={12}>
           <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>My CVs</Text>
         </Pressable>
@@ -191,15 +191,15 @@ export default function CvTemplateScreen() {
 
       <View
         className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4"
-        style={{ backgroundColor: '#09080E', borderTopWidth: 1, borderTopColor: '#1E1B2E' }}
+        style={{ backgroundColor: '#F5F0E8', borderTopWidth: 1, borderTopColor: '#DDD6C9' }}
       >
         <Pressable
           onPress={handleUse}
           disabled={!selectedId}
           className="rounded-2xl py-4 items-center active:opacity-80"
-          style={{ backgroundColor: selectedId ? '#FF6240' : '#1E1B2E', opacity: selectedId ? 1 : 0.5 }}
+          style={{ backgroundColor: selectedId ? '#FF6240' : '#DDD6C9', opacity: selectedId ? 1 : 0.5 }}
         >
-          <Text className="text-white font-bold text-base">
+          <Text className="text-[#1A1625] font-bold text-base">
             {selectedId ? 'Use this template' : 'Select a template'}
           </Text>
         </Pressable>

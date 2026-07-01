@@ -52,7 +52,7 @@ function ArrowLeftIcon() {
 
 function StarIcon({ filled }: { filled: boolean }) {
   return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : 'none'} stroke={filled ? '#F59E0B' : '#1E1B2E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={28} height={28} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : 'none'} stroke={filled ? '#F59E0B' : '#DDD6C9'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </Svg>
   )
@@ -185,7 +185,7 @@ export default function IssueBadgeScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold flex-1">Issue Badge</Text>
+        <Text className="text-[#1A1625] text-lg font-bold flex-1">Issue Badge</Text>
         <ShieldIcon />
       </View>
 
@@ -200,15 +200,15 @@ export default function IssueBadgeScreen() {
 
             {!paramCandidateId && (
               <>
-                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECIPIENT</Text>
-                <View style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, marginBottom: 8 }}>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECIPIENT</Text>
+                <View style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, marginBottom: 8 }}>
                   <SearchIcon />
                   <TextInput
                     value={search}
                     onChangeText={setSearch}
                     placeholder="Search candidate by name…"
                     placeholderTextColor="#475569"
-                    style={{ flex: 1, color: '#fff', fontSize: 14, padding: 14 }}
+                    style={{ flex: 1, color: '#1A1625', fontSize: 14, padding: 14 }}
                   />
                 </View>
                 {searchResults.map((c) => {
@@ -217,7 +217,7 @@ export default function IssueBadgeScreen() {
                     <Pressable
                       key={c.id}
                       onPress={() => { setSelectedCandidate(c); setSearch('') }}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
                     >
                       {c.avatar_url ? (
                         <Image source={{ uri: c.avatar_url }} style={{ width: 36, height: 36, borderRadius: 18 }} />
@@ -226,7 +226,7 @@ export default function IssueBadgeScreen() {
                           <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700' }}>{ci}</Text>
                         </View>
                       )}
-                      <Text style={{ color: '#E2E8F0', fontSize: 14 }}>{c.full_name}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14 }}>{c.full_name}</Text>
                     </Pressable>
                   )
                 })}
@@ -234,7 +234,7 @@ export default function IssueBadgeScreen() {
             )}
 
             {candidate && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#0DD4C330', padding: 14, marginBottom: 24 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#0DD4C330', padding: 14, marginBottom: 24 }}>
                 {candidate.avatar_url ? (
                   <Image source={{ uri: candidate.avatar_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
                 ) : (
@@ -243,7 +243,7 @@ export default function IssueBadgeScreen() {
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{candidate.full_name}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>{candidate.full_name}</Text>
                   <Text style={{ color: '#0DD4C3', fontSize: 12 }}>Selected recipient</Text>
                 </View>
                 {!paramCandidateId && (
@@ -254,50 +254,50 @@ export default function IssueBadgeScreen() {
               </View>
             )}
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>ROLE HELD *</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>ROLE HELD *</Text>
             <TextInput
               value={roleHeld}
               onChangeText={setRoleHeld}
               placeholder="e.g. Senior Software Engineer"
               placeholderTextColor="#475569"
-              style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
             />
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>START DATE * (DD/MM/YYYY)</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>START DATE * (DD/MM/YYYY)</Text>
             <TextInput
               value={startDate}
               onChangeText={setStartDate}
               placeholder="01/01/2023"
               placeholderTextColor="#475569"
               keyboardType="numbers-and-punctuation"
-              style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
             />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600' }}>CURRENT ROLE</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600' }}>CURRENT ROLE</Text>
               <Switch
                 value={isCurrent}
                 onValueChange={setIsCurrent}
-                trackColor={{ false: '#1E1B2E', true: '#FF624060' }}
+                trackColor={{ false: '#DDD6C9', true: '#FF624060' }}
                 thumbColor={isCurrent ? '#FF6240' : '#475569'}
               />
             </View>
 
             {!isCurrent && (
               <>
-                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>END DATE * (DD/MM/YYYY)</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>END DATE * (DD/MM/YYYY)</Text>
                 <TextInput
                   value={endDate}
                   onChangeText={setEndDate}
                   placeholder="31/12/2024"
                   placeholderTextColor="#475569"
                   keyboardType="numbers-and-punctuation"
-                  style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+                  style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
                 />
               </>
             )}
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>PERFORMANCE RATING</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>PERFORMANCE RATING</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <Pressable key={n} onPress={() => setPerformanceRating(n)} hitSlop={8}>
@@ -306,25 +306,25 @@ export default function IssueBadgeScreen() {
               ))}
             </View>
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECOMMENDATION (optional)</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECOMMENDATION (optional)</Text>
             <TextInput
               value={recommendation}
               onChangeText={setRecommendation}
               placeholder="Write a recommendation that will be visible on the candidate's profile…"
               placeholderTextColor="#475569"
               multiline
-              style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, minHeight: 120, textAlignVertical: 'top', marginBottom: 24 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, minHeight: 120, textAlignVertical: 'top', marginBottom: 24 }}
             />
 
             {canSubmit && (
-              <Animated.View entering={FadeInDown.duration(300)} style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 24 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 8 }}>BADGE PREVIEW</Text>
+              <Animated.View entering={FadeInDown.duration(300)} style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 24 }}>
+                <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', marginBottom: 8 }}>BADGE PREVIEW</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#0DD4C320', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#0DD4C340' }}>
                     <ShieldIcon />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{roleHeld}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>{roleHeld}</Text>
                     <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>
                       {startDate} — {isCurrent ? 'Present' : endDate}
                     </Text>
@@ -342,12 +342,12 @@ export default function IssueBadgeScreen() {
             <Pressable
               onPress={() => issueMutation.mutate()}
               disabled={!canSubmit || issueMutation.isPending}
-              style={{ backgroundColor: canSubmit ? '#FF6240' : '#1E1B2E', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginBottom: 12 }}
+              style={{ backgroundColor: canSubmit ? '#FF6240' : '#DDD6C9', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginBottom: 12 }}
             >
               {issueMutation.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={{ color: canSubmit ? '#fff' : '#475569', fontWeight: '700', fontSize: 15 }}>Issue badge</Text>
+                <Text style={{ color: canSubmit ? '#1A1625' : '#475569', fontWeight: '700', fontSize: 15 }}>Issue badge</Text>
               )}
             </Pressable>
             <Text style={{ color: '#334155', fontSize: 12, textAlign: 'center' }}>

@@ -119,13 +119,13 @@ export default function PickSlotScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-      <View className="flex-row items-center gap-4 px-5 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+      <View className="flex-row items-center gap-4 px-5 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text className="text-white text-base font-semibold">Choose Interview Time</Text>
+        <Text className="text-[#1A1625] text-base font-semibold">Choose Interview Time</Text>
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
@@ -137,14 +137,14 @@ export default function PickSlotScreen() {
           <View className="flex-row items-start gap-3">
             <CalendarIcon />
             <View className="flex-1">
-              <Text className="text-white font-bold text-base">{jobTitle}</Text>
+              <Text className="text-[#1A1625] font-bold text-base">{jobTitle}</Text>
               <Text className="text-slate-400 text-sm mt-0.5">{companyName}</Text>
               <View className="flex-row gap-2 mt-2">
                 <View style={{ backgroundColor: '#FF624020', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
                   <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '600' }}>{duration} min</Text>
                 </View>
-                <View style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', textTransform: 'capitalize' }}>{meetingType}</Text>
+                <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', textTransform: 'capitalize' }}>{meetingType}</Text>
                 </View>
               </View>
             </View>
@@ -157,7 +157,7 @@ export default function PickSlotScreen() {
           </View>
         ) : slots.length === 0 ? (
           <View className="py-16 items-center px-8">
-            <Text className="text-white text-base font-semibold text-center mb-2">No slots available</Text>
+            <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">No slots available</Text>
             <Text className="text-slate-400 text-sm text-center leading-5">
               The company hasn't set interview times yet. Check back later or contact them through your application.
             </Text>
@@ -177,11 +177,11 @@ export default function PickSlotScreen() {
                         onPress={() => { setSelectedDate(date); setSelectedSlotId(null) }}
                         style={{
                           paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14,
-                          backgroundColor: isSelected ? '#FF6240' : '#131118',
-                          borderWidth: 1, borderColor: isSelected ? '#FF6240' : '#1E1B2E',
+                          backgroundColor: isSelected ? '#FF6240' : '#EDE7DB',
+                          borderWidth: 1, borderColor: isSelected ? '#FF6240' : '#DDD6C9',
                         }}
                       >
-                        <Text style={{ color: isSelected ? '#fff' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+                        <Text style={{ color: isSelected ? '#1A1625' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
                           {formatDate(date)}
                         </Text>
                       </Pressable>
@@ -203,12 +203,12 @@ export default function PickSlotScreen() {
                       onPress={() => setSelectedSlotId(slot.id)}
                       style={{
                         width: '47%', paddingVertical: 14, borderRadius: 14,
-                        backgroundColor: isSelected ? '#FF624015' : '#131118',
-                        borderWidth: 1.5, borderColor: isSelected ? '#FF6240' : '#1E1B2E',
+                        backgroundColor: isSelected ? '#FF624015' : '#EDE7DB',
+                        borderWidth: 1.5, borderColor: isSelected ? '#FF6240' : '#DDD6C9',
                         alignItems: 'center',
                       }}
                     >
-                      <Text style={{ color: isSelected ? '#FF6240' : '#fff', fontSize: 15, fontWeight: '700' }}>
+                      <Text style={{ color: isSelected ? '#FF6240' : '#1A1625', fontSize: 15, fontWeight: '700' }}>
                         {formatTime(slot.start_time)}
                       </Text>
                       <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>
@@ -225,15 +225,15 @@ export default function PickSlotScreen() {
 
       <View
         className="absolute bottom-0 left-0 right-0 px-5 pb-8 pt-4"
-        style={{ backgroundColor: '#09080E', borderTopWidth: 1, borderTopColor: '#1E1B2E' }}
+        style={{ backgroundColor: '#F5F0E8', borderTopWidth: 1, borderTopColor: '#DDD6C9' }}
       >
         <Pressable
           onPress={confirmBooking}
           disabled={!selectedSlotId || isBooking}
           className="rounded-2xl py-4 items-center active:opacity-80"
-          style={{ backgroundColor: selectedSlotId ? '#FF6240' : '#1E1B2E', opacity: !selectedSlotId || isBooking ? 0.5 : 1 }}
+          style={{ backgroundColor: selectedSlotId ? '#FF6240' : '#DDD6C9', opacity: !selectedSlotId || isBooking ? 0.5 : 1 }}
         >
-          <Text className="text-white font-bold text-base">
+          <Text className="text-[#1A1625] font-bold text-base">
             {isBooking ? 'Booking…' : selectedSlotId ? `Confirm — ${formatTime(selectedSlot!.start_time)}` : 'Select a time slot'}
           </Text>
         </Pressable>

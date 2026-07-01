@@ -51,7 +51,7 @@ const STAGE_CONFIG: { stage: PipelineStage; label: string; color: string }[] = [
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string }> = {
   active:  { label: 'Active',   color: '#22C55E' },
-  draft:   { label: 'Draft',    color: '#94A3B8' },
+  draft:   { label: 'Draft',    color: '#5A4F6E' },
   paused:  { label: 'Paused',   color: '#F59E0B' },
   closed:  { label: 'Closed',   color: '#EF4444' },
   expired: { label: 'Expired',  color: '#64748B' },
@@ -83,10 +83,10 @@ function FunnelBar({ bucket, max }: { bucket: StageBucket; max: number }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
       <Text style={{ color: '#64748B', fontSize: 11, width: 68 }} numberOfLines={1}>{bucket.label}</Text>
-      <View style={{ flex: 1, height: 8, backgroundColor: '#1E1B2E', borderRadius: 4, overflow: 'hidden' }}>
+      <View style={{ flex: 1, height: 8, backgroundColor: '#DDD6C9', borderRadius: 4, overflow: 'hidden' }}>
         <View style={{ height: '100%', width: `${width}%`, backgroundColor: bucket.color, borderRadius: 4 }} />
       </View>
-      <Text style={{ color: bucket.count > 0 ? '#fff' : '#475569', fontSize: 12, fontWeight: '700', width: 24, textAlign: 'right' }}>{bucket.count}</Text>
+      <Text style={{ color: bucket.count > 0 ? '#1A1625' : '#475569', fontSize: 12, fontWeight: '700', width: 24, textAlign: 'right' }}>{bucket.count}</Text>
     </View>
   )
 }
@@ -163,7 +163,7 @@ export default function JobApplicantsOverview() {
         <Pressable onPress={() => router.back()} hitSlop={8} className="active:opacity-70">
           <BackIcon />
         </Pressable>
-        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', flex: 1 }} numberOfLines={1}>{job.title}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700', flex: 1 }} numberOfLines={1}>{job.title}</Text>
         <Pressable onPress={() => router.push(`/(company)/jobs/${jobId}/edit` as any)} hitSlop={8} className="active:opacity-70">
           <EditIcon />
         </Pressable>
@@ -171,10 +171,10 @@ export default function JobApplicantsOverview() {
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <Animated.View entering={FadeInDown.delay(50).duration(350)} className="px-5 mb-4">
-          <View style={{ backgroundColor: '#131118', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+          <View style={{ backgroundColor: '#EDE7DB', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 4 }} numberOfLines={2}>{job.title}</Text>
+                <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 4 }} numberOfLines={2}>{job.title}</Text>
                 <Text style={{ color: '#64748B', fontSize: 12 }}>{EMPLOYMENT_LABELS[job.employment_type] ?? job.employment_type}{job.city ? ` · ${job.city}` : ''}</Text>
               </View>
               <View style={{ backgroundColor: `${statusCfg.color}20`, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
@@ -188,7 +188,7 @@ export default function JobApplicantsOverview() {
                 { label: 'Views', value: job.views_count },
                 { label: 'Days live', value: daysPosted ?? '—' },
               ].map((stat, i) => (
-                <View key={stat.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: '#1E1B2E' }}>
+                <View key={stat.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i > 0 ? 1 : 0, borderLeftColor: '#DDD6C9' }}>
                   <Text style={{ color: '#FF6240', fontSize: 20, fontWeight: '800' }}>{stat.value}</Text>
                   <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>{stat.label}</Text>
                 </View>
@@ -198,8 +198,8 @@ export default function JobApplicantsOverview() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(100).duration(350)} className="px-5 mb-4">
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Pipeline</Text>
-          <View style={{ backgroundColor: '#131118', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Pipeline</Text>
+          <View style={{ backgroundColor: '#EDE7DB', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
             {stageBuckets.map((bucket) => (
               <FunnelBar key={bucket.stage} bucket={bucket} max={maxCount} />
             ))}
@@ -207,7 +207,7 @@ export default function JobApplicantsOverview() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150).duration(350)} className="px-5 mb-4">
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Quick actions</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Quick actions</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable
               onPress={() => router.push(`/(company)/jobs/${jobId}/ats` as any)}
@@ -237,14 +237,14 @@ export default function JobApplicantsOverview() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(350)} className="px-5">
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Recent applicants</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Recent applicants</Text>
 
           {applications.length === 0 ? (
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 24, alignItems: 'center' }}>
               <Text style={{ color: '#64748B', fontSize: 13 }}>No applications yet</Text>
             </View>
           ) : (
-            <View style={{ backgroundColor: '#131118', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', paddingHorizontal: 16 }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', paddingHorizontal: 16 }}>
               {applications.slice(0, 5).map((app, index) => {
                 const name = app.candidate_profiles?.full_name ?? 'Candidate'
                 const avatar = app.candidate_profiles?.avatar_url
@@ -257,18 +257,18 @@ export default function JobApplicantsOverview() {
                   <Pressable
                     key={app.id}
                     onPress={() => router.push(`/(company)/candidates/${app.candidate_id}?applicationId=${app.id}` as any)}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: index < 4 ? 1 : 0, borderBottomColor: '#1E1B2E' }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: index < 4 ? 1 : 0, borderBottomColor: '#DDD6C9' }}
                     className="active:opacity-70"
                   >
                     {avatar ? (
                       <Image source={{ uri: avatar }} style={{ width: 40, height: 40, borderRadius: 20 }} contentFit="cover" />
                     ) : (
-                      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700' }}>{initials}</Text>
+                      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '700' }}>{initials}</Text>
                       </View>
                     )}
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{name}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{name}</Text>
                       {headline && <Text style={{ color: '#64748B', fontSize: 11, marginTop: 1 }} numberOfLines={1}>{headline}</Text>}
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>

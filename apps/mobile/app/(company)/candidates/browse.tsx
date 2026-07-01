@@ -87,13 +87,13 @@ function CandidateCard({
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={{ width: 48, height: 48, borderRadius: 24 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#FF6240', fontSize: 15, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
 
           <View className="flex-1">
-            <Text className="text-white font-semibold text-base" numberOfLines={1}>{name}</Text>
+            <Text className="text-[#1A1625] font-semibold text-base" numberOfLines={1}>{name}</Text>
             {item.headline && (
               <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={2}>{item.headline}</Text>
             )}
@@ -209,7 +209,7 @@ export default function BrowseCandidatesScreen() {
           <Pressable onPress={() => router.back()} hitSlop={10} className="active:opacity-70">
             <ArrowLeftIcon />
           </Pressable>
-          <Text className="flex-1 text-white text-xl font-bold">Browse Talent</Text>
+          <Text className="flex-1 text-[#1A1625] text-xl font-bold">Browse Talent</Text>
         </View>
 
         <View className="flex-row items-center gap-2 bg-surface-card border border-surface-border rounded-xl px-3 py-2.5">
@@ -219,7 +219,7 @@ export default function BrowseCandidatesScreen() {
             placeholderTextColor="#475569"
             value={search}
             onChangeText={handleSearchChange}
-            style={{ flex: 1, fontSize: 14, color: '#fff' }}
+            style={{ flex: 1, fontSize: 14, color: '#1A1625' }}
           />
         </View>
 

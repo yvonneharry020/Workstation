@@ -28,7 +28,7 @@ interface JobPosting {
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string }> = {
   active:  { label: 'Active',   color: '#22C55E', bg: '#14532D20' },
-  draft:   { label: 'Draft',    color: '#94A3B8', bg: '#1E293B'   },
+  draft:   { label: 'Draft',    color: '#5A4F6E', bg: '#1E293B'   },
   paused:  { label: 'Paused',   color: '#F59E0B', bg: '#78350F20' },
   closed:  { label: 'Closed',   color: '#EF4444', bg: '#7F1D1D20' },
   expired: { label: 'Expired',  color: '#64748B', bg: '#1E293B'   },
@@ -109,9 +109,9 @@ function JobCard({ job, onToggleStatus }: { job: JobPosting; onToggleStatus: (id
 
   return (
     <Animated.View entering={FadeInDown.duration(350)}>
-      <View style={{ backgroundColor: '#131118', borderRadius: 18, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 12 }}>
+      <View style={{ backgroundColor: '#EDE7DB', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', flex: 1, marginRight: 10 }} numberOfLines={2}>{job.title}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700', flex: 1, marginRight: 10 }} numberOfLines={2}>{job.title}</Text>
           <View style={{ backgroundColor: config.bg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}>
             <Text style={{ color: config.color, fontSize: 11, fontWeight: '600' }}>{config.label}</Text>
           </View>
@@ -122,15 +122,15 @@ function JobCard({ job, onToggleStatus }: { job: JobPosting; onToggleStatus: (id
         )}
 
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          <View style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 11 }}>{EMPLOYMENT_LABELS[job.employment_type]}</Text>
+          <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 11 }}>{EMPLOYMENT_LABELS[job.employment_type]}</Text>
           </View>
-          <View style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 11 }}>{WORK_MODE_LABELS[job.work_mode]}</Text>
+          <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 11 }}>{WORK_MODE_LABELS[job.work_mode]}</Text>
           </View>
           {job.city && (
-            <View style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 11 }}>{job.city}</Text>
+            <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 11 }}>{job.city}</Text>
             </View>
           )}
         </View>
@@ -160,16 +160,16 @@ function JobCard({ job, onToggleStatus }: { job: JobPosting; onToggleStatus: (id
           </Pressable>
           <Pressable
             onPress={() => router.push(`/(company)/jobs/${job.id}/edit` as any)}
-            style={{ flex: 1, backgroundColor: '#1E1B2E', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5 }}
+            style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5 }}
             className="active:opacity-70"
           >
             <EditIcon />
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600' }}>Edit</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600' }}>Edit</Text>
           </Pressable>
           {(job.status === 'active' || job.status === 'paused') && (
             <Pressable
               onPress={() => onToggleStatus(job.id, job.status)}
-              style={{ backgroundColor: '#1E1B2E', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' }}
+              style={{ backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' }}
               className="active:opacity-70"
             >
               <Text style={{ color: job.status === 'active' ? '#F59E0B' : '#22C55E', fontSize: 12, fontWeight: '600' }}>
@@ -217,14 +217,14 @@ export default function CompanyJobsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>Job Listings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Job Listings</Text>
         <Pressable
           onPress={() => router.push('/(company)/jobs/post' as any)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FF6240', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 }}
           className="active:opacity-80"
         >
           <PlusIcon />
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Post Job</Text>
+          <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>Post Job</Text>
         </Pressable>
       </View>
 
@@ -245,16 +245,16 @@ export default function CompanyJobsScreen() {
                 paddingHorizontal: 14,
                 paddingVertical: 7,
                 borderRadius: 10,
-                backgroundColor: isActive ? '#FF6240' : '#131118',
+                backgroundColor: isActive ? '#FF6240' : '#EDE7DB',
                 borderWidth: 1,
-                borderColor: isActive ? '#FF6240' : '#1E1B2E',
+                borderColor: isActive ? '#FF6240' : '#DDD6C9',
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 5,
               }}
               className="active:opacity-70"
             >
-              <Text style={{ color: isActive ? '#fff' : '#64748B', fontSize: 12, fontWeight: '600' }}>{tab.label}</Text>
+              <Text style={{ color: isActive ? '#1A1625' : '#64748B', fontSize: 12, fontWeight: '600' }}>{tab.label}</Text>
               <Text style={{ color: isActive ? '#ffffff99' : '#475569', fontSize: 11 }}>{count}</Text>
             </Pressable>
           )
@@ -288,7 +288,7 @@ export default function CompanyJobsScreen() {
                   style={{ backgroundColor: '#FF6240', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, marginTop: 8 }}
                   className="active:opacity-80"
                 >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Post your first job</Text>
+                  <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 14 }}>Post your first job</Text>
                 </Pressable>
               )}
             </View>

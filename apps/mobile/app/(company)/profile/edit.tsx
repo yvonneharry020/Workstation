@@ -80,7 +80,7 @@ function ArrowLeftIcon() {
   )
 }
 
-function CameraIcon({ color = '#fff' }: { color?: string }) {
+function CameraIcon({ color = '#1A1625' }: { color?: string }) {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -107,7 +107,7 @@ function TrashIcon() {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 12, marginTop: 8 }}>
+    <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 12, marginTop: 8 }}>
       {children}
     </Text>
   )
@@ -312,7 +312,7 @@ export default function EditCompanyProfileScreen() {
           <Pressable onPress={() => router.back()} className="active:opacity-70 p-1">
             <ArrowLeftIcon />
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Edit Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Edit Profile</Text>
           <Pressable
             onPress={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
@@ -321,7 +321,7 @@ export default function EditCompanyProfileScreen() {
           >
             {saveMutation.isPending
               ? <ActivityIndicator color="#fff" size="small" />
-              : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Save</Text>
+              : <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 14 }}>Save</Text>
             }
           </Pressable>
         </View>
@@ -335,7 +335,7 @@ export default function EditCompanyProfileScreen() {
             <Pressable
               onPress={() => pickAndUploadImage('banner')}
               disabled={uploadingField === 'banner'}
-              style={{ width: '100%', aspectRatio: 3.5, backgroundColor: '#131118', borderRadius: 14, borderWidth: 1.5, borderColor: bannerUri ? '#FF624040' : '#1E1B2E', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}
+              style={{ width: '100%', aspectRatio: 3.5, backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1.5, borderColor: bannerUri ? '#FF624040' : '#DDD6C9', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}
               className="active:opacity-70"
             >
               {bannerUri
@@ -350,7 +350,7 @@ export default function EditCompanyProfileScreen() {
             <Pressable
               onPress={() => pickAndUploadImage('logo')}
               disabled={uploadingField === 'logo'}
-              style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#131118', borderWidth: 1.5, borderColor: logoUri ? '#FF624040' : '#1E1B2E', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}
+              style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#EDE7DB', borderWidth: 1.5, borderColor: logoUri ? '#FF624040' : '#DDD6C9', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}
               className="active:opacity-70"
             >
               {logoUri
@@ -378,7 +378,7 @@ export default function EditCompanyProfileScreen() {
             />
 
             <View>
-              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>About</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>About</Text>
               <TextInput
                 multiline
                 numberOfLines={5}
@@ -386,12 +386,12 @@ export default function EditCompanyProfileScreen() {
                 placeholderTextColor="#475569"
                 value={form.about}
                 onChangeText={updateField('about')}
-                style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, minHeight: 110, textAlignVertical: 'top' }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, minHeight: 110, textAlignVertical: 'top' }}
               />
             </View>
 
             <View>
-              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
                 Culture & values <Text style={{ color: '#475569', fontWeight: '400' }}>(optional)</Text>
               </Text>
               <TextInput
@@ -401,7 +401,7 @@ export default function EditCompanyProfileScreen() {
                 placeholderTextColor="#475569"
                 value={form.culture_description}
                 onChangeText={updateField('culture_description')}
-                style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, minHeight: 80, textAlignVertical: 'top' }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, minHeight: 80, textAlignVertical: 'top' }}
               />
             </View>
 
@@ -474,7 +474,7 @@ export default function EditCompanyProfileScreen() {
               <Pressable
                 onPress={addGalleryImage}
                 disabled={uploadingField === 'gallery'}
-                style={{ width: 100, height: 100, borderRadius: 12, backgroundColor: '#131118', borderWidth: 1.5, borderColor: '#1E1B2E', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 100, height: 100, borderRadius: 12, backgroundColor: '#EDE7DB', borderWidth: 1.5, borderColor: '#DDD6C9', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
                 className="active:opacity-70"
               >
                 {uploadingField === 'gallery'

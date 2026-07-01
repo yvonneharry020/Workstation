@@ -129,7 +129,7 @@ function Timeline({ currentSecs, totalSecs, annotations, onSeek, onAnnotationPre
     <View style={{ paddingHorizontal: 20, gap: 8 }}>
       {/* Time labels */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: '#94A3B8', fontSize: 12, fontVariant: ['tabular-nums'] }}>{formatTime(currentSecs)}</Text>
+        <Text style={{ color: '#5A4F6E', fontSize: 12, fontVariant: ['tabular-nums'] }}>{formatTime(currentSecs)}</Text>
         <Text style={{ color: '#475569', fontSize: 12, fontVariant: ['tabular-nums'] }}>{formatTime(totalSecs)}</Text>
       </View>
 
@@ -145,7 +145,7 @@ function Timeline({ currentSecs, totalSecs, annotations, onSeek, onAnnotationPre
         style={{ height: 40, justifyContent: 'center' }}
       >
         {/* Track background */}
-        <View style={{ height: 4, backgroundColor: '#2A2638', borderRadius: 2 }}>
+        <View style={{ height: 4, backgroundColor: '#D4CCBE', borderRadius: 2 }}>
           {/* Fill */}
           <View style={{ width: `${progress * 100}%`, height: 4, backgroundColor: '#FF6240', borderRadius: 2 }} />
           {/* Playhead thumb */}
@@ -170,7 +170,7 @@ function Timeline({ currentSecs, totalSecs, annotations, onSeek, onAnnotationPre
                 top: -4, marginLeft: -5,
                 width: 10, height: 10, borderRadius: 5,
                 backgroundColor: '#0DD4C3',
-                borderWidth: 1.5, borderColor: '#09080E',
+                borderWidth: 1.5, borderColor: '#F5F0E8',
               }}
             />
           )
@@ -267,17 +267,17 @@ export default function InterviewRecordingPlaybackScreen() {
   // Access denied state
   if (!isAuthorised) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }} edges={['top']}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#3D3850' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#C8BFB0' }}>
           <Pressable onPress={() => router.back()} hitSlop={12}><BackIcon /></Pressable>
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>Interview Recording</Text>
+          <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Interview Recording</Text>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: 20 }}>
           <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#2D1B00', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#92400E' }}>
             <LockIcon />
           </View>
-          <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '700', textAlign: 'center' }}>Access Restricted</Text>
-          <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
+          <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', textAlign: 'center' }}>Access Restricted</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 14, textAlign: 'center', lineHeight: 22 }}>
             Interview recordings are only accessible to verified company accounts. Candidates cannot view recordings of their own interviews.
           </Text>
         </View>
@@ -291,13 +291,13 @@ export default function InterviewRecordingPlaybackScreen() {
   const jobTitle = (bookingDetail as any)?.interview_slots?.job_postings?.title ?? 'Interview'
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#3D3850' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#C8BFB0' }}>
         <Pressable onPress={() => router.back()} hitSlop={12}><BackIcon /></Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }} numberOfLines={1}>{candidateName || 'Recording'}</Text>
-          <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{jobTitle}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }} numberOfLines={1}>{candidateName || 'Recording'}</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{jobTitle}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2D1B00', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#92400E' }}>
           <LockIcon />
@@ -310,7 +310,7 @@ export default function InterviewRecordingPlaybackScreen() {
         <Animated.View entering={FadeInDown.duration(400)} style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 16 }}>
           <View style={{
             height: 220, borderRadius: 20, backgroundColor: '#0A0910',
-            borderWidth: 1.5, borderColor: '#3D3850',
+            borderWidth: 1.5, borderColor: '#C8BFB0',
             alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden',
           }}>
@@ -331,13 +331,13 @@ export default function InterviewRecordingPlaybackScreen() {
 
             {/* Overlay: current time indicator */}
             <View style={{ position: 'absolute', top: 12, left: 12, backgroundColor: '#00000080', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 12, fontVariant: ['tabular-nums'] }}>{formatTime(currentSecs)} / {formatTime(TOTAL_DURATION_SECS)}</Text>
+              <Text style={{ color: '#1A1625', fontSize: 12, fontVariant: ['tabular-nums'] }}>{formatTime(currentSecs)} / {formatTime(TOTAL_DURATION_SECS)}</Text>
             </View>
 
             {/* Speed badge */}
             {playbackSpeed !== 1 && (
               <View style={{ position: 'absolute', top: 12, right: 12, backgroundColor: '#FF624080', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>{playbackSpeed}×</Text>
+                <Text style={{ color: '#1A1625', fontSize: 11, fontWeight: '700' }}>{playbackSpeed}×</Text>
               </View>
             )}
           </View>
@@ -395,12 +395,12 @@ export default function InterviewRecordingPlaybackScreen() {
                 onPress={() => setPlaybackSpeed(speed)}
                 style={({ pressed }) => ({
                   paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-                  backgroundColor: playbackSpeed === speed ? '#FF624020' : '#131118',
-                  borderWidth: 1.5, borderColor: playbackSpeed === speed ? '#FF6240' : '#3D3850',
+                  backgroundColor: playbackSpeed === speed ? '#FF624020' : '#EDE7DB',
+                  borderWidth: 1.5, borderColor: playbackSpeed === speed ? '#FF6240' : '#C8BFB0',
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Text style={{ color: playbackSpeed === speed ? '#FF6240' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+                <Text style={{ color: playbackSpeed === speed ? '#FF6240' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
                   {speed}×
                 </Text>
               </Pressable>
@@ -422,7 +422,7 @@ export default function InterviewRecordingPlaybackScreen() {
                 <Text style={{ color: '#0DD4C3', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>
                   Note at {formatTime(selectedAnnotation.timestampSecs)} · {selectedAnnotation.author}
                 </Text>
-                <Text style={{ color: '#E2E8F0', fontSize: 13, lineHeight: 18 }}>{selectedAnnotation.text}</Text>
+                <Text style={{ color: '#1A1625', fontSize: 13, lineHeight: 18 }}>{selectedAnnotation.text}</Text>
               </View>
               <Pressable onPress={() => setSelectedAnnotation(null)} hitSlop={8}>
                 <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round">
@@ -436,7 +436,7 @@ export default function InterviewRecordingPlaybackScreen() {
         {/* ── Annotation list ───────────────────────────────────────────── */}
         <Animated.View entering={FadeInUp.delay(200).duration(400)} style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
               Notes &amp; Annotations
             </Text>
             <View style={{ backgroundColor: '#0DD4C320', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
@@ -452,9 +452,9 @@ export default function InterviewRecordingPlaybackScreen() {
                   onPress={() => handleAnnotationPress(ann)}
                   style={({ pressed }) => ({
                     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-                    backgroundColor: isActive ? '#0DD4C315' : '#131118',
+                    backgroundColor: isActive ? '#0DD4C315' : '#EDE7DB',
                     borderRadius: 12, borderWidth: 1.5,
-                    borderColor: isActive ? '#0DD4C3' : '#3D3850',
+                    borderColor: isActive ? '#0DD4C3' : '#C8BFB0',
                     padding: 14, opacity: pressed ? 0.75 : 1,
                   })}
                 >
@@ -464,7 +464,7 @@ export default function InterviewRecordingPlaybackScreen() {
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#E2E8F0', fontSize: 13, lineHeight: 18 }} numberOfLines={2}>{ann.text}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 13, lineHeight: 18 }} numberOfLines={2}>{ann.text}</Text>
                     <Text style={{ color: '#475569', fontSize: 11, marginTop: 4 }}>{ann.author}</Text>
                   </View>
                   <View style={{ marginTop: 2 }}>
@@ -481,7 +481,7 @@ export default function InterviewRecordingPlaybackScreen() {
           <View style={{ backgroundColor: '#08332F', borderRadius: 14, borderWidth: 1, borderColor: '#00A89A', padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: '#0DD4C3', fontSize: 14, fontWeight: '700' }}>Download recording</Text>
-              <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 2 }}>
                 Signed link · expires 7 days from interview date
               </Text>
             </View>
@@ -489,7 +489,7 @@ export default function InterviewRecordingPlaybackScreen() {
               onPress={handleDownload}
               style={({ pressed }) => ({
                 flexDirection: 'row', alignItems: 'center', gap: 6,
-                backgroundColor: '#131118', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
+                backgroundColor: '#EDE7DB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
                 borderWidth: 1, borderColor: '#0DD4C3', opacity: pressed ? 0.7 : 1,
               })}
             >

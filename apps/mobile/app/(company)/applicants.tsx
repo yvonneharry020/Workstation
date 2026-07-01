@@ -122,7 +122,7 @@ function ApplicationCard({ item, index }: { item: ApplicationRow; index: number 
             <View
               style={{
                 width: 44, height: 44, borderRadius: 22,
-                backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center',
+                backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center',
               }}
             >
               <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
@@ -130,7 +130,7 @@ function ApplicationCard({ item, index }: { item: ApplicationRow; index: number 
           )}
 
           <View className="flex-1">
-            <Text className="text-white font-semibold text-sm" numberOfLines={1}>{name}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
             <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{jobTitle}</Text>
           </View>
 
@@ -208,7 +208,7 @@ export default function ApplicantsScreen() {
     <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
       <View className="px-5 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-white text-2xl font-bold">Applicants</Text>
+          <Text className="text-[#1A1625] text-2xl font-bold">Applicants</Text>
           <Pressable className="p-2 bg-surface-card border border-surface-border rounded-xl active:opacity-70">
             <FilterIcon />
           </Pressable>
@@ -221,7 +221,7 @@ export default function ApplicantsScreen() {
             placeholderTextColor="#475569"
             value={search}
             onChangeText={handleSearchChange}
-            style={{ flex: 1, fontSize: 14, color: '#fff' }}
+            style={{ flex: 1, fontSize: 14, color: '#1A1625' }}
           />
         </View>
 
@@ -233,12 +233,12 @@ export default function ApplicantsScreen() {
                 key={tab.value}
                 onPress={() => setActiveFilter(tab.value)}
                 style={{
-                  backgroundColor: active ? '#FF6240' : '#131118',
+                  backgroundColor: active ? '#FF6240' : '#EDE7DB',
                   borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
-                  borderWidth: 1, borderColor: active ? '#FF6240' : '#1E1B2E',
+                  borderWidth: 1, borderColor: active ? '#FF6240' : '#DDD6C9',
                 }}
               >
-                <Text style={{ color: active ? '#fff' : '#64748B', fontSize: 12, fontWeight: active ? '600' : '400' }}>
+                <Text style={{ color: active ? '#1A1625' : '#64748B', fontSize: 12, fontWeight: active ? '600' : '400' }}>
                   {tab.label}
                 </Text>
               </Pressable>
@@ -269,7 +269,7 @@ export default function ApplicantsScreen() {
           }
           ListEmptyComponent={
             <View className="items-center py-16">
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#131118', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#EDE7DB', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <FilterIcon />
               </View>
               <Text className="text-slate-400 font-semibold text-base mb-1">No applicants found</Text>

@@ -118,7 +118,7 @@ function StatusBadge({ status }: { status: string }) {
     rejected: { bg: '#EF444420', text: '#EF4444' },
     hired: { bg: '#0DD4C320', text: '#0DD4C3' },
   }
-  const color = colorMap[status] ?? { bg: '#1E1B2E', text: '#94A3B8' }
+  const color = colorMap[status] ?? { bg: '#DDD6C9', text: '#5A4F6E' }
   return (
     <View style={{ backgroundColor: color.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
       <Text style={{ color: color.text, fontSize: 12, fontWeight: '600' }}>{formatLabel(status)}</Text>
@@ -201,7 +201,7 @@ export default function JobDetailScreen() {
   if (isError || !job) {
     return (
       <SafeAreaView className="flex-1 bg-surface items-center justify-center px-5">
-        <Text className="text-white font-semibold text-base mb-2">Job not found</Text>
+        <Text className="text-[#1A1625] font-semibold text-base mb-2">Job not found</Text>
         <Pressable onPress={() => router.back()}>
           <Text className="text-primary-400 text-sm">← Go back</Text>
         </Pressable>
@@ -223,7 +223,7 @@ export default function JobDetailScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <BackIcon />
         </Pressable>
-        <Text className="text-white font-semibold text-sm flex-1 mx-4" numberOfLines={1}>
+        <Text className="text-[#1A1625] font-semibold text-sm flex-1 mx-4" numberOfLines={1}>
           {job.title}
         </Text>
         <Pressable onPress={() => toggleSave.mutate()} hitSlop={12}>
@@ -259,7 +259,7 @@ export default function JobDetailScreen() {
             <Text className="text-slate-400 text-sm">{company?.company_name}</Text>
             {company?.is_verified && <VerifiedBadge />}
           </View>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', textAlign: 'center', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', textAlign: 'center', letterSpacing: -0.3 }}>
             {job.title}
           </Text>
           <Text className="text-slate-500 text-xs mt-1">Posted {timeAgo(job.published_at)}</Text>
@@ -298,7 +298,7 @@ export default function JobDetailScreen() {
 
           {/* Description */}
           <View className="mb-5">
-            <Text className="text-white font-semibold text-base mb-2">About this role</Text>
+            <Text className="text-[#1A1625] font-semibold text-base mb-2">About this role</Text>
             <Text className="text-slate-400 text-sm leading-6">{displayedDescription}</Text>
             {descriptionLong && (
               <Pressable onPress={() => setExpanded((e) => !e)} className="mt-2">
@@ -310,7 +310,7 @@ export default function JobDetailScreen() {
           {/* Requirements */}
           {job.requirements && (
             <View className="mb-5">
-              <Text className="text-white font-semibold text-base mb-2">Requirements</Text>
+              <Text className="text-[#1A1625] font-semibold text-base mb-2">Requirements</Text>
               {job.requirements
                 .split('\n')
                 .filter((line) => line.trim().length > 0)
@@ -326,7 +326,7 @@ export default function JobDetailScreen() {
           {/* Benefits */}
           {job.benefits && (
             <View className="mb-5">
-              <Text className="text-white font-semibold text-base mb-2">Benefits</Text>
+              <Text className="text-[#1A1625] font-semibold text-base mb-2">Benefits</Text>
               <Text className="text-slate-400 text-sm leading-6">{job.benefits}</Text>
             </View>
           )}
@@ -360,7 +360,7 @@ export default function JobDetailScreen() {
                 )}
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2 flex-wrap">
-                    <Text className="text-white font-semibold text-sm">{company.company_name}</Text>
+                    <Text className="text-[#1A1625] font-semibold text-sm">{company.company_name}</Text>
                     {company.is_verified && <VerifiedBadge />}
                   </View>
                   {company.industry && <Text className="text-slate-400 text-xs mt-0.5">{company.industry}</Text>}
@@ -381,13 +381,13 @@ export default function JobDetailScreen() {
       {/* Sticky bottom bar */}
       <View
         className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-8 border-t border-surface-border"
-        style={{ backgroundColor: '#09080E' }}
+        style={{ backgroundColor: '#F5F0E8' }}
       >
         {existingApp ? (
           <View className="flex-row items-center justify-between bg-surface-card rounded-2xl px-4 py-3">
             <View>
               <Text className="text-slate-400 text-xs">Applied {timeAgo(existingApp.submitted_at)}</Text>
-              <Text className="text-white text-sm font-semibold mt-0.5">Your application</Text>
+              <Text className="text-[#1A1625] text-sm font-semibold mt-0.5">Your application</Text>
             </View>
             <StatusBadge status={existingApp.status} />
           </View>
@@ -397,7 +397,7 @@ export default function JobDetailScreen() {
               onPress={() => router.push(`/(candidate)/jobs/apply?jobId=${id}`)}
               className="flex-1 bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             >
-              <Text className="text-white font-semibold text-base">Apply now</Text>
+              <Text className="text-[#1A1625] font-semibold text-base">Apply now</Text>
             </Pressable>
             <Pressable
               onPress={() => toggleSave.mutate()}

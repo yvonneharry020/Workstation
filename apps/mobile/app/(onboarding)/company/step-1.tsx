@@ -6,12 +6,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { Input as FormInput } from '@/components/ui/Input'
 
@@ -49,6 +51,7 @@ const STEPS_TOTAL = 7
 export default function CompanyStep1() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isAgreed, setIsAgreed] = useState(false)
 
   const {
     control,
@@ -67,6 +70,10 @@ export default function CompanyStep1() {
   })
 
   const handleCreate = async (data: FormData) => {
+    if (!isAgreed) {
+      Alert.alert('Agreement required', 'Please confirm you are authorised to register this company before continuing.')
+      return
+    }
     setIsSubmitting(true)
     setSubmitError(null)
     try {
@@ -137,7 +144,7 @@ export default function CompanyStep1() {
           </View>
           <Text className="text-slate-500 text-xs mb-8">Step 1 of {STEPS_TOTAL}</Text>
 
-          <Text className="text-white text-3xl font-bold mb-2">Register your company</Text>
+          <Text className="text-[#1A1625] text-3xl font-bold mb-2">Register your company</Text>
           <Text className="text-slate-400 text-base mb-8">
             You'll verify your RC number in the next step. All details must match your CAC registration.
           </Text>
@@ -237,10 +244,36 @@ export default function CompanyStep1() {
             />
           </View>
 
-          <Text className="text-slate-500 text-xs mb-8 leading-5">
-            By registering you confirm you are authorised to act on behalf of this company.
-            All data is processed under NDPR.
-          </Text>
+          <Pressable
+            onPress={() => setIsAgreed((v) => !v)}
+            style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 24 }}
+            hitSlop={6}
+          >
+            <View
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 5,
+                borderWidth: 1.5,
+                borderColor: isAgreed ? '#FF6240' : '#64748B',
+                backgroundColor: isAgreed ? '#FF624020' : 'transparent',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 1,
+                flexShrink: 0,
+              }}
+            >
+              {isAgreed && (
+                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M20 6L9 17l-5-5" />
+                </Svg>
+              )}
+            </View>
+            <Text style={{ color: '#64748B', fontSize: 12, flex: 1, lineHeight: 18 }}>
+              By registering you confirm you are authorised to act on behalf of this company.
+              All data is processed under NDPR.
+            </Text>
+          </Pressable>
 
           {submitError && (
             <View className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-4">
@@ -253,7 +286,7 @@ export default function CompanyStep1() {
             disabled={isSubmitting}
             className={`rounded-2xl py-4 items-center mb-12 ${isSubmitting ? 'bg-primary-700' : 'bg-primary-500'}`}
           >
-            <Text className="text-white font-bold text-base">
+            <Text className="text-[#1A1625] font-bold text-base">
               {isSubmitting ? 'Registering...' : 'Continue'}
             </Text>
           </Pressable>

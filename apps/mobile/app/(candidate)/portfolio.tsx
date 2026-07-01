@@ -40,7 +40,7 @@ const TYPE_CONFIG: Record<ItemType, { label: string; color: string; bg: string; 
   project: { label: 'Project', color: '#FF6240', bg: '#FF624020', placeholder: '#1A0F0C' },
   design:  { label: 'Design',  color: '#0DD4C3', bg: '#0DD4C320', placeholder: '#091A19' },
   writing: { label: 'Writing', color: '#F59E0B', bg: '#F59E0B20', placeholder: '#1A140A' },
-  other:   { label: 'Other',   color: '#94A3B8', bg: '#94A3B820', placeholder: '#131118' },
+  other:   { label: 'Other',   color: '#5A4F6E', bg: '#94A3B820', placeholder: '#EDE7DB' },
 }
 
 const EMPTY_FORM = { title: '', description: '', url: '', type: 'project' as ItemType, image_url: '' }
@@ -103,7 +103,7 @@ function PortfolioCard({
         </View>
       )}
       <View className="p-3">
-        <Text className="text-white font-semibold" style={{ fontSize: 13 }} numberOfLines={2}>
+        <Text className="text-[#1A1625] font-semibold" style={{ fontSize: 13 }} numberOfLines={2}>
           {item.title}
         </Text>
         <View className="flex-row items-center justify-between mt-2">
@@ -194,11 +194,11 @@ function ItemModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
             <View className="flex-row items-center justify-between py-5">
-              <Text className="text-white text-base font-semibold">{initial ? 'Edit item' : 'Add portfolio item'}</Text>
+              <Text className="text-[#1A1625] text-base font-semibold">{initial ? 'Edit item' : 'Add portfolio item'}</Text>
               <Pressable onPress={onClose} hitSlop={12}>
                 <Text className="text-slate-400 text-sm">Cancel</Text>
               </Pressable>
@@ -210,7 +210,7 @@ function ItemModal({
               onChangeText={(t) => update('title', t)}
               placeholder="e.g. E-commerce checkout redesign"
               placeholderTextColor="#475569"
-              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base mb-4"
+              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base mb-4"
             />
 
             <Text className="text-slate-300 text-sm font-medium mb-2">Description</Text>
@@ -222,7 +222,7 @@ function ItemModal({
               multiline
               numberOfLines={3}
               textAlignVertical="top"
-              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm mb-1"
+              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm mb-1"
               style={{ minHeight: 80 }}
             />
             <Text className="text-slate-600 text-xs mb-4 text-right">{form.description.length}/300</Text>
@@ -236,11 +236,11 @@ function ItemModal({
                   style={{
                     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
                     borderWidth: 1.5,
-                    borderColor: form.type === t ? TYPE_CONFIG[t].color : '#3D3850',
-                    backgroundColor: form.type === t ? TYPE_CONFIG[t].bg : '#131118',
+                    borderColor: form.type === t ? TYPE_CONFIG[t].color : '#C8BFB0',
+                    backgroundColor: form.type === t ? TYPE_CONFIG[t].bg : '#EDE7DB',
                   }}
                 >
-                  <Text style={{ color: form.type === t ? TYPE_CONFIG[t].color : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: form.type === t ? TYPE_CONFIG[t].color : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
                     {TYPE_CONFIG[t].label}
                   </Text>
                 </Pressable>
@@ -255,7 +255,7 @@ function ItemModal({
               placeholderTextColor="#475569"
               keyboardType="url"
               autoCapitalize="none"
-              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base mb-4"
+              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base mb-4"
             />
 
             <Pressable
@@ -277,7 +277,7 @@ function ItemModal({
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               style={{ opacity: isSaving ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">{isSaving ? 'Saving…' : initial ? 'Save changes' : 'Add item'}</Text>
+              <Text className="text-[#1A1625] font-semibold text-base">{isSaving ? 'Saving…' : initial ? 'Save changes' : 'Add item'}</Text>
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -341,7 +341,7 @@ export default function PortfolioScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 pt-5 pb-4">
-        <Text className="text-white text-2xl font-bold">Portfolio</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold">Portfolio</Text>
         <Pressable onPress={openAdd} className="flex-row items-center gap-1.5 active:opacity-70">
           <PlusIcon />
           <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>Add</Text>
@@ -354,7 +354,7 @@ export default function PortfolioScreen() {
         </View>
       ) : items.length === 0 ? (
         <Animated.View entering={FadeInDown.duration(400)} className="flex-1 items-center justify-center px-8">
-          <Text className="text-white text-lg font-semibold text-center mb-2">Showcase your work</Text>
+          <Text className="text-[#1A1625] text-lg font-semibold text-center mb-2">Showcase your work</Text>
           <Text className="text-slate-400 text-sm text-center leading-5 mb-6">
             Add projects, designs, or writing samples to stand out to employers.
           </Text>
@@ -362,7 +362,7 @@ export default function PortfolioScreen() {
             onPress={openAdd}
             className="bg-primary-500 rounded-2xl px-8 py-4 active:opacity-80"
           >
-            <Text className="text-white font-semibold">Add first item</Text>
+            <Text className="text-[#1A1625] font-semibold">Add first item</Text>
           </Pressable>
         </Animated.View>
       ) : (

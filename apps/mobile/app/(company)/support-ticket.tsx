@@ -28,7 +28,7 @@ const STATUS_CONFIG: Record<TicketStatus, { label: string; bg: string; text: str
   sent:        { label: 'Sent',        bg: '#F59E0B15', text: '#F59E0B', border: '#F59E0B30' },
   in_progress: { label: 'In Progress', bg: '#0DD4C315', text: '#0DD4C3', border: '#0DD4C330' },
   resolved:    { label: 'Resolved',    bg: '#10B98115', text: '#10B981', border: '#10B98130' },
-  closed:      { label: 'Closed',      bg: '#47556920', text: '#94A3B8', border: '#47556940' },
+  closed:      { label: 'Closed',      bg: '#47556920', text: '#5A4F6E', border: '#47556940' },
 }
 
 const CATEGORIES: { value: TicketCategory; label: string }[] = [
@@ -135,12 +135,12 @@ export default function CompanySupportTicketScreen() {
           <Text className="text-[#94A3B8] text-lg">←</Text>
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="text-sm font-bold text-white">{view === 'new' ? 'New Ticket' : 'My Support Tickets'}</Text>
+          <Text className="text-sm font-bold text-[#1A1625]">{view === 'new' ? 'New Ticket' : 'My Support Tickets'}</Text>
           {view === 'list' && <Text className="text-xs text-[#475569] mt-0.5">{tickets.length} ticket{tickets.length !== 1 ? 's' : ''}</Text>}
         </View>
         {view === 'list' && (
           <TouchableOpacity onPress={() => setView('new')} className="px-3 py-1.5 rounded-lg bg-[#F59E0B] flex-row items-center gap-1.5">
-            <Text className="text-white text-xs font-bold">+ New Ticket</Text>
+            <Text className="text-[#1A1625] text-xs font-bold">+ New Ticket</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -153,10 +153,10 @@ export default function CompanySupportTicketScreen() {
         ) : tickets.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <Text className="text-4xl mb-3">🎫</Text>
-            <Text className="text-base font-bold text-white mb-1">No tickets yet</Text>
+            <Text className="text-base font-bold text-[#1A1625] mb-1">No tickets yet</Text>
             <Text className="text-sm text-[#475569] text-center mb-6">Need help? Submit a support ticket and we'll assign it to the right team.</Text>
             <TouchableOpacity onPress={() => setView('new')} className="px-5 py-2.5 rounded-xl bg-[#F59E0B]">
-              <Text className="text-white text-sm font-bold">Submit your first ticket</Text>
+              <Text className="text-[#1A1625] text-sm font-bold">Submit your first ticket</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -171,7 +171,7 @@ export default function CompanySupportTicketScreen() {
                   <View className="flex-row items-start justify-between mb-2">
                     <View className="flex-1 mr-3">
                       <Text className="text-[10px] font-mono text-[#475569] mb-0.5">{t.ticket_number}</Text>
-                      <Text className="text-sm font-semibold text-white leading-snug">{t.subject}</Text>
+                      <Text className="text-sm font-semibold text-[#1A1625] leading-snug">{t.subject}</Text>
                     </View>
                     <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-full border" style={{ backgroundColor: s.bg, borderColor: s.border }}>
                       {t.status === 'in_progress' && (
@@ -209,7 +209,7 @@ export default function CompanySupportTicketScreen() {
             placeholder="Brief summary of your issue"
             placeholderTextColor="#475569"
             maxLength={120}
-            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-white mb-4"
+            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-4"
           />
 
           <Text className="text-xs font-semibold text-[#94A3B8] mb-1.5">Category *</Text>
@@ -220,7 +220,7 @@ export default function CompanySupportTicketScreen() {
                 onPress={() => setCategory(c.value)}
                 className={`px-3 py-1.5 rounded-lg border ${category === c.value ? 'bg-[#F59E0B] border-[#F59E0B]' : 'bg-[#13111F] border-[#1E1B2E]'}`}
               >
-                <Text className={`text-xs font-semibold ${category === c.value ? 'text-white' : 'text-[#64748B]'}`}>{c.label}</Text>
+                <Text className={`text-xs font-semibold ${category === c.value ? 'text-[#1A1625]' : 'text-[#64748B]'}`}>{c.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -235,7 +235,7 @@ export default function CompanySupportTicketScreen() {
             numberOfLines={6}
             maxLength={2000}
             textAlignVertical="top"
-            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-white mb-2"
+            className="bg-[#13111F] border border-[#1E1B2E] rounded-xl px-4 py-3 text-sm text-[#1A1625] mb-2"
             style={{ minHeight: 140 }}
           />
           <Text className="text-[10px] text-[#475569] text-right mb-6">{description.length}/2000</Text>
@@ -248,7 +248,7 @@ export default function CompanySupportTicketScreen() {
             {submitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text className={`text-sm font-bold ${submitting || !subject.trim() || !description.trim() ? 'text-[#475569]' : 'text-white'}`}>
+              <Text className={`text-sm font-bold ${submitting || !subject.trim() || !description.trim() ? 'text-[#475569]' : 'text-[#1A1625]'}`}>
                 Submit Ticket
               </Text>
             )}

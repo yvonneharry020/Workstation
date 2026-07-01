@@ -126,15 +126,15 @@ function TemplateCard({
   return (
     <Animated.View
       entering={FadeInDown.duration(300)}
-      style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 10 }}
+      style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 10 }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 3 }}>{template.name}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', marginBottom: 3 }}>{template.name}</Text>
           <Text style={{ color: '#64748B', fontSize: 12 }} numberOfLines={1}>{template.subject}</Text>
         </View>
         {isSystem && (
-          <View style={{ backgroundColor: '#1E1B2E', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+          <View style={{ backgroundColor: '#DDD6C9', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
             <Text style={{ color: '#475569', fontSize: 10, fontWeight: '600' }}>SYSTEM</Text>
           </View>
         )}
@@ -247,13 +247,13 @@ export default function EmailTemplatesScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold flex-1">Email Templates</Text>
+        <Text className="text-[#1A1625] text-lg font-bold flex-1">Email Templates</Text>
         <Pressable
           onPress={() => setShowNewForm((v) => !v)}
           style={{ backgroundColor: '#FF6240', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}
         >
           <PlusIcon />
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>New</Text>
+          <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>New</Text>
         </Pressable>
       </View>
 
@@ -262,7 +262,7 @@ export default function EmailTemplatesScreen() {
           {showNewForm && (
             <Animated.View
               entering={FadeInDown.duration(300)}
-              style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1.5, borderColor: '#FF624040', padding: 16, marginBottom: 24 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1.5, borderColor: '#FF624040', padding: 16, marginBottom: 24 }}
             >
               <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700', marginBottom: 12 }}>New Template</Text>
               <TextInput
@@ -270,14 +270,14 @@ export default function EmailTemplatesScreen() {
                 onChangeText={(v) => setForm((f) => ({ ...f, name: v }))}
                 placeholder="Template name…"
                 placeholderTextColor="#475569"
-                style={{ backgroundColor: '#09080E', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 12, marginBottom: 10 }}
+                style={{ backgroundColor: '#F5F0E8', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 12, marginBottom: 10 }}
               />
               <TextInput
                 value={form.subject}
                 onChangeText={(v) => setForm((f) => ({ ...f, subject: v }))}
                 placeholder="Subject line…"
                 placeholderTextColor="#475569"
-                style={{ backgroundColor: '#09080E', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 12, marginBottom: 10 }}
+                style={{ backgroundColor: '#F5F0E8', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 12, marginBottom: 10 }}
               />
               <TextInput
                 value={form.body}
@@ -285,14 +285,14 @@ export default function EmailTemplatesScreen() {
                 placeholder="Email body… Use {{firstName}}, {{jobTitle}}, {{companyName}}"
                 placeholderTextColor="#475569"
                 multiline
-                style={{ backgroundColor: '#09080E', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 12, minHeight: 120, textAlignVertical: 'top', marginBottom: 12 }}
+                style={{ backgroundColor: '#F5F0E8', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 12, minHeight: 120, textAlignVertical: 'top', marginBottom: 12 }}
               />
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <Pressable
                   onPress={() => { setShowNewForm(false); setForm({ name: '', subject: '', body: '' }) }}
-                  style={{ flex: 1, backgroundColor: '#1E1B2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
                 >
-                  <Text style={{ color: '#94A3B8', fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{ color: '#5A4F6E', fontWeight: '600' }}>Cancel</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => createMutation.mutate()}
@@ -302,25 +302,25 @@ export default function EmailTemplatesScreen() {
                   {createMutation.isPending ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={{ color: '#fff', fontWeight: '700' }}>Save</Text>
+                    <Text style={{ color: '#1A1625', fontWeight: '700' }}>Save</Text>
                   )}
                 </Pressable>
               </View>
             </Animated.View>
           )}
 
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SYSTEM TEMPLATES</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>SYSTEM TEMPLATES</Text>
           {SYSTEM_TEMPLATES.map((t) => (
             <TemplateCard key={t.id} template={t} isSystem onUse={() => handleUse(t)} />
           ))}
 
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginTop: 16, marginBottom: 12 }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginTop: 16, marginBottom: 12 }}>
             CUSTOM TEMPLATES {customTemplates.length > 0 ? `(${customTemplates.length})` : ''}
           </Text>
           {isLoading ? (
             <ActivityIndicator color="#FF6240" style={{ marginTop: 20 }} />
           ) : customTemplates.length === 0 ? (
-            <View style={{ alignItems: 'center', paddingVertical: 30, backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', borderStyle: 'dashed' }}>
+            <View style={{ alignItems: 'center', paddingVertical: 30, backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', borderStyle: 'dashed' }}>
               <Text style={{ color: '#475569', fontSize: 14 }}>No custom templates yet</Text>
               <Text style={{ color: '#334155', fontSize: 12, marginTop: 4 }}>Tap "New" to create your first template</Text>
             </View>

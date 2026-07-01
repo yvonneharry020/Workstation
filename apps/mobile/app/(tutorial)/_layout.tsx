@@ -7,7 +7,7 @@ export default function TutorialLayout() {
         headerShown: false,
         animation: 'fade',
         gestureEnabled: false,
-        contentStyle: { backgroundColor: '#09080E' },
+        contentStyle: { backgroundColor: '#F5F0E8' },
       }}
     />
   )

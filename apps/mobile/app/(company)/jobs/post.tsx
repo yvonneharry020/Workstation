@@ -100,7 +100,7 @@ function TrashIcon() {
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>{children}</Text>
+  return <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>{children}</Text>
 }
 
 function MultilineField({ label, value, onChange, error, placeholder, minHeight = 100 }: {
@@ -113,7 +113,7 @@ function MultilineField({ label, value, onChange, error, placeholder, minHeight 
 }) {
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>{label}</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>{label}</Text>
       <TextInput
         multiline
         value={value}
@@ -121,11 +121,11 @@ function MultilineField({ label, value, onChange, error, placeholder, minHeight 
         placeholder={placeholder}
         placeholderTextColor="#475569"
         style={{
-          backgroundColor: '#131118',
+          backgroundColor: '#EDE7DB',
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: error ? '#EF4444' : '#1E1B2E',
-          color: '#fff',
+          borderColor: error ? '#EF4444' : '#DDD6C9',
+          color: '#1A1625',
           fontSize: 14,
           padding: 14,
           minHeight,
@@ -143,7 +143,7 @@ function ProgressBar({ step }: { step: number }) {
       {[1, 2, 3].map((s) => (
         <View
           key={s}
-          style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: s <= step ? '#FF6240' : '#1E1B2E' }}
+          style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: s <= step ? '#FF6240' : '#DDD6C9' }}
         />
       ))}
     </View>
@@ -275,7 +275,7 @@ export default function PostJobScreen() {
               <Path d="M12 8v4M12 16h.01" />
             </Svg>
           </View>
-          <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
+          <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>
             Verification required
           </Text>
           <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 28, paddingHorizontal: 16 }}>
@@ -305,7 +305,7 @@ export default function PostJobScreen() {
               <Path d="M20 6L9 17l-5-5" />
             </Svg>
           </View>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>Job saved!</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>Job saved!</Text>
           <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32 }}>
             Your job is saved as a draft. Publish it now to start receiving applications, or keep it as a draft.
           </Text>
@@ -315,14 +315,14 @@ export default function PostJobScreen() {
             style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, width: '100%', alignItems: 'center', marginBottom: 12 }}
             className="active:opacity-80"
           >
-            {isPublishing ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Publish now</Text>}
+            {isPublishing ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Publish now</Text>}
           </Pressable>
           <Pressable
             onPress={() => router.replace('/(company)/jobs' as any)}
-            style={{ backgroundColor: '#131118', borderRadius: 14, paddingVertical: 15, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: '#1E1B2E' }}
+            style={{ backgroundColor: '#EDE7DB', borderRadius: 14, paddingVertical: 15, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: '#DDD6C9' }}
             className="active:opacity-80"
           >
-            <Text style={{ color: '#94A3B8', fontWeight: '600', fontSize: 15 }}>Keep as draft</Text>
+            <Text style={{ color: '#5A4F6E', fontWeight: '600', fontSize: 15 }}>Keep as draft</Text>
           </Pressable>
         </Animated.View>
       </SafeAreaView>
@@ -345,7 +345,7 @@ export default function PostJobScreen() {
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
           {step === 1 && (
             <Animated.View entering={FadeInRight.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Role details</Text>
+              <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Role details</Text>
               <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 24 }}>Tell candidates what position you're hiring for.</Text>
 
               <Controller
@@ -392,14 +392,14 @@ export default function PostJobScreen() {
               />
 
               <Pressable onPress={goToStep2} style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 8 }} className="active:opacity-80">
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Continue</Text>
+                <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Continue</Text>
               </Pressable>
             </Animated.View>
           )}
 
           {step === 2 && (
             <Animated.View entering={FadeInRight.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Job details</Text>
+              <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Job details</Text>
               <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 24 }}>Give candidates a clear picture of the role and what you offer.</Text>
 
               <Controller
@@ -433,13 +433,13 @@ export default function PostJobScreen() {
 
               <View style={{ marginBottom: 16 }}>
                 <SectionLabel>Salary</SectionLabel>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 12 }}>
-                  <Text style={{ color: '#94A3B8', fontSize: 14 }}>Mark salary as confidential</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 12 }}>
+                  <Text style={{ color: '#5A4F6E', fontSize: 14 }}>Mark salary as confidential</Text>
                   <Controller
                     control={control}
                     name="salary_is_confidential"
                     render={({ field: { onChange, value } }) => (
-                      <Switch value={value} onValueChange={onChange} trackColor={{ false: '#1E1B2E', true: '#FF6240' }} thumbColor="#fff" />
+                      <Switch value={value} onValueChange={onChange} trackColor={{ false: '#DDD6C9', true: '#FF6240' }} thumbColor="#fff" />
                     )}
                   />
                 </View>
@@ -482,18 +482,18 @@ export default function PostJobScreen() {
               />
 
               <Pressable onPress={goToStep3} style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 8 }} className="active:opacity-80">
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Continue</Text>
+                <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Continue</Text>
               </Pressable>
             </Animated.View>
           )}
 
           {step === 3 && (
             <Animated.View entering={FadeInRight.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Screening questions</Text>
+              <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700', marginBottom: 6, marginTop: 8 }}>Screening questions</Text>
               <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 24 }}>Add up to 5 questions that candidates answer when they apply. This is optional.</Text>
 
               {fields.map((field, index) => (
-                <Animated.View key={field.id} entering={FadeInDown.duration(300)} style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 12 }}>
+                <Animated.View key={field.id} entering={FadeInDown.duration(300)} style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '600' }}>Question {index + 1}</Text>
                     <Pressable onPress={() => remove(index)} hitSlop={8} className="active:opacity-70">
@@ -509,7 +509,7 @@ export default function PostJobScreen() {
                         onChangeText={onChange}
                         placeholder="e.g. How many years of React Native experience do you have?"
                         placeholderTextColor="#475569"
-                        style={{ backgroundColor: '#09080E', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 13, padding: 12, marginBottom: 10 }}
+                        style={{ backgroundColor: '#F5F0E8', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 13, padding: 12, marginBottom: 10 }}
                       />
                     )}
                   />
@@ -519,7 +519,7 @@ export default function PostJobScreen() {
                       control={control}
                       name={`screening_questions.${index}.required`}
                       render={({ field: { onChange, value } }) => (
-                        <Switch value={value} onValueChange={onChange} trackColor={{ false: '#1E1B2E', true: '#FF6240' }} thumbColor="#fff" />
+                        <Switch value={value} onValueChange={onChange} trackColor={{ false: '#DDD6C9', true: '#FF6240' }} thumbColor="#fff" />
                       )}
                     />
                   </View>
@@ -553,7 +553,7 @@ export default function PostJobScreen() {
                 {insertMutation.isPending ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save job</Text>
+                  <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Save job</Text>
                 )}
               </Pressable>
             </Animated.View>

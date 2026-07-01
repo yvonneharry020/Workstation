@@ -125,13 +125,13 @@ export default function LoginScreen() {
               marginBottom: 16,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', lineHeight: 30 }}>
+            <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '800', lineHeight: 30 }}>
               W
             </Text>
           </View>
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 26,
               fontWeight: '700',
               textAlign: 'center',
@@ -153,7 +153,7 @@ export default function LoginScreen() {
             <View className="mb-4">
               <Text className="text-slate-300 text-sm mb-2">Email address</Text>
               <TextInput
-                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base"
                 placeholder="you@company.com"
                 placeholderTextColor="#475569"
                 keyboardType="email-address"
@@ -177,7 +177,7 @@ export default function LoginScreen() {
               <Text className="text-slate-300 text-sm mb-2">Password</Text>
               <View className="relative">
                 <TextInput
-                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base pr-12"
+                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base pr-12"
                   placeholder="••••••••"
                   placeholderTextColor="#475569"
                   secureTextEntry={!showPassword}
@@ -219,7 +219,7 @@ export default function LoginScreen() {
           className="bg-primary-500 rounded-2xl py-4 items-center mb-5 active:opacity-80"
           style={{ opacity: isSubmitting ? 0.7 : 1 }}
         >
-          <Text className="text-white font-semibold text-base">
+          <Text className="text-[#1A1625] font-semibold text-base">
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </Text>
         </Pressable>
@@ -237,7 +237,7 @@ export default function LoginScreen() {
           style={{ opacity: isGoogleLoading ? 0.7 : 1 }}
         >
           <GoogleIcon />
-          <Text className="text-white font-semibold text-sm">
+          <Text className="text-[#1A1625] font-semibold text-sm">
             {isGoogleLoading ? 'Opening Google…' : 'Continue with Google'}
           </Text>
         </Pressable>

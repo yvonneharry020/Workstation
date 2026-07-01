@@ -62,13 +62,13 @@ function AnimatedCheckmark() {
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <View style={{
-      flex: 1, backgroundColor: '#131118', borderRadius: 14,
-      borderWidth: 1, borderColor: '#3D3850', padding: 16,
+      flex: 1, backgroundColor: '#EDE7DB', borderRadius: 14,
+      borderWidth: 1, borderColor: '#C8BFB0', padding: 16,
       alignItems: 'center', gap: 8,
     }}>
       {icon}
-      <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '700' }}>{value}</Text>
-      <Text style={{ color: '#94A3B8', fontSize: 12, textAlign: 'center' }}>{label}</Text>
+      <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{value}</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 12, textAlign: 'center' }}>{label}</Text>
     </View>
   )
 }
@@ -183,15 +183,15 @@ export default function MeetingEndedSummaryScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }} edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(500)} style={{ alignItems: 'center', paddingTop: 48, paddingBottom: 32, paddingHorizontal: 20 }}>
           <AnimatedCheckmark />
-          <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800', marginTop: 24, letterSpacing: -0.5, textAlign: 'center' }}>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', marginTop: 24, letterSpacing: -0.5, textAlign: 'center' }}>
             Interview Complete
           </Text>
-          <Text style={{ color: '#94A3B8', fontSize: 15, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 15, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>
             The meeting has ended.{'\n'}Here's a summary.
           </Text>
         </Animated.View>
@@ -209,7 +209,7 @@ export default function MeetingEndedSummaryScreen() {
               <VideoIcon />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '700' }}>Recording saved</Text>
-                <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>Available for 7 days · Company access only</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 2 }}>Available for 7 days · Company access only</Text>
               </View>
             </View>
             {hostMode && (
@@ -218,7 +218,7 @@ export default function MeetingEndedSummaryScreen() {
                 style={({ pressed }) => ({
                   flexDirection: 'row', alignItems: 'center', gap: 8,
                   backgroundColor: '#13110A', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
-                  borderWidth: 1, borderColor: '#3D3850',
+                  borderWidth: 1, borderColor: '#C8BFB0',
                   opacity: pressed ? 0.7 : 1, alignSelf: 'flex-start',
                 })}
               >
@@ -236,7 +236,7 @@ export default function MeetingEndedSummaryScreen() {
               onPress={handleGoToNotes}
               style={({ pressed }) => ({
                 flexDirection: 'row', alignItems: 'center', gap: 14,
-                backgroundColor: '#131118', borderRadius: 16, borderWidth: 1.5,
+                backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1.5,
                 borderColor: '#FF6240', padding: 16, opacity: pressed ? 0.75 : 1,
               })}
             >
@@ -244,8 +244,8 @@ export default function MeetingEndedSummaryScreen() {
                 <FileIcon />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>Add interview notes</Text>
-                <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>Private — only visible to your team</Text>
+                <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>Add interview notes</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 2 }}>Private — only visible to your team</Text>
               </View>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M9 18l6-6-6-6" />
@@ -256,8 +256,8 @@ export default function MeetingEndedSummaryScreen() {
 
         {/* Company: Internal quick rating (never shown to candidate) */}
         {hostMode && !ratingSubmitted && (
-          <Animated.View entering={FadeInUp.delay(400).duration(400)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#3D3850', padding: 20 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700', marginBottom: 4 }}>Quick impression</Text>
+          <Animated.View entering={FadeInUp.delay(400).duration(400)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#C8BFB0', padding: 20 }}>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 4 }}>Quick impression</Text>
             <Text style={{ color: '#475569', fontSize: 12, marginBottom: 16 }}>
               Internal only — this rating is never shared with the candidate.
             </Text>
@@ -278,9 +278,9 @@ export default function MeetingEndedSummaryScreen() {
                   multiline
                   numberOfLines={3}
                   style={{
-                    backgroundColor: '#1E1B2A', borderWidth: 1.5, borderColor: '#3D3850',
+                    backgroundColor: '#DDD6C9', borderWidth: 1.5, borderColor: '#C8BFB0',
                     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
-                    color: '#E2E8F0', fontSize: 14, lineHeight: 20,
+                    color: '#1A1625', fontSize: 14, lineHeight: 20,
                     marginBottom: 14, minHeight: 80, textAlignVertical: 'top',
                   }}
                 />
@@ -292,7 +292,7 @@ export default function MeetingEndedSummaryScreen() {
                     backgroundColor: '#FF6240', opacity: isSaving || pressed ? 0.7 : 1,
                   })}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
+                  <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>
                     {isSaving ? 'Saving…' : 'Save rating'}
                   </Text>
                 </Pressable>
@@ -317,16 +317,16 @@ export default function MeetingEndedSummaryScreen() {
               onPress={handleCandidateHome}
               style={({ pressed }) => ({
                 flexDirection: 'row', alignItems: 'center', gap: 14,
-                backgroundColor: '#131118', borderRadius: 16, borderWidth: 1,
-                borderColor: '#3D3850', padding: 16, opacity: pressed ? 0.75 : 1,
+                backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1,
+                borderColor: '#C8BFB0', padding: 16, opacity: pressed ? 0.75 : 1,
               })}
             >
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#0DD4C320', alignItems: 'center', justifyContent: 'center' }}>
                 <ClockIcon />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>My upcoming interviews</Text>
-                <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 2 }}>View your schedule</Text>
+                <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>My upcoming interviews</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, marginTop: 2 }}>View your schedule</Text>
               </View>
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <Path d="M9 18l6-6-6-6" />
@@ -348,9 +348,9 @@ export default function MeetingEndedSummaryScreen() {
             multiline
             numberOfLines={3}
             style={{
-              backgroundColor: '#131118', borderWidth: 1, borderColor: '#3D3850',
+              backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#C8BFB0',
               borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12,
-              color: '#E2E8F0', fontSize: 14, lineHeight: 20,
+              color: '#1A1625', fontSize: 14, lineHeight: 20,
               minHeight: 80, textAlignVertical: 'top', marginBottom: 10,
             }}
           />
@@ -380,7 +380,7 @@ export default function MeetingEndedSummaryScreen() {
               shadowColor: '#FF6240', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 20,
             })}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+            <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>
               {hostMode ? 'Back to calendar' : 'Back to applications'}
             </Text>
           </Pressable>

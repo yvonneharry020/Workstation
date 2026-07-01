@@ -74,7 +74,7 @@ function TrashIcon() {
   )
 }
 
-function CheckIcon({ color = '#fff' }: { color?: string }) {
+function CheckIcon({ color = '#1A1625' }: { color?: string }) {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M20 6L9 17l-5-5" />
@@ -86,7 +86,7 @@ function StepBar({ step }: { step: number }) {
   return (
     <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingVertical: 16 }}>
       {[1, 2, 3].map((s) => (
-        <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: s <= step ? '#FF6240' : '#1E1B2E' }} />
+        <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: s <= step ? '#FF6240' : '#DDD6C9' }} />
       ))}
     </View>
   )
@@ -226,7 +226,7 @@ export default function InterviewScheduleScreen() {
         <Pressable onPress={() => { if (step > 1) setStep(s => s - 1); else router.back() }} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold flex-1">Interview Scheduler</Text>
+        <Text className="text-[#1A1625] text-lg font-bold flex-1">Interview Scheduler</Text>
         <Text style={{ color: '#475569', fontSize: 13 }}>Step {step}/3</Text>
       </View>
       <StepBar step={step} />
@@ -236,7 +236,7 @@ export default function InterviewScheduleScreen() {
 
           {step === 1 && (
             <Animated.View entering={FadeInDown.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Select a Job</Text>
+              <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Select a Job</Text>
               <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>Which role are you scheduling interviews for?</Text>
               {jobsLoading ? (
                 <ActivityIndicator color="#FF6240" />
@@ -245,9 +245,9 @@ export default function InterviewScheduleScreen() {
                   <Pressable
                     key={job.id}
                     onPress={() => { setSelectedJobId(job.id); setStep(2) }}
-                    style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1.5, borderColor: selectedJobId === job.id ? '#FF6240' : '#1E1B2E', padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                    style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1.5, borderColor: selectedJobId === job.id ? '#FF6240' : '#DDD6C9', padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{job.title}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>{job.title}</Text>
                     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth={2}><Path d="M9 18l6-6-6-6" /></Svg>
                   </Pressable>
                 ))
@@ -257,10 +257,10 @@ export default function InterviewScheduleScreen() {
 
           {step === 2 && (
             <Animated.View entering={FadeInDown.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Create Time Slots</Text>
+              <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Create Time Slots</Text>
               <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>Add available slots for candidates to book.</Text>
 
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>SELECT DATE</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>SELECT DATE</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {days.map((d) => {
@@ -270,55 +270,55 @@ export default function InterviewScheduleScreen() {
                       <Pressable
                         key={d}
                         onPress={() => setSelectedDate(d)}
-                        style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: isSelected ? '#FF6240' : '#131118', borderWidth: 1, borderColor: isSelected ? '#FF6240' : '#1E1B2E', alignItems: 'center', minWidth: 64 }}
+                        style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: isSelected ? '#FF6240' : '#EDE7DB', borderWidth: 1, borderColor: isSelected ? '#FF6240' : '#DDD6C9', alignItems: 'center', minWidth: 64 }}
                       >
-                        <Text style={{ color: isSelected ? '#fff' : '#94A3B8', fontSize: 12, fontWeight: '600' }}>{label.split(' ')[0]}</Text>
-                        <Text style={{ color: isSelected ? '#fff' : '#64748B', fontSize: 16, fontWeight: '700' }}>{label.split(' ')[1]}</Text>
+                        <Text style={{ color: isSelected ? '#1A1625' : '#5A4F6E', fontSize: 12, fontWeight: '600' }}>{label.split(' ')[0]}</Text>
+                        <Text style={{ color: isSelected ? '#1A1625' : '#64748B', fontSize: 16, fontWeight: '700' }}>{label.split(' ')[1]}</Text>
                       </Pressable>
                     )
                   })}
                 </View>
               </ScrollView>
 
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>START TIME (HH:MM)</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>START TIME (HH:MM)</Text>
               <TextInput
                 value={startTime}
                 onChangeText={setStartTime}
                 placeholder="09:00"
                 placeholderTextColor="#475569"
                 keyboardType="numbers-and-punctuation"
-                style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
               />
 
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>DURATION</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>DURATION</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                 {DURATION_OPTIONS.map((d) => (
                   <Pressable
                     key={d}
                     onPress={() => setDuration(d)}
-                    style={{ flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: duration === d ? '#FF624020' : '#131118', borderWidth: 1, borderColor: duration === d ? '#FF6240' : '#1E1B2E', alignItems: 'center' }}
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: duration === d ? '#FF624020' : '#EDE7DB', borderWidth: 1, borderColor: duration === d ? '#FF6240' : '#DDD6C9', alignItems: 'center' }}
                   >
-                    <Text style={{ color: duration === d ? '#FF6240' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>{d}m</Text>
+                    <Text style={{ color: duration === d ? '#FF6240' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>{d}m</Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MEETING TYPE</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MEETING TYPE</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
                 {MEETING_TYPES.map((t) => (
                   <Pressable
                     key={t.key}
                     onPress={() => setMeetingType(t.key)}
-                    style={{ flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: meetingType === t.key ? '#FF624020' : '#131118', borderWidth: 1, borderColor: meetingType === t.key ? '#FF6240' : '#1E1B2E', alignItems: 'center' }}
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: meetingType === t.key ? '#FF624020' : '#EDE7DB', borderWidth: 1, borderColor: meetingType === t.key ? '#FF6240' : '#DDD6C9', alignItems: 'center' }}
                   >
-                    <Text style={{ color: meetingType === t.key ? '#FF6240' : '#94A3B8', fontSize: 11, fontWeight: '600' }}>{t.label}</Text>
+                    <Text style={{ color: meetingType === t.key ? '#FF6240' : '#5A4F6E', fontSize: 11, fontWeight: '600' }}>{t.label}</Text>
                   </Pressable>
                 ))}
               </View>
 
               {meetingType !== 'in_person' && (
                 <>
-                  <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MEETING LINK</Text>
+                  <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MEETING LINK</Text>
                   <TextInput
                     value={meetingLink}
                     onChangeText={setMeetingLink}
@@ -326,7 +326,7 @@ export default function InterviewScheduleScreen() {
                     placeholderTextColor="#475569"
                     keyboardType="url"
                     autoCapitalize="none"
-                    style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+                    style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
                   />
                 </>
               )}
@@ -334,22 +334,22 @@ export default function InterviewScheduleScreen() {
               <Pressable
                 onPress={() => addSlotMutation.mutate()}
                 disabled={!startTime || addSlotMutation.isPending}
-                style={{ backgroundColor: startTime ? '#FF6240' : '#1E1B2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 20 }}
+                style={{ backgroundColor: startTime ? '#FF6240' : '#DDD6C9', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 20 }}
               >
                 {addSlotMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={{ color: startTime ? '#fff' : '#475569', fontWeight: '700' }}>+ Add slot</Text>
+                  <Text style={{ color: startTime ? '#1A1625' : '#475569', fontWeight: '700' }}>+ Add slot</Text>
                 )}
               </Pressable>
 
               {slots.length > 0 && (
                 <View>
-                  <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 10 }}>SLOTS CREATED ({slots.length})</Text>
+                  <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 10 }}>SLOTS CREATED ({slots.length})</Text>
                   {slots.map((s) => (
-                    <View key={s.id} style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#0DD4C330', padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                    <View key={s.id} style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#0DD4C330', padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{formatDate(s.slot_date)} · {s.start_time.slice(0, 5)}</Text>
+                        <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600' }}>{formatDate(s.slot_date)} · {s.start_time.slice(0, 5)}</Text>
                         <Text style={{ color: '#64748B', fontSize: 12 }}>{s.duration_mins}min · {s.meeting_type.replace('_', ' ')}</Text>
                       </View>
                       <Pressable onPress={() => deleteSlotMutation.mutate(s.id)} hitSlop={10}>
@@ -363,16 +363,16 @@ export default function InterviewScheduleScreen() {
               <Pressable
                 onPress={() => setStep(3)}
                 disabled={slots.length === 0}
-                style={{ backgroundColor: slots.length > 0 ? '#FF6240' : '#1E1B2E', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 12 }}
+                style={{ backgroundColor: slots.length > 0 ? '#FF6240' : '#DDD6C9', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 12 }}
               >
-                <Text style={{ color: slots.length > 0 ? '#fff' : '#475569', fontWeight: '700', fontSize: 15 }}>Next: Assign candidates</Text>
+                <Text style={{ color: slots.length > 0 ? '#1A1625' : '#475569', fontWeight: '700', fontSize: 15 }}>Next: Assign candidates</Text>
               </Pressable>
             </Animated.View>
           )}
 
           {step === 3 && (
             <Animated.View entering={FadeInDown.duration(300)}>
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Assign Candidates</Text>
+              <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Assign Candidates</Text>
               <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>Pair shortlisted candidates with your available slots.</Text>
 
               {candidatesLoading ? (
@@ -383,7 +383,7 @@ export default function InterviewScheduleScreen() {
                 </View>
               ) : (
                 slots.filter((s) => !pairings[s.id]).map((slot) => (
-                  <View key={slot.id} style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 16 }}>
+                  <View key={slot.id} style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 16 }}>
                     <Text style={{ color: '#0DD4C3', fontSize: 13, fontWeight: '700', marginBottom: 10 }}>
                       {formatDate(slot.slot_date)} · {slot.start_time.slice(0, 5)} ({slot.duration_mins}min)
                     </Text>
@@ -393,7 +393,7 @@ export default function InterviewScheduleScreen() {
                         <Pressable
                           key={c.id}
                           onPress={() => assignMutation.mutate({ slotId: slot.id, candidateId: c.id, applicationId: c.application_id })}
-                          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
                         >
                           {c.avatar_url ? (
                             <Image source={{ uri: c.avatar_url }} style={{ width: 34, height: 34, borderRadius: 17 }} />
@@ -402,7 +402,7 @@ export default function InterviewScheduleScreen() {
                               <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700' }}>{initials}</Text>
                             </View>
                           )}
-                          <Text style={{ color: '#E2E8F0', fontSize: 13, flex: 1 }}>{c.full_name}</Text>
+                          <Text style={{ color: '#1A1625', fontSize: 13, flex: 1 }}>{c.full_name}</Text>
                           <View style={{ backgroundColor: '#FF624020', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
                             <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Assign</Text>
                           </View>
@@ -424,7 +424,7 @@ export default function InterviewScheduleScreen() {
                 onPress={handleFinish}
                 style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Done — view schedule</Text>
+                <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Done — view schedule</Text>
               </Pressable>
             </Animated.View>
           )}

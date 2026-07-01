@@ -79,7 +79,7 @@ function statusColor(status: SlotStatus): string {
     case 'failed': return '#EF4444'
     case 'uploading':
     case 'scanning': return '#FF6240'
-    default: return '#3D3850'
+    default: return '#C8BFB0'
   }
 }
 
@@ -217,7 +217,7 @@ export default function CandidateStep5() {
         <Animated.View entering={FadeInDown.duration(400)}>
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 24,
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -241,7 +241,7 @@ export default function CandidateStep5() {
                 disabled={isActive}
                 className="mb-4 rounded-2xl border p-5"
                 style={{
-                  backgroundColor: '#131118',
+                  backgroundColor: '#EDE7DB',
                   borderColor,
                   opacity: isActive ? 0.85 : 1,
                 }}
@@ -277,7 +277,7 @@ export default function CandidateStep5() {
 
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2">
-                      <Text className="text-white text-sm font-semibold">{slot.label}</Text>
+                      <Text className="text-[#1A1625] text-sm font-semibold">{slot.label}</Text>
                       {slot.required && (
                         <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700' }}>Required</Text>
                       )}
@@ -344,7 +344,7 @@ export default function CandidateStep5() {
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             style={{ opacity: !allRequiredPassed || isSubmitting ? 0.4 : 1 }}
           >
-            <Text className="text-white font-semibold text-base">
+            <Text className="text-[#1A1625] font-semibold text-base">
               {isSubmitting ? 'Saving…' : 'Continue to profile setup'}
             </Text>
           </Pressable>

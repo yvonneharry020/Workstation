@@ -52,7 +52,7 @@ export function UpdateRequiredScreen() {
       <UpdateIcon />
 
       <View className="items-center gap-2">
-        <Text className="text-white font-display text-2xl text-center">
+        <Text className="text-[#1A1625] font-display text-2xl text-center">
           Update required
         </Text>
         <Text className="text-slate-400 font-sans text-base text-center leading-relaxed">
@@ -65,7 +65,7 @@ export function UpdateRequiredScreen() {
           onPress={handleUpdate}
           className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
         >
-          <Text className="text-white font-semibold text-base">Update app</Text>
+          <Text className="text-[#1A1625] font-semibold text-base">Update app</Text>
         </Pressable>
 
         <View className="bg-surface-card rounded-2xl p-4 border border-surface-border">

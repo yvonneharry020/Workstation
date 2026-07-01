@@ -241,7 +241,7 @@ export default function CandidateProfileScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10} className="active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="flex-1 text-white font-semibold text-base" numberOfLines={1}>{name}</Text>
+        <Text className="flex-1 text-[#1A1625] font-semibold text-base" numberOfLines={1}>{name}</Text>
         {application && (
           <Pressable
             onPress={handleMoveStage}
@@ -261,12 +261,12 @@ export default function CandidateProfileScreen() {
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={{ width: 80, height: 80, borderRadius: 40 }} contentFit="cover" />
             ) : (
-              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: '#FF6240', fontSize: 24, fontWeight: '700' }}>{getInitials(name)}</Text>
               </View>
             )}
             <View className="flex-1">
-              <Text className="text-white text-xl font-bold mb-0.5">{name}</Text>
+              <Text className="text-[#1A1625] text-xl font-bold mb-0.5">{name}</Text>
               {candidate.headline && (
                 <Text className="text-slate-400 text-sm mb-1" numberOfLines={2}>{candidate.headline}</Text>
               )}
@@ -291,7 +291,7 @@ export default function CandidateProfileScreen() {
                 >
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: emailSeen ? '#22C55E' : '#64748B' }} />
                   <View className="flex-1">
-                    <Text style={{ color: emailSeen ? '#22C55E' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+                    <Text style={{ color: emailSeen ? '#22C55E' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
                       {emailSeen ? 'Email opened' : 'Email sent — not yet opened'}
                     </Text>
                     {emailSeen && application.email_opened_at && (
@@ -312,7 +312,7 @@ export default function CandidateProfileScreen() {
                       {application.skills_match_pct}%
                     </Text>
                   </View>
-                  <View style={{ height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden' }}>
+                  <View style={{ height: 6, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden' }}>
                     <View style={{ height: '100%', width: `${application.skills_match_pct}%`, backgroundColor: '#FF6240', borderRadius: 3 }} />
                   </View>
                 </View>
@@ -339,7 +339,7 @@ export default function CandidateProfileScreen() {
                       {Object.entries(application.screening_answers).map(([q, a]) => (
                         <View key={q}>
                           <Text className="text-slate-400 text-xs font-medium mb-1">{q}</Text>
-                          <Text className="text-white text-sm">{a}</Text>
+                          <Text className="text-[#1A1625] text-sm">{a}</Text>
                         </View>
                       ))}
                     </View>
@@ -358,7 +358,7 @@ export default function CandidateProfileScreen() {
                     onChangeText={setInternalNotes}
                     onBlur={() => saveNotes(internalNotes)}
                     style={{
-                      color: '#fff', fontSize: 13, minHeight: 80,
+                      color: '#1A1625', fontSize: 13, minHeight: 80,
                       textAlignVertical: 'top', lineHeight: 20,
                     }}
                   />
@@ -370,10 +370,10 @@ export default function CandidateProfileScreen() {
                   onPress={() =>
                     router.push({ pathname: '/(company)/interviews/schedule', params: { applicationId } })
                   }
-                  style={{ flex: 1, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+                  style={{ flex: 1, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
                   className="active:opacity-70"
                 >
-                  <Text className="text-white font-semibold text-sm">Schedule Interview</Text>
+                  <Text className="text-[#1A1625] font-semibold text-sm">Schedule Interview</Text>
                 </Pressable>
                 <Pressable
                   onPress={() =>
@@ -398,11 +398,11 @@ export default function CandidateProfileScreen() {
                 <View
                   key={i}
                   style={{
-                    backgroundColor: '#131118', borderRadius: 12, borderWidth: 1,
-                    borderColor: '#1E1B2E', padding: 12, marginBottom: 8,
+                    backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1,
+                    borderColor: '#DDD6C9', padding: 12, marginBottom: 8,
                   }}
                 >
-                  <Text className="text-white font-semibold text-sm">{job.job_title}</Text>
+                  <Text className="text-[#1A1625] font-semibold text-sm">{job.job_title}</Text>
                   <Text className="text-slate-400 text-xs mt-0.5">{job.company_name}</Text>
                   <Text className="text-slate-500 text-xs mt-1">
                     {formatWorkDate(job.start_date, false)} — {formatWorkDate(job.end_date, job.is_current)}

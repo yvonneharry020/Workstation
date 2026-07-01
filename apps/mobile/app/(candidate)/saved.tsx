@@ -150,10 +150,10 @@ function EmploymentTypePill({ type }: { type: string }) {
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 8,
-        backgroundColor: '#1E1B2E',
+        backgroundColor: '#DDD6C9',
       }}
     >
-      <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '500' }}>
+      <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '500' }}>
         {labels[type] ?? type}
       </Text>
     </View>
@@ -164,7 +164,7 @@ function EmptyState() {
   return (
     <View className="flex-1 items-center justify-center px-8 mt-16">
       <Text style={{ fontSize: 40, marginBottom: 16 }}>🔖</Text>
-      <Text className="text-white font-semibold text-base text-center mb-2">
+      <Text className="text-[#1A1625] font-semibold text-base text-center mb-2">
         No saved jobs yet
       </Text>
       <Text className="text-slate-400 text-sm text-center leading-5">
@@ -250,7 +250,7 @@ export default function SavedJobsScreen() {
         </Pressable>
         <View className="flex-row items-center gap-3 flex-1">
           <Text
-            style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}
+            style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}
           >
             Saved Jobs
           </Text>
@@ -309,7 +309,7 @@ export default function SavedJobsScreen() {
                     <View className="flex-row items-start justify-between mb-1">
                       <View className="flex-1 mr-2">
                         <Text
-                          className="text-white font-semibold text-sm mb-0.5"
+                          className="text-[#1A1625] font-semibold text-sm mb-0.5"
                           numberOfLines={1}
                         >
                           {job.title}

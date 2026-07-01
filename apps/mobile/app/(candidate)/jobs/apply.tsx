@@ -85,7 +85,7 @@ function CvPicker({
         onPress={() => setOpen((o) => !o)}
         className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 flex-row items-center justify-between"
       >
-        <Text className={selected ? 'text-white text-sm' : 'text-slate-500 text-sm'}>
+        <Text className={selected ? 'text-[#1A1625] text-sm' : 'text-slate-500 text-sm'}>
           {selected ? selected.name : 'No CV attached'}
         </Text>
         <ChevronIcon />
@@ -98,7 +98,7 @@ function CvPicker({
               onPress={() => { onSelect(cv.id); setOpen(false) }}
               className="px-4 py-3 border-b border-surface-border active:opacity-70"
             >
-              <Text className={cv.id === selectedId ? 'text-primary-400 font-semibold text-sm' : 'text-white text-sm'}>
+              <Text className={cv.id === selectedId ? 'text-primary-400 font-semibold text-sm' : 'text-[#1A1625] text-sm'}>
                 {cv.name}
               </Text>
             </Pressable>
@@ -215,7 +215,7 @@ export default function ApplyScreen() {
         </Pressable>
         <View className="flex-1">
           <Text className="text-slate-400 text-xs">Applying for</Text>
-          <Text className="text-white font-semibold text-sm" numberOfLines={1}>{jobInfo?.title}</Text>
+          <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{jobInfo?.title}</Text>
         </View>
       </View>
 
@@ -240,7 +240,7 @@ export default function ApplyScreen() {
                   </View>
                 )}
                 <View className="flex-1">
-                  <Text className="text-white font-semibold text-base">
+                  <Text className="text-[#1A1625] font-semibold text-base">
                     {candidate ? `${candidate.first_name} ${candidate.last_name}` : '—'}
                   </Text>
                   {candidate?.headline && (
@@ -287,7 +287,7 @@ export default function ApplyScreen() {
               multiline
               numberOfLines={5}
               textAlignVertical="top"
-              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
               style={{ minHeight: 110 }}
             />
           </Animated.View>
@@ -300,7 +300,7 @@ export default function ApplyScreen() {
               </Text>
               {questions.map((q, i) => (
                 <View key={i} className="mb-4">
-                  <Text className="text-white text-sm mb-1 leading-5">
+                  <Text className="text-[#1A1625] text-sm mb-1 leading-5">
                     {q.question}
                     {q.required && <Text className="text-primary-400"> *</Text>}
                   </Text>
@@ -312,7 +312,7 @@ export default function ApplyScreen() {
                     multiline
                     numberOfLines={3}
                     textAlignVertical="top"
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-white text-sm"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-[#1A1625] text-sm"
                     style={{ minHeight: 76 }}
                   />
                 </View>
@@ -325,7 +325,7 @@ export default function ApplyScreen() {
       {/* Submit button */}
       <View
         className="absolute bottom-0 left-0 right-0 px-5 pt-3 pb-8 border-t border-surface-border"
-        style={{ backgroundColor: '#09080E' }}
+        style={{ backgroundColor: '#F5F0E8' }}
       >
         <Pressable
           onPress={handleSubmit}
@@ -336,7 +336,7 @@ export default function ApplyScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-white font-semibold text-base">Submit Application</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Submit Application</Text>
           )}
         </Pressable>
         <Text className="text-slate-600 text-xs text-center mt-2">

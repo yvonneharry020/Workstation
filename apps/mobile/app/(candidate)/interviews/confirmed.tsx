@@ -137,7 +137,7 @@ export default function InterviewConfirmedScreen() {
         <Animated.View entering={FadeInDown.duration(500)} className="items-center mt-12 mb-8">
           <AnimatedCheck />
           <Text
-            style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 20, marginBottom: 8, textAlign: 'center' }}
+            style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginTop: 20, marginBottom: 8, textAlign: 'center' }}
           >
             Interview Booked!
           </Text>
@@ -152,16 +152,16 @@ export default function InterviewConfirmedScreen() {
           className="bg-surface-card border border-surface-border rounded-2xl p-5 mb-4"
         >
           {company && (
-            <View className="flex-row items-center gap-3 mb-4 pb-4" style={{ borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+            <View className="flex-row items-center gap-3 mb-4 pb-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
               {company.logo_url ? (
                 <Image source={{ uri: company.logo_url }} style={{ width: 48, height: 48, borderRadius: 12 }} contentFit="cover" />
               ) : (
-                <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ color: '#475569', fontSize: 20, fontWeight: '700' }}>{company.company_name.charAt(0)}</Text>
                 </View>
               )}
               <View>
-                <Text className="text-white font-bold text-base">{company.company_name}</Text>
+                <Text className="text-[#1A1625] font-bold text-base">{company.company_name}</Text>
                 <Text className="text-slate-500 text-xs mt-0.5">Interview</Text>
               </View>
             </View>
@@ -172,7 +172,7 @@ export default function InterviewConfirmedScreen() {
               <View className="flex-row items-center gap-3">
                 <CalendarIcon />
                 <View>
-                  <Text className="text-white text-sm font-semibold">{formatSlotDate(slot.slot_date)}</Text>
+                  <Text className="text-[#1A1625] text-sm font-semibold">{formatSlotDate(slot.slot_date)}</Text>
                   <Text className="text-slate-400 text-xs mt-0.5">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</Text>
                 </View>
               </View>
@@ -181,8 +181,8 @@ export default function InterviewConfirmedScreen() {
                 <View style={{ backgroundColor: '#FF624020', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
                   <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>{slot.duration_mins} min</Text>
                 </View>
-                <View style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-                  <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' }}>{slot.meeting_type}</Text>
+                <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                  <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'capitalize' }}>{slot.meeting_type}</Text>
                 </View>
               </View>
 
@@ -206,7 +206,7 @@ export default function InterviewConfirmedScreen() {
             className="bg-surface-card border border-surface-border rounded-2xl px-5 py-4 mb-6"
           >
             <Text className="text-slate-500 text-xs mb-1">Reference number</Text>
-            <Text style={{ color: '#fff', fontFamily: 'JetBrainsMono_700Bold', fontSize: 15, letterSpacing: 1 }}>
+            <Text style={{ color: '#1A1625', fontFamily: 'JetBrainsMono_700Bold', fontSize: 15, letterSpacing: 1 }}>
               {booking.booking_token.slice(0, 8).toUpperCase()}
             </Text>
           </Animated.View>
@@ -218,14 +218,14 @@ export default function InterviewConfirmedScreen() {
             onPress={() => router.replace('/(candidate)/interviews/history' as Parameters<typeof router.replace>[0])}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-bold text-base">View all interviews</Text>
+            <Text className="text-[#1A1625] font-bold text-base">View all interviews</Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.replace('/(candidate)/applications' as Parameters<typeof router.replace>[0])}
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">Back to applications</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Back to applications</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

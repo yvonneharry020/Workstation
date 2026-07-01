@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native'
 import { useState } from 'react'
+import Svg, { Path } from 'react-native-svg'
 
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -89,7 +90,7 @@ function PasswordStrength({ password }: { password: string }) {
               flex: 1,
               height: 3,
               borderRadius: 2,
-              backgroundColor: i < score ? barColor : '#3D3850',
+              backgroundColor: i < score ? barColor : '#C8BFB0',
             }}
           />
         ))}
@@ -108,6 +109,7 @@ function PasswordStrength({ password }: { password: string }) {
 export default function CandidateStep1() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [isAgreed, setIsAgreed] = useState(false)
 
   const {
     control,
@@ -131,6 +133,10 @@ export default function CandidateStep1() {
   })
 
   const handleCreate = async (data: FormData) => {
+    if (!isAgreed) {
+      Alert.alert('Agreement required', 'Please agree to the Terms of Service and Privacy Policy to continue.')
+      return
+    }
     setIsSubmitting(true)
     try {
       const dob = `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`
@@ -167,6 +173,7 @@ export default function CandidateStep1() {
           dateOfBirth: dob,
           gender: data.gender,
           phone: data.phone,
+          stateOfOrigin: data.stateOfOrigin,
         },
       })
     } catch {
@@ -201,7 +208,7 @@ export default function CandidateStep1() {
                   flex: 1,
                   height: 3,
                   borderRadius: 2,
-                  backgroundColor: i === 0 ? '#FF6240' : '#1E1B2E',
+                  backgroundColor: i === 0 ? '#FF6240' : '#DDD6C9',
                 }}
               />
             ))}
@@ -211,7 +218,7 @@ export default function CandidateStep1() {
           <Animated.View entering={FadeInDown.duration(400)}>
             <Text
               style={{
-                color: '#fff',
+                color: '#1A1625',
                 fontSize: 26,
                 fontWeight: '700',
                 letterSpacing: -0.3,
@@ -335,7 +342,7 @@ export default function CandidateStep1() {
                       autoComplete="new-password"
                       value={value}
                       onChangeText={onChange}
-                      className={`bg-surface-card border rounded-xl px-4 py-4 text-white text-base pr-16 ${errors.password ? 'border-red-500' : 'border-surface-border'}`}
+                      className={`bg-surface-card border rounded-xl px-4 py-4 text-[#1A1625] text-base pr-16 ${errors.password ? 'border-red-500' : 'border-surface-border'}`}
                     />
                     <Pressable
                       onPress={() => setShowPassword((s) => !s)}
@@ -373,7 +380,7 @@ export default function CandidateStep1() {
                         onChangeText={onChange}
                         keyboardType="number-pad"
                         maxLength={2}
-                        className={`bg-surface-card border rounded-xl px-4 py-4 text-white text-base text-center ${errors.dobDay ? 'border-red-500' : 'border-surface-border'}`}
+                        className={`bg-surface-card border rounded-xl px-4 py-4 text-[#1A1625] text-base text-center ${errors.dobDay ? 'border-red-500' : 'border-surface-border'}`}
                       />
                     )}
                   />
@@ -390,7 +397,7 @@ export default function CandidateStep1() {
                         onChangeText={onChange}
                         keyboardType="number-pad"
                         maxLength={2}
-                        className={`bg-surface-card border rounded-xl px-4 py-4 text-white text-base text-center ${errors.dobMonth ? 'border-red-500' : 'border-surface-border'}`}
+                        className={`bg-surface-card border rounded-xl px-4 py-4 text-[#1A1625] text-base text-center ${errors.dobMonth ? 'border-red-500' : 'border-surface-border'}`}
                       />
                     )}
                   />
@@ -407,7 +414,7 @@ export default function CandidateStep1() {
                         onChangeText={onChange}
                         keyboardType="number-pad"
                         maxLength={4}
-                        className={`bg-surface-card border rounded-xl px-4 py-4 text-white text-base text-center ${errors.dobYear ? 'border-red-500' : 'border-surface-border'}`}
+                        className={`bg-surface-card border rounded-xl px-4 py-4 text-[#1A1625] text-base text-center ${errors.dobYear ? 'border-red-500' : 'border-surface-border'}`}
                       />
                     )}
                   />
@@ -451,10 +458,38 @@ export default function CandidateStep1() {
               )}
             />
 
-            <Text className="text-slate-500 text-xs leading-5 mb-8">
-              By creating an account you agree to our Terms of Service and Privacy Policy.
-              Your data is protected under NDPR.
-            </Text>
+            <Pressable
+              onPress={() => setIsAgreed((v) => !v)}
+              style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 24 }}
+              hitSlop={6}
+            >
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 5,
+                  borderWidth: 1.5,
+                  borderColor: isAgreed ? '#FF6240' : '#64748B',
+                  backgroundColor: isAgreed ? '#FF624020' : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: 1,
+                  flexShrink: 0,
+                }}
+              >
+                {isAgreed && (
+                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                    <Path d="M20 6L9 17l-5-5" />
+                  </Svg>
+                )}
+              </View>
+              <Text style={{ color: '#64748B', fontSize: 12, flex: 1, lineHeight: 18 }}>
+                By creating an account you agree to our{' '}
+                <Text style={{ color: '#FF6240' }}>Terms of Service</Text> and{' '}
+                <Text style={{ color: '#FF6240' }}>Privacy Policy</Text>.
+                Your data is protected under NDPR.
+              </Text>
+            </Pressable>
 
             <Pressable
               onPress={handleSubmit(handleCreate)}
@@ -462,7 +497,7 @@ export default function CandidateStep1() {
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               style={{ opacity: isSubmitting ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#1A1625] font-semibold text-base">
                 {isSubmitting ? 'Creating account…' : 'Continue'}
               </Text>
             </Pressable>

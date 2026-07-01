@@ -130,20 +130,20 @@ export default function EmailHistoryScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold">Email History</Text>
+        <Text className="text-[#1A1625] text-lg font-bold">Email History</Text>
       </View>
 
       <View className="px-5 py-4 flex-row gap-3">
-        <View style={{ flex: 1, backgroundColor: '#131118', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1E1B2E' }}>
-          <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>SENT THIS MONTH</Text>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{thisMonthEmails.length}</Text>
+        <View style={{ flex: 1, backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#DDD6C9' }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>SENT THIS MONTH</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>{thisMonthEmails.length}</Text>
         </View>
-        <View style={{ flex: 1, backgroundColor: '#131118', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1E1B2E' }}>
-          <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>OPENED</Text>
+        <View style={{ flex: 1, backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#DDD6C9' }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>OPENED</Text>
           <Text style={{ color: '#22C55E', fontSize: 22, fontWeight: '800' }}>{openedCount}</Text>
         </View>
-        <View style={{ flex: 1, backgroundColor: '#131118', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1E1B2E' }}>
-          <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>OPEN RATE</Text>
+        <View style={{ flex: 1, backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#DDD6C9' }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>OPEN RATE</Text>
           <Text style={{ color: '#0DD4C3', fontSize: 22, fontWeight: '800' }}>{openRate}%</Text>
         </View>
       </View>
@@ -153,9 +153,9 @@ export default function EmailHistoryScreen() {
           <Pressable
             key={t.key}
             onPress={() => setFilter(t.key)}
-            style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: filter === t.key ? '#FF6240' : '#131118', borderWidth: 1, borderColor: filter === t.key ? '#FF6240' : '#1E1B2E' }}
+            style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: filter === t.key ? '#FF6240' : '#EDE7DB', borderWidth: 1, borderColor: filter === t.key ? '#FF6240' : '#DDD6C9' }}
           >
-            <Text style={{ color: filter === t.key ? '#fff' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>{t.label}</Text>
+            <Text style={{ color: filter === t.key ? '#1A1625' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>{t.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -180,7 +180,7 @@ export default function EmailHistoryScreen() {
             return (
               <Pressable
                 onPress={() => setSelected(item)}
-                style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}
               >
                 {item.profiles?.avatar_url ? (
                   <Image source={{ uri: item.profiles.avatar_url }} style={{ width: 42, height: 42, borderRadius: 21 }} />
@@ -190,7 +190,7 @@ export default function EmailHistoryScreen() {
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+                  <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
                     {item.profiles?.full_name ?? 'Unknown'}
                   </Text>
                   <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
@@ -222,13 +222,13 @@ export default function EmailHistoryScreen() {
 
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         {selected && (
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', flex: 1 }} numberOfLines={1}>{selected.subject}</Text>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', flex: 1 }} numberOfLines={1}>{selected.subject}</Text>
               <Pressable onPress={() => setSelected(null)}><XIcon /></Pressable>
             </View>
             <ScrollView style={{ flex: 1, padding: 20 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 4 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, marginBottom: 4 }}>
                 To: {selected.profiles?.full_name ?? 'Unknown'} · {relativeTime(selected.sent_at)}
               </Text>
               {selected.opened_at && (
@@ -236,8 +236,8 @@ export default function EmailHistoryScreen() {
                   Opened {relativeTime(selected.opened_at)}{selected.open_count > 1 ? ` (${selected.open_count} times)` : ''}
                 </Text>
               )}
-              <View style={{ height: 1, backgroundColor: '#1E1B2E', marginBottom: 16 }} />
-              <Text style={{ color: '#E2E8F0', fontSize: 14, lineHeight: 22 }}>{selected.body}</Text>
+              <View style={{ height: 1, backgroundColor: '#DDD6C9', marginBottom: 16 }} />
+              <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 22 }}>{selected.body}</Text>
             </ScrollView>
           </SafeAreaView>
         )}

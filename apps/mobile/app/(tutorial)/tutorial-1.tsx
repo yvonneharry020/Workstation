@@ -106,7 +106,7 @@ function SlideProgress({ current }: { current: number }) {
             height: 4,
             width: i === current ? 24 : 8,
             borderRadius: 2,
-            backgroundColor: i === current ? '#FF6240' : '#3D3850',
+            backgroundColor: i === current ? '#FF6240' : '#C8BFB0',
           }}
         />
       ))}
@@ -123,7 +123,7 @@ export default function Tutorial1() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <View className="flex-row justify-between items-center px-6 pt-4 pb-2">
         <View style={{ width: 44 }} />
         <SlideProgress current={0} />
@@ -150,7 +150,7 @@ export default function Tutorial1() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(250).duration(500)} className="gap-2">
-          <Text className="text-white font-display text-[26px] leading-tight tracking-tight">
+          <Text className="text-[#1A1625] font-display text-[26px] leading-tight tracking-tight">
             Nigeria's first{'\n'}
             <Text className="text-primary-500">trust-first</Text>
             {' '}job platform
@@ -166,7 +166,7 @@ export default function Tutorial1() {
             className="bg-primary-500 rounded-2xl py-4 items-center mt-1 active:opacity-80"
             style={{ backgroundColor: '#FF6240', borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 4 }}
           >
-            <Text className="text-white font-semibold text-base">Continue</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Continue</Text>
           </Pressable>
         </Animated.View>
       </View>

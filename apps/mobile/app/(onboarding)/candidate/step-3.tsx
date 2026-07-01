@@ -72,7 +72,7 @@ function VerifyingSpinner() {
       <Svg width={56} height={56} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </Svg>
-      <Text style={{ color: '#94A3B8', fontSize: 14 }}>Verifying with NIMC…</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 14 }}>Verifying with NIMC…</Text>
     </Animated.View>
   )
 }
@@ -157,7 +157,7 @@ export default function CandidateStep3() {
                   flex: 1,
                   height: 3,
                   borderRadius: 2,
-                  backgroundColor: i <= 2 ? '#FF6240' : '#1E1B2E',
+                  backgroundColor: i <= 2 ? '#FF6240' : '#DDD6C9',
                 }}
               />
             ))}
@@ -176,7 +176,7 @@ export default function CandidateStep3() {
                 </View>
                 <Text
                   style={{
-                    color: '#fff',
+                    color: '#1A1625',
                     fontSize: 24,
                     fontWeight: '700',
                     letterSpacing: -0.3,
@@ -194,7 +194,7 @@ export default function CandidateStep3() {
               {/* NIN info card */}
               <View
                 className="rounded-xl px-4 py-4 mb-8"
-                style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#3D3850' }}
+                style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#C8BFB0' }}
               >
                 <Text className="text-slate-300 text-sm font-semibold mb-2">Where to find your NIN</Text>
                 <Text className="text-slate-400 text-sm leading-5">
@@ -218,16 +218,16 @@ export default function CandidateStep3() {
                         width: 42,
                         height: 52,
                         borderRadius: 10,
-                        backgroundColor: '#131118',
+                        backgroundColor: '#EDE7DB',
                         borderWidth: 1.5,
-                        borderColor: isFilled ? '#FF6240' : isActive ? '#564F6A' : '#3D3850',
+                        borderColor: isFilled ? '#FF6240' : isActive ? '#564F6A' : '#C8BFB0',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
                       <Text
                         style={{
-                          color: '#fff',
+                          color: '#1A1625',
                           fontSize: 20,
                           fontWeight: '700',
                           fontFamily: 'JetBrainsMono_700Bold',
@@ -270,7 +270,7 @@ export default function CandidateStep3() {
                 className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
                 style={{ opacity: nin.length !== NIN_LENGTH ? 0.4 : 1 }}
               >
-                <Text className="text-white font-semibold text-base">Verify NIN</Text>
+                <Text className="text-[#1A1625] font-semibold text-base">Verify NIN</Text>
               </Pressable>
             </Animated.View>
           )}
@@ -298,7 +298,7 @@ export default function CandidateStep3() {
               <CheckCircleIcon />
               <Text
                 style={{
-                  color: '#fff',
+                  color: '#1A1625',
                   fontSize: 24,
                   fontWeight: '700',
                   letterSpacing: -0.3,
@@ -315,7 +315,7 @@ export default function CandidateStep3() {
 
               <View
                 className="w-full rounded-2xl px-5 py-4 mb-8"
-                style={{ backgroundColor: '#131118', borderWidth: 1, borderColor: '#22C55E30' }}
+                style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#22C55E30' }}
               >
                 {[
                   'Full name matched',
@@ -344,7 +344,7 @@ export default function CandidateStep3() {
                 onPress={() => router.push('/(onboarding)/candidate/step-4')}
                 className="w-full bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               >
-                <Text className="text-white font-semibold text-base">Continue to liveness check</Text>
+                <Text className="text-[#1A1625] font-semibold text-base">Continue to liveness check</Text>
               </Pressable>
             </Animated.View>
           )}
@@ -358,7 +358,7 @@ export default function CandidateStep3() {
               <XCircleIcon />
               <Text
                 style={{
-                  color: '#fff',
+                  color: '#1A1625',
                   fontSize: 24,
                   fontWeight: '700',
                   letterSpacing: -0.3,
@@ -390,7 +390,7 @@ export default function CandidateStep3() {
                 onPress={handleRetry}
                 className="w-full bg-primary-500 rounded-2xl py-4 items-center active:opacity-80 mb-4"
               >
-                <Text className="text-white font-semibold text-base">Try again</Text>
+                <Text className="text-[#1A1625] font-semibold text-base">Try again</Text>
               </Pressable>
               <Pressable onPress={() => router.back()} className="py-2">
                 <Text className="text-slate-400 text-sm text-center">Update my name in step 1</Text>

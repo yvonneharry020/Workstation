@@ -83,10 +83,10 @@ function DirectorOption({
         alignItems: 'center',
         gap: 12,
         padding: 14,
-        backgroundColor: selected ? '#FF624015' : '#131118',
+        backgroundColor: selected ? '#FF624015' : '#EDE7DB',
         borderRadius: 14,
         borderWidth: 1.5,
-        borderColor: selected ? '#FF6240' : '#1E1B2E',
+        borderColor: selected ? '#FF6240' : '#DDD6C9',
         marginBottom: 8,
       }}
       className="active:opacity-80"
@@ -96,7 +96,7 @@ function DirectorOption({
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: selected ? '#FF624025' : '#1E1B2E',
+          backgroundColor: selected ? '#FF624025' : '#DDD6C9',
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -105,7 +105,7 @@ function DirectorOption({
           {initials}
         </Text>
       </View>
-      <Text style={{ flex: 1, color: selected ? '#fff' : '#94A3B8', fontSize: 14, fontWeight: '500' }}>
+      <Text style={{ flex: 1, color: selected ? '#1A1625' : '#5A4F6E', fontSize: 14, fontWeight: '500' }}>
         {name}
       </Text>
       <View
@@ -220,7 +220,7 @@ export default function CompanyStep3() {
 
           {verifyState !== 'success' ? (
             <>
-              <Text className="text-white text-3xl font-bold mb-2">Director identity</Text>
+              <Text className="text-[#1A1625] text-3xl font-bold mb-2">Director identity</Text>
               <Text className="text-slate-400 text-base mb-8">
                 Confirm you are one of the directors registered with the CAC.
               </Text>
@@ -290,10 +290,10 @@ export default function CompanyStep3() {
                 {verifyState === 'loading' ? (
                   <View className="flex-row items-center gap-3">
                     <ActivityIndicator color="#fff" size="small" />
-                    <Text className="text-white font-bold text-base">Verifying identity…</Text>
+                    <Text className="text-[#1A1625] font-bold text-base">Verifying identity…</Text>
                   </View>
                 ) : (
-                  <Text className="text-white font-bold text-base">Verify my identity</Text>
+                  <Text className="text-[#1A1625] font-bold text-base">Verify my identity</Text>
                 )}
               </Pressable>
             </>
@@ -302,9 +302,9 @@ export default function CompanyStep3() {
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#22C55E15', borderWidth: 1.5, borderColor: '#22C55E40', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                 <CheckIcon />
               </View>
-              <Text className="text-white font-bold text-xl mb-2">Identity confirmed</Text>
+              <Text className="text-[#1A1625] font-bold text-xl mb-2">Identity confirmed</Text>
               <Text className="text-slate-400 text-sm text-center leading-5 mb-8 px-4">
-                We've confirmed you are <Text className="text-white font-medium">{selectedDirector}</Text>, an authorised director of this company.
+                We've confirmed you are <Text className="text-[#1A1625] font-medium">{selectedDirector}</Text>, an authorised director of this company.
               </Text>
 
               <View
@@ -323,7 +323,7 @@ export default function CompanyStep3() {
                 onPress={() => router.push('/(onboarding)/company/step-4')}
                 className="bg-primary-500 rounded-2xl py-4 items-center w-full active:opacity-80 mb-12"
               >
-                <Text className="text-white font-bold text-base">Continue to document upload</Text>
+                <Text className="text-[#1A1625] font-bold text-base">Continue to document upload</Text>
               </Pressable>
             </Animated.View>
           )}

@@ -93,7 +93,7 @@ function TrustRing({ score }: { score: number }) {
         </G>
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>{score}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '800' }}>{score}</Text>
         <Text style={{ color: '#64748B', fontSize: 9 }}>/ 100</Text>
       </View>
     </View>
@@ -204,7 +204,7 @@ export default function CandidateDashboard() {
 
   if (profileLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E', alignItems: 'center', justifyContent: 'center' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#FF6240" size="large" />
       </SafeAreaView>
     )
@@ -220,7 +220,7 @@ export default function CandidateDashboard() {
   const trustLabel = trustScore >= 80 ? 'Verified' : trustScore >= 50 ? 'Partial' : 'Unverified'
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 110 }}
@@ -230,11 +230,11 @@ export default function CandidateDashboard() {
         <Animated.View entering={FadeInDown.duration(300)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}>
           <View>
             <Text style={{ color: '#475569', fontSize: 12, letterSpacing: 0.3 }}>{greeting()}</Text>
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 }}>{firstName} 👋</Text>
+            <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 }}>{firstName} 👋</Text>
           </View>
           <Pressable
             onPress={() => router.push('/(candidate)/notifications' as never)}
-            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}
             hitSlop={12}
           >
             <BellIcon />
@@ -243,7 +243,7 @@ export default function CandidateDashboard() {
 
         {/* ── Hero identity card ── */}
         <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ marginHorizontal: 20, marginBottom: 16 }}>
-          <View style={{ backgroundColor: '#0F0D1A', borderRadius: 24, borderWidth: 1, borderColor: '#1E1B2E', padding: 20, overflow: 'hidden' }}>
+          <View style={{ backgroundColor: '#F0EBE1', borderRadius: 24, borderWidth: 1, borderColor: '#DDD6C9', padding: 20, overflow: 'hidden' }}>
             {/* Subtle glow accent */}
             <View style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: '#FF624008' }} />
 
@@ -258,7 +258,7 @@ export default function CandidateDashboard() {
               )}
 
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }} numberOfLines={1}>{fullName || firstName}</Text>
+                <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }} numberOfLines={1}>{fullName || firstName}</Text>
                 {candidate?.headline && (
                   <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }} numberOfLines={1}>{candidate.headline}</Text>
                 )}
@@ -284,7 +284,7 @@ export default function CandidateDashboard() {
                 <Text style={{ color: '#475569', fontSize: 11 }}>Profile strength</Text>
                 <Text style={{ color: completion >= 80 ? '#22C55E' : '#FF6240', fontSize: 11, fontWeight: '700' }}>{completion}%</Text>
               </View>
-              <View style={{ height: 5, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
+              <View style={{ height: 5, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
                 <View style={{ height: '100%', width: `${completion}%`, backgroundColor: completion >= 80 ? '#22C55E' : '#FF6240', borderRadius: 3 }} />
               </View>
 
@@ -304,8 +304,8 @@ export default function CandidateDashboard() {
                   onPress={() => toggleMutation.mutate(!isOpenToWork)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
                 >
-                  <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: isOpenToWork ? '#22C55E' : '#3D3850', padding: 2, justifyContent: 'center', alignItems: isOpenToWork ? 'flex-end' : 'flex-start' }}>
-                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff' }} />
+                  <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: isOpenToWork ? '#22C55E' : '#C8BFB0', padding: 2, justifyContent: 'center', alignItems: isOpenToWork ? 'flex-end' : 'flex-start' }}>
+                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#1A1625' }} />
                   </View>
                   <Text style={{ color: '#64748B', fontSize: 11 }}>Open to work</Text>
                 </Pressable>
@@ -321,7 +321,7 @@ export default function CandidateDashboard() {
             { label: 'Views (7d)', value: viewCount ?? 0, color: '#0DD4C3', emoji: '👁️' },
             { label: 'Interviews', value: 0, color: '#A78BFA', emoji: '🗓️' },
           ].map((s) => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center' }}>
+            <View key={s.label} style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center' }}>
               <Text style={{ fontSize: 18, marginBottom: 4 }}>{s.emoji}</Text>
               <Text style={{ color: s.color, fontSize: 24, fontWeight: '800', lineHeight: 28 }}>{s.value}</Text>
               <Text style={{ color: '#475569', fontSize: 10, marginTop: 2, textAlign: 'center' }}>{s.label}</Text>
@@ -354,7 +354,7 @@ export default function CandidateDashboard() {
         {/* ── Matched jobs ── */}
         <Animated.View entering={FadeInDown.delay(200).duration(350)} style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 14 }}>
-            <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Matched for you</Text>
+            <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Matched for you</Text>
             <Pressable onPress={() => router.push('/(candidate)/jobs' as never)}>
               <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>See all →</Text>
             </Pressable>
@@ -365,7 +365,7 @@ export default function CandidateDashboard() {
               <ActivityIndicator color="#FF6240" />
             </View>
           ) : !jobs?.length ? (
-            <View style={{ marginHorizontal: 20, backgroundColor: '#0F0D1A', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
+            <View style={{ marginHorizontal: 20, backgroundColor: '#F0EBE1', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 24, alignItems: 'center' }}>
               <Text style={{ fontSize: 28, marginBottom: 8 }}>🔍</Text>
               <Text style={{ color: '#475569', fontSize: 13, textAlign: 'center' }}>Complete your profile to see tailored job matches</Text>
             </View>
@@ -380,7 +380,7 @@ export default function CandidateDashboard() {
                   <Pressable
                     key={job.id}
                     onPress={() => router.push(`/(candidate)/jobs/${job.id}` as never)}
-                    style={{ width: 252, backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, overflow: 'hidden' }}
+                    style={{ width: 252, backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, overflow: 'hidden' }}
                   >
                     {/* Color accent top bar */}
                     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: modeColor, borderTopLeftRadius: 20, borderTopRightRadius: 20 }} />
@@ -394,7 +394,7 @@ export default function CandidateDashboard() {
                         </View>
                       )}
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '700', lineHeight: 18 }} numberOfLines={2}>{job.title}</Text>
+                        <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700', lineHeight: 18 }} numberOfLines={2}>{job.title}</Text>
                         <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{companyName}{job.city ? ` · ${job.city}` : ''}</Text>
                       </View>
                     </View>
@@ -416,22 +416,22 @@ export default function CandidateDashboard() {
         {(recentApps ?? []).length > 0 && (
           <Animated.View entering={FadeInDown.delay(260).duration(350)} style={{ marginHorizontal: 20 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>Recent applications</Text>
+              <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Recent applications</Text>
               <Pressable onPress={() => router.push('/(candidate)/applications' as never)}>
                 <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>View all →</Text>
               </Pressable>
             </View>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', overflow: 'hidden' }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', overflow: 'hidden' }}>
               {recentApps!.map((app, idx) => {
                 const color = STAGE_COLOR[app.pipeline_stage] ?? '#64748B'
                 const label = STAGE_LABEL[app.pipeline_stage] ?? app.pipeline_stage
                 const jobTitle = app.job_postings?.title ?? 'Position'
                 const companyName = app.job_postings?.company_profiles?.company_name ?? 'Company'
                 return (
-                  <View key={app.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 15, borderBottomWidth: idx < recentApps!.length - 1 ? 1 : 0, borderBottomColor: '#1E1B2E' }}>
+                  <View key={app.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 15, borderBottomWidth: idx < recentApps!.length - 1 ? 1 : 0, borderBottomColor: '#DDD6C9' }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: color, flexShrink: 0, shadowColor: color, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4 }} />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{jobTitle}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{jobTitle}</Text>
                       <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{companyName}</Text>
                     </View>
                     <View style={{ backgroundColor: `${color}20`, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderColor: `${color}40` }}>

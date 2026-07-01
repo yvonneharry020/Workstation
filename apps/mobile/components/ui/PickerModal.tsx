@@ -71,7 +71,7 @@ export function PickerModal({
           onPress={() => setOpen(true)}
           className={`bg-surface-card border rounded-xl px-4 py-4 flex-row items-center justify-between ${error ? 'border-red-500' : 'border-surface-border'}`}
         >
-          <Text style={{ color: selected ? '#fff' : '#475569', fontSize: 16 }}>
+          <Text style={{ color: selected ? '#1A1625' : '#475569', fontSize: 16 }}>
             {selected ? selected.label : placeholder}
           </Text>
           <ChevronIcon />
@@ -80,9 +80,9 @@ export function PickerModal({
       </View>
 
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
           <View className="px-5 py-4 border-b border-surface-border flex-row items-center justify-between">
-            <Text className="text-white font-semibold text-base">{label ?? 'Select'}</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">{label ?? 'Select'}</Text>
             <Pressable onPress={() => { setOpen(false); setSearch('') }} hitSlop={12}>
               <Text className="text-primary-400 text-base font-medium">Done</Text>
             </Pressable>
@@ -95,7 +95,7 @@ export function PickerModal({
                 onChangeText={setSearch}
                 placeholder="Search…"
                 placeholderTextColor="#475569"
-                className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-white text-sm"
+                className="bg-surface-card border border-surface-border rounded-xl px-4 py-3 text-[#1A1625] text-sm"
                 autoFocus
               />
             </View>
@@ -110,7 +110,7 @@ export function PickerModal({
                 onPress={() => handleSelect(item.value)}
                 className="flex-row items-center justify-between py-4 border-b border-surface-border active:opacity-70"
               >
-                <Text className="text-white text-base">{item.label}</Text>
+                <Text className="text-[#1A1625] text-base">{item.label}</Text>
                 {item.value === value && <CheckIcon />}
               </Pressable>
             )}

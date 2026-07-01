@@ -117,11 +117,11 @@ export default function JobDeepLink() {
             className="bg-primary-500 items-center justify-center"
             style={{ width: 28, height: 28, borderRadius: 8 }}
           >
-            <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#fff' }}>
+            <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#1A1625' }}>
               W
             </Text>
           </View>
-          <Text className="text-white font-semibold text-sm tracking-wide">WORKSTATION</Text>
+          <Text className="text-[#1A1625] font-semibold text-sm tracking-wide">WORKSTATION</Text>
         </View>
         <View style={{ width: 32 }} />
       </View>
@@ -135,7 +135,7 @@ export default function JobDeepLink() {
 
       {isError && (
         <View className="flex-1 items-center justify-center px-8 gap-4">
-          <Text className="text-white font-display text-xl text-center">Job not found</Text>
+          <Text className="text-[#1A1625] font-display text-xl text-center">Job not found</Text>
           <Text className="text-slate-400 font-sans text-base text-center leading-relaxed">
             This job may have been removed or is no longer accepting applications.
           </Text>
@@ -143,7 +143,7 @@ export default function JobDeepLink() {
             onPress={() => router.replace('/(auth)/welcome')}
             className="bg-primary-500 rounded-2xl px-8 py-3.5 mt-2"
           >
-            <Text className="text-white font-semibold text-base">Browse open jobs</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Browse open jobs</Text>
           </Pressable>
         </View>
       )}
@@ -168,7 +168,7 @@ export default function JobDeepLink() {
                 </View>
 
                 <View className="gap-1">
-                  <Text className="text-white font-display text-xl leading-tight">
+                  <Text className="text-[#1A1625] font-display text-xl leading-tight">
                     {job.title}
                   </Text>
                   <Text className="text-primary-400 font-semibold text-base">
@@ -188,7 +188,7 @@ export default function JobDeepLink() {
                 </View>
 
                 <View className="border-t border-surface-border pt-4">
-                  <Text className="text-white font-display text-lg">
+                  <Text className="text-[#1A1625] font-display text-lg">
                     {formatSalary(job.salary_min, job.salary_max, job.currency)}
                   </Text>
                 </View>
@@ -196,7 +196,7 @@ export default function JobDeepLink() {
 
               {job.description && (
                 <Animated.View entering={FadeInDown.delay(200).duration(500)} className="gap-3">
-                  <Text className="text-white font-semibold text-base">About this role</Text>
+                  <Text className="text-[#1A1625] font-semibold text-base">About this role</Text>
                   <Text className="text-slate-400 font-sans text-sm leading-relaxed">
                     {job.description.length > 400
                       ? `${job.description.slice(0, 400)}…`
@@ -207,7 +207,7 @@ export default function JobDeepLink() {
 
               {job.requirements && (
                 <Animated.View entering={FadeInDown.delay(300).duration(500)} className="gap-3">
-                  <Text className="text-white font-semibold text-base">Requirements</Text>
+                  <Text className="text-[#1A1625] font-semibold text-base">Requirements</Text>
                   {job.requirements
                     .split('\n')
                     .filter(Boolean)
@@ -232,7 +232,7 @@ export default function JobDeepLink() {
                 >
                   <View className="flex-row items-center gap-2 mb-2">
                     <View className="w-2 h-2 rounded-full bg-teal-500" />
-                    <Text className="text-white font-semibold text-sm">Free to apply</Text>
+                    <Text className="text-[#1A1625] font-semibold text-sm">Free to apply</Text>
                   </View>
                   <Text className="text-slate-400 font-sans text-xs leading-relaxed">
                     Create your Workstation account to apply. NIN verification required — it's free and takes under 2 minutes.
@@ -247,7 +247,7 @@ export default function JobDeepLink() {
               onPress={handleApply}
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#1A1625] font-semibold text-base">
                 {session ? 'Apply now' : 'Sign in to apply'}
               </Text>
             </Pressable>

@@ -53,9 +53,9 @@ const STAGE_LABELS: Record<string, string> = {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <View style={{ flex: 1, backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14 }}>
+    <View style={{ flex: 1, backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14 }}>
       <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>{label}</Text>
-      <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{value}</Text>
+      <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>{value}</Text>
       {sub && <Text style={{ color: '#475569', fontSize: 11, marginTop: 2 }}>{sub}</Text>}
     </View>
   )
@@ -84,7 +84,7 @@ function RingChart({ value, color, label }: { value: number; color: string; labe
           </G>
         </Svg>
         <View style={{ position: 'absolute' }}>
-          <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800', textAlign: 'center' }}>{value}%</Text>
+          <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '800', textAlign: 'center' }}>{value}%</Text>
         </View>
       </View>
       <Text style={{ color: '#64748B', fontSize: 11, textAlign: 'center' }}>{label}</Text>
@@ -177,16 +177,16 @@ export default function AnalyticsScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Pressable
             onPress={() => router.back()}
-            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#DDD6C9' }}
             className="active:opacity-70"
           >
             <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <Path d="M19 12H5M12 5l-7 7 7 7" />
             </Svg>
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Analytics</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Analytics</Text>
         </View>
-        <View style={{ flexDirection: 'row', backgroundColor: '#131118', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', padding: 3 }}>
+        <View style={{ flexDirection: 'row', backgroundColor: '#EDE7DB', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', padding: 3 }}>
           {(['30', '90'] as DateRange[]).map((r) => (
             <Pressable
               key={r}
@@ -194,7 +194,7 @@ export default function AnalyticsScreen() {
               style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: dateRange === r ? '#FF6240' : 'transparent' }}
               className="active:opacity-80"
             >
-              <Text style={{ color: dateRange === r ? '#fff' : '#64748B', fontSize: 12, fontWeight: '600' }}>{r}d</Text>
+              <Text style={{ color: dateRange === r ? '#1A1625' : '#64748B', fontSize: 12, fontWeight: '600' }}>{r}d</Text>
             </Pressable>
           ))}
         </View>
@@ -219,18 +219,18 @@ export default function AnalyticsScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(100).duration(300)} style={{ marginBottom: 28 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Application funnel</Text>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, gap: 10 }}>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Application funnel</Text>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, gap: 10 }}>
               {Object.entries(STAGE_LABELS).map(([stage, label]) => {
                 const count = stageCounts[stage] ?? 0
                 const pct = (count / maxStageCount) * 100
                 return (
                   <View key={stage} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Text style={{ color: '#64748B', fontSize: 12, width: 80 }}>{label}</Text>
-                    <View style={{ flex: 1, height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden' }}>
+                    <View style={{ flex: 1, height: 6, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden' }}>
                       <View style={{ width: `${pct}%`, height: '100%', backgroundColor: STAGE_COLORS[stage], borderRadius: 3 }} />
                     </View>
-                    <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', width: 28, textAlign: 'right' }}>{count}</Text>
+                    <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', width: 28, textAlign: 'right' }}>{count}</Text>
                   </View>
                 )
               })}
@@ -241,8 +241,8 @@ export default function AnalyticsScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(150).duration(300)} style={{ marginBottom: 28 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Applications over time</Text>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Applications over time</Text>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 80, gap: 8 }}>
                 {weekCounts.map((count, i) => (
                   <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
@@ -268,17 +268,17 @@ export default function AnalyticsScreen() {
 
           {topJobs.length > 0 && (
             <Animated.View entering={FadeInDown.delay(200).duration(300)} style={{ marginBottom: 28 }}>
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Top jobs by applications</Text>
-              <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, gap: 12 }}>
+              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Top jobs by applications</Text>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, gap: 12 }}>
                 {topJobs.map((job) => {
                   const pct = ((job.applications_count ?? 0) / maxJobApps) * 100
                   return (
                     <View key={job.id}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '500', flex: 1 }} numberOfLines={1}>{job.title}</Text>
+                        <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '500', flex: 1 }} numberOfLines={1}>{job.title}</Text>
                         <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '700', marginLeft: 8 }}>{job.applications_count ?? 0}</Text>
                       </View>
-                      <View style={{ height: 4, backgroundColor: '#1E1B2E', borderRadius: 2, overflow: 'hidden' }}>
+                      <View style={{ height: 4, backgroundColor: '#DDD6C9', borderRadius: 2, overflow: 'hidden' }}>
                         <View style={{ width: `${pct}%`, height: '100%', backgroundColor: '#FF6240', borderRadius: 2 }} />
                       </View>
                     </View>
@@ -289,20 +289,20 @@ export default function AnalyticsScreen() {
           )}
 
           <Animated.View entering={FadeInDown.delay(250).duration(300)} style={{ marginBottom: 28 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Email performance</Text>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 20 }}>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Email performance</Text>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 20 }}>
                 <RingChart value={openRate} color="#FF6240" label="Open rate" />
                 <RingChart value={totalApps > 0 ? Math.min(Math.round((totalApps / Math.max(activeJobs, 1)) * 5), 100) : 0} color="#0DD4C3" label="Response rate" />
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 10, padding: 12 }}>
+                <View style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 10, padding: 12 }}>
                   <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 4 }}>Sent</Text>
-                  <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{emailSentMock}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailSentMock}</Text>
                 </View>
-                <View style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 10, padding: 12 }}>
+                <View style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 10, padding: 12 }}>
                   <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 4 }}>Opened</Text>
-                  <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{emailOpenedMock}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailOpenedMock}</Text>
                 </View>
               </View>
             </View>

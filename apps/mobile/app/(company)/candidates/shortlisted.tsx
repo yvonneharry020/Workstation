@@ -104,13 +104,13 @@ function CandidateCard({ item }: { item: ShortlistedApplication }) {
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#0DD4C3', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
 
           <View className="flex-1">
-            <Text className="text-white font-semibold text-sm" numberOfLines={1}>{name}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
             {headline && <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{headline}</Text>}
             <View className="flex-row items-center gap-2 mt-1">
               <Text className="text-slate-500 text-xs">{timeAgo(item.submitted_at)}</Text>
@@ -197,7 +197,7 @@ export default function ShortlistedScreen() {
           <ArrowLeftIcon />
         </Pressable>
         <View className="flex-1">
-          <Text className="text-white text-xl font-bold">Shortlisted</Text>
+          <Text className="text-[#1A1625] text-xl font-bold">Shortlisted</Text>
           {!isLoading && (
             <Text className="text-slate-400 text-xs">
               {totalCount} candidate{totalCount !== 1 ? 's' : ''}
@@ -226,11 +226,11 @@ export default function ShortlistedScreen() {
           renderSectionHeader={({ section }) => (
             <View
               style={{
-                backgroundColor: '#09080E', paddingHorizontal: 20, paddingVertical: 8,
+                backgroundColor: '#F5F0E8', paddingHorizontal: 20, paddingVertical: 8,
                 flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
               }}
             >
-              <Text className="text-white font-semibold text-sm" numberOfLines={1} style={{ flex: 1 }}>
+              <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1} style={{ flex: 1 }}>
                 {section.jobTitle}
               </Text>
               <View style={{ backgroundColor: '#0DD4C320', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>

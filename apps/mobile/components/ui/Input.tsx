@@ -18,7 +18,7 @@ export function Input({ label, error, hint, ...props }: InputProps) {
         placeholderTextColor="#475569"
         {...props}
         className={`
-          bg-surface-card border rounded-xl px-4 py-4 text-white text-base
+          bg-surface-card border rounded-xl px-4 py-4 text-[#1A1625] text-base
           ${hasBorderError ? 'border-red-500' : 'border-surface-border'}
           ${props.className ?? ''}
         `}

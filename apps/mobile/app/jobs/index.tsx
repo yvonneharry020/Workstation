@@ -125,7 +125,7 @@ function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
     >
       <View className="flex-row items-start justify-between mb-3">
         <View className="flex-1 mr-3">
-          <Text className="text-white font-semibold text-base leading-tight mb-1" numberOfLines={2}>
+          <Text className="text-[#1A1625] font-semibold text-base leading-tight mb-1" numberOfLines={2}>
             {job.title}
           </Text>
           <View className="flex-row items-center gap-1.5">
@@ -234,7 +234,7 @@ export default function BrowseJobsScreen() {
         <View className="flex-row items-center justify-between mb-4">
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 22,
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -256,7 +256,7 @@ export default function BrowseJobsScreen() {
             onChangeText={setSearch}
             placeholder="Search jobs, companies…"
             placeholderTextColor="#475569"
-            className="flex-1 py-3 text-white text-sm"
+            className="flex-1 py-3 text-[#1A1625] text-sm"
             returnKeyType="search"
           />
         </View>
@@ -271,14 +271,14 @@ export default function BrowseJobsScreen() {
               onPress={() => setActiveType(item.value)}
               className="mr-2 rounded-xl px-4 py-2"
               style={{
-                backgroundColor: activeType === item.value ? '#FF6240' : '#131118',
+                backgroundColor: activeType === item.value ? '#FF6240' : '#EDE7DB',
                 borderWidth: 1,
-                borderColor: activeType === item.value ? '#FF6240' : '#3D3850',
+                borderColor: activeType === item.value ? '#FF6240' : '#C8BFB0',
               }}
             >
               <Text
                 className="text-sm font-medium"
-                style={{ color: activeType === item.value ? '#fff' : '#94a3b8' }}
+                style={{ color: activeType === item.value ? '#1A1625' : '#94a3b8' }}
               >
                 {item.label}
               </Text>
@@ -317,7 +317,7 @@ export default function BrowseJobsScreen() {
           ListFooterComponent={
             jobs && jobs.length > 0 && !session ? (
               <View className="bg-surface-card border border-surface-border rounded-2xl p-5 mt-2 items-center">
-                <Text className="text-white font-semibold text-base mb-2">
+                <Text className="text-[#1A1625] font-semibold text-base mb-2">
                   Ready to apply?
                 </Text>
                 <Text className="text-slate-400 text-sm text-center mb-4">
@@ -327,7 +327,7 @@ export default function BrowseJobsScreen() {
                   onPress={() => router.push('/(auth)/register')}
                   className="bg-primary-500 rounded-xl px-8 py-3 active:opacity-80"
                 >
-                  <Text className="text-white font-semibold text-sm">Create account</Text>
+                  <Text className="text-[#1A1625] font-semibold text-sm">Create account</Text>
                 </Pressable>
               </View>
             ) : null

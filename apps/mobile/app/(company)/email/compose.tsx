@@ -82,7 +82,7 @@ function ArrowLeftIcon() {
   )
 }
 
-function XIcon({ color = '#94A3B8' }: { color?: string }) {
+function XIcon({ color = '#5A4F6E' }: { color?: string }) {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M18 6L6 18M6 6l12 12" />
@@ -110,7 +110,7 @@ function UserIcon() {
 function RecipientChip({ recipient, onRemove }: { recipient: Recipient; onRemove: () => void }) {
   const initials = recipient.full_name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#1E1B2E', borderRadius: 20, paddingLeft: 6, paddingRight: 8, paddingVertical: 5, marginRight: 6, marginBottom: 6 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#DDD6C9', borderRadius: 20, paddingLeft: 6, paddingRight: 8, paddingVertical: 5, marginRight: 6, marginBottom: 6 }}>
       {recipient.avatar_url ? (
         <Image source={{ uri: recipient.avatar_url }} style={{ width: 22, height: 22, borderRadius: 11 }} />
       ) : (
@@ -118,7 +118,7 @@ function RecipientChip({ recipient, onRemove }: { recipient: Recipient; onRemove
           <Text style={{ color: '#FF6240', fontSize: 9, fontWeight: '700' }}>{initials}</Text>
         </View>
       )}
-      <Text style={{ color: '#E2E8F0', fontSize: 12, fontWeight: '500' }} numberOfLines={1}>{recipient.full_name}</Text>
+      <Text style={{ color: '#1A1625', fontSize: 12, fontWeight: '500' }} numberOfLines={1}>{recipient.full_name}</Text>
       <Pressable onPress={onRemove} hitSlop={8}>
         <XIcon />
       </Pressable>
@@ -255,12 +255,12 @@ export default function ComposeEmailScreen() {
           <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
             <ArrowLeftIcon />
           </Pressable>
-          <Text className="text-white text-lg font-bold flex-1">Compose Email</Text>
+          <Text className="text-[#1A1625] text-lg font-bold flex-1">Compose Email</Text>
           <Pressable
             onPress={() => setShowPreview((v) => !v)}
-            style={{ backgroundColor: showPreview ? '#FF624020' : '#1E1B2E', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+            style={{ backgroundColor: showPreview ? '#FF624020' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
           >
-            <Text style={{ color: showPreview ? '#FF6240' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+            <Text style={{ color: showPreview ? '#FF6240' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
               {showPreview ? 'Edit' : 'Preview'}
             </Text>
           </Pressable>
@@ -268,13 +268,13 @@ export default function ComposeEmailScreen() {
 
         {showPreview ? (
           <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 20 }}>
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>SUBJECT</Text>
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 16 }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', marginBottom: 4 }}>SUBJECT</Text>
+              <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '600', marginBottom: 16 }}>
                 {subject || '(no subject)'}
               </Text>
-              <View style={{ height: 1, backgroundColor: '#1E1B2E', marginBottom: 16 }} />
-              <Text style={{ color: '#E2E8F0', fontSize: 14, lineHeight: 22 }}>{previewBody || '(no body)'}</Text>
+              <View style={{ height: 1, backgroundColor: '#DDD6C9', marginBottom: 16 }} />
+              <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 22 }}>{previewBody || '(no body)'}</Text>
             </View>
             {firstRecipient && (
               <Text style={{ color: '#475569', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
@@ -285,8 +285,8 @@ export default function ComposeEmailScreen() {
         ) : (
           <ScrollView className="flex-1" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 120 }}>
             <View className="px-5 pt-4">
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECIPIENTS ({recipients.length})</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', padding: 10, minHeight: 50 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>RECIPIENTS ({recipients.length})</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', padding: 10, minHeight: 50 }}>
                 {recipients.map((r) => (
                   <RecipientChip key={r.id} recipient={r} onRemove={() => setRecipients((prev) => prev.filter((x) => x.id !== r.id))} />
                 ))}
@@ -301,16 +301,16 @@ export default function ComposeEmailScreen() {
             </View>
 
             <View className="px-5 mt-5">
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>TEMPLATE</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>TEMPLATE</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {allTemplates.map((t) => (
                     <Pressable
                       key={t.id}
                       onPress={() => { setSubject(t.subject); setBody(t.body) }}
-                      style={{ backgroundColor: '#131118', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#1E1B2E' }}
+                      style={{ backgroundColor: '#EDE7DB', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#DDD6C9' }}
                     >
-                      <Text style={{ color: '#E2E8F0', fontSize: 12, fontWeight: '500' }}>{t.name}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 12, fontWeight: '500' }}>{t.name}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -318,19 +318,19 @@ export default function ComposeEmailScreen() {
             </View>
 
             <View className="px-5 mt-5">
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>SUBJECT</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>SUBJECT</Text>
               <TextInput
                 value={subject}
                 onChangeText={setSubject}
                 placeholder="Email subject line…"
                 placeholderTextColor="#475569"
-                style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14 }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14 }}
               />
             </View>
 
             <View className="px-5 mt-5">
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600' }}>BODY</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600' }}>BODY</Text>
                 <Text style={{ color: '#475569', fontSize: 11 }}>{body.length} chars</Text>
               </View>
               <TextInput
@@ -339,7 +339,7 @@ export default function ComposeEmailScreen() {
                 placeholder="Write your email…"
                 placeholderTextColor="#475569"
                 multiline
-                style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, minHeight: 180, textAlignVertical: 'top' }}
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, minHeight: 180, textAlignVertical: 'top' }}
               />
             </View>
 
@@ -361,7 +361,7 @@ export default function ComposeEmailScreen() {
           </ScrollView>
         )}
 
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#09080E', borderTopWidth: 1, borderTopColor: '#1E1B2E', padding: 16 }}>
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#F5F0E8', borderTopWidth: 1, borderTopColor: '#DDD6C9', padding: 16 }}>
           <Pressable
             onPress={() => sendMutation.mutate()}
             disabled={!canSend || sendMutation.isPending}
@@ -370,7 +370,7 @@ export default function ComposeEmailScreen() {
             {sendMutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={{ color: canSend ? '#fff' : '#6B3030', fontWeight: '700', fontSize: 15 }}>
+              <Text style={{ color: canSend ? '#1A1625' : '#6B3030', fontWeight: '700', fontSize: 15 }}>
                 Send to {recipients.length} candidate{recipients.length !== 1 ? 's' : ''}
               </Text>
             )}
@@ -379,9 +379,9 @@ export default function ComposeEmailScreen() {
       </KeyboardAvoidingView>
 
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowAddModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 }}>Add Recipients</Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700', flex: 1 }}>Add Recipients</Text>
             <Pressable onPress={() => setShowAddModal(false)}><XIcon color="#fff" /></Pressable>
           </View>
           <View style={{ padding: 16 }}>
@@ -390,7 +390,7 @@ export default function ComposeEmailScreen() {
               onChangeText={setSearchQuery}
               placeholder="Search candidates by name…"
               placeholderTextColor="#475569"
-              style={{ backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14 }}
               autoFocus
             />
           </View>
@@ -415,7 +415,7 @@ export default function ComposeEmailScreen() {
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{item.full_name}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>{item.full_name}</Text>
                     {item.email && <Text style={{ color: '#64748B', fontSize: 12 }}>{item.email}</Text>}
                   </View>
                   {already && <Text style={{ color: '#0DD4C3', fontSize: 12 }}>Added</Text>}

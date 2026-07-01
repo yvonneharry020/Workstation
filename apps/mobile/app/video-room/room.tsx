@@ -88,9 +88,9 @@ interface ControlButtonProps {
 }
 
 function ControlButton({ icon, label, onPress, variant = 'default', badge }: ControlButtonProps) {
-  const bgColour = variant === 'danger' ? '#7C2210' : variant === 'active' ? '#FF624025' : '#1E1B2A'
-  const borderColour = variant === 'danger' ? '#D9451E' : variant === 'active' ? '#FF6240' : '#3D3850'
-  const textColour = variant === 'danger' ? '#FF6240' : variant === 'active' ? '#FF6240' : '#94A3B8'
+  const bgColour = variant === 'danger' ? '#7C2210' : variant === 'active' ? '#FF624025' : '#DDD6C9'
+  const borderColour = variant === 'danger' ? '#D9451E' : variant === 'active' ? '#FF6240' : '#C8BFB0'
+  const textColour = variant === 'danger' ? '#FF6240' : variant === 'active' ? '#FF6240' : '#5A4F6E'
 
   return (
     <Pressable
@@ -111,7 +111,7 @@ function ControlButton({ icon, label, onPress, variant = 'default', badge }: Con
             width: 16, height: 16, borderRadius: 8,
             backgroundColor: '#FF6240', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{badge > 9 ? '9+' : badge}</Text>
+            <Text style={{ color: '#1A1625', fontSize: 9, fontWeight: '800' }}>{badge > 9 ? '9+' : badge}</Text>
           </View>
         )}
       </View>
@@ -166,7 +166,7 @@ function ShareIcon() {
 
 function RecordIcon({ active }: { active: boolean }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#EF4444' : '#94A3B8'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={active ? '#EF4444' : '#5A4F6E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Circle cx={12} cy={12} r={10} />
       <Circle cx={12} cy={12} r={4} fill={active ? '#EF4444' : 'none'} />
     </Svg>
@@ -175,7 +175,7 @@ function RecordIcon({ active }: { active: boolean }) {
 
 function HandIcon({ raised }: { raised: boolean }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={raised ? '#FF6240' : '#94A3B8'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={raised ? '#FF6240' : '#5A4F6E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
       <Path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
     </Svg>
@@ -300,7 +300,7 @@ export default function ActiveMeetingRoomScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <View style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <StatusBar barStyle="light-content" backgroundColor="#09080E" />
 
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
@@ -322,14 +322,14 @@ export default function ActiveMeetingRoomScreen() {
           </Animated.View>
         )}
         <View style={{ flex: 1 }} />
-        <View style={{ backgroundColor: '#131118', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: '#3D3850' }}>
-          <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
+        <View style={{ backgroundColor: '#EDE7DB', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: '#C8BFB0' }}>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
             {formatDuration(callDuration)}
           </Text>
         </View>
         <Pressable
           onPress={() => setIsGridView((v) => !v)}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#131118', borderWidth: 1, borderColor: '#3D3850', alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#C8BFB0', alignItems: 'center', justifyContent: 'center' }}
         >
           <GridIcon />
         </Pressable>
@@ -345,14 +345,14 @@ export default function ActiveMeetingRoomScreen() {
             ].map((p) => (
               <View key={p.name} style={{
                 width: '48.5%', aspectRatio: 4 / 3,
-                backgroundColor: '#131118', borderRadius: 16, borderWidth: 1.5,
-                borderColor: p.isSelf ? '#0DD4C3' : '#3D3850',
+                backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1.5,
+                borderColor: p.isSelf ? '#0DD4C3' : '#C8BFB0',
                 alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
               }}>
                 <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: `${p.colour}25`, borderWidth: 2, borderColor: p.colour, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ color: p.colour, fontSize: 20, fontWeight: '800' }}>{p.name.charAt(0)}</Text>
                 </View>
-                <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 8 }}>{p.name}</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 11, marginTop: 8 }}>{p.name}</Text>
                 {p.isSelf && isCameraOff && (
                   <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#EF444430', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
                     <Text style={{ color: '#EF4444', fontSize: 10, fontWeight: '600' }}>Camera off</Text>
@@ -374,7 +374,7 @@ export default function ActiveMeetingRoomScreen() {
             }}>
               <Text style={{ color: '#FF6240', fontSize: 40, fontWeight: '800' }}>A</Text>
             </View>
-            <Text style={{ color: '#E2E8F0', fontSize: 16, fontWeight: '600', marginTop: 16 }}>Adaeze Nwosu</Text>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '600', marginTop: 16 }}>Adaeze Nwosu</Text>
             <Text style={{ color: '#475569', fontSize: 12, marginTop: 4 }}>Speaking…</Text>
           </View>
 
@@ -382,7 +382,7 @@ export default function ActiveMeetingRoomScreen() {
           <View style={{
             position: 'absolute', bottom: 160, right: 16,
             width: 100, height: 140, borderRadius: 14,
-            backgroundColor: isCameraOff ? '#1E1B2A' : '#131118',
+            backgroundColor: isCameraOff ? '#DDD6C9' : '#EDE7DB',
             borderWidth: 2, borderColor: '#0DD4C3',
             alignItems: 'center', justifyContent: 'center',
             overflow: 'hidden',
@@ -403,7 +403,7 @@ export default function ActiveMeetingRoomScreen() {
                     {(participantName ?? 'Y').charAt(0).toUpperCase()}
                   </Text>
                 </View>
-                <Text style={{ color: '#94A3B8', fontSize: 9, marginTop: 4 }}>You</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 9, marginTop: 4 }}>You</Text>
               </>
             )}
             {isMuted && (
@@ -424,20 +424,20 @@ export default function ActiveMeetingRoomScreen() {
           exiting={SlideOutRight.duration(220)}
           style={{
             position: 'absolute', top: 0, bottom: 0, right: 0,
-            width: '75%', backgroundColor: '#131118',
-            borderLeftWidth: 1, borderLeftColor: '#3D3850',
+            width: '75%', backgroundColor: '#EDE7DB',
+            borderLeftWidth: 1, borderLeftColor: '#C8BFB0',
             paddingTop: insets.top,
             zIndex: 30,
           }}
         >
           {/* Panel header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#3D3850' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#C8BFB0' }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <Pressable onPress={() => setActivePanel('chat')}>
-                <Text style={{ color: activePanel === 'chat' ? '#FF6240' : '#94A3B8', fontSize: 14, fontWeight: '700' }}>Chat</Text>
+                <Text style={{ color: activePanel === 'chat' ? '#FF6240' : '#5A4F6E', fontSize: 14, fontWeight: '700' }}>Chat</Text>
               </Pressable>
               <Pressable onPress={() => setActivePanel('participants')}>
-                <Text style={{ color: activePanel === 'participants' ? '#FF6240' : '#94A3B8', fontSize: 14, fontWeight: '700' }}>People</Text>
+                <Text style={{ color: activePanel === 'participants' ? '#FF6240' : '#5A4F6E', fontSize: 14, fontWeight: '700' }}>People</Text>
               </Pressable>
             </View>
             <Pressable onPress={() => setActivePanel(null)} hitSlop={12}>
@@ -456,24 +456,24 @@ export default function ActiveMeetingRoomScreen() {
                       <Text style={{ color: '#475569', fontSize: 10, marginBottom: 3 }}>{msg.sender}</Text>
                     )}
                     <View style={{
-                      backgroundColor: msg.isOwnMessage ? '#FF624020' : '#1E1B2A',
+                      backgroundColor: msg.isOwnMessage ? '#FF624020' : '#DDD6C9',
                       borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8,
                       maxWidth: '85%', borderWidth: 1,
-                      borderColor: msg.isOwnMessage ? '#FF640040' : '#3D3850',
+                      borderColor: msg.isOwnMessage ? '#FF640040' : '#C8BFB0',
                     }}>
-                      <Text style={{ color: '#E2E8F0', fontSize: 13, lineHeight: 18 }}>{msg.text}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 13, lineHeight: 18 }}>{msg.text}</Text>
                     </View>
                     <Text style={{ color: '#334155', fontSize: 10, marginTop: 3 }}>{formatChatTime(msg.time)}</Text>
                   </View>
                 ))}
               </ScrollView>
-              <View style={{ flexDirection: 'row', padding: 12, gap: 8, borderTopWidth: 1, borderTopColor: '#3D3850' }}>
+              <View style={{ flexDirection: 'row', padding: 12, gap: 8, borderTopWidth: 1, borderTopColor: '#C8BFB0' }}>
                 <TextInput
                   value={chatInput}
                   onChangeText={setChatInput}
                   placeholder="Type a message…"
                   placeholderTextColor="#475569"
-                  style={{ flex: 1, height: 40, backgroundColor: '#1E1B2A', borderRadius: 20, paddingHorizontal: 14, color: '#E2E8F0', fontSize: 13, borderWidth: 1, borderColor: '#3D3850' }}
+                  style={{ flex: 1, height: 40, backgroundColor: '#DDD6C9', borderRadius: 20, paddingHorizontal: 14, color: '#1A1625', fontSize: 13, borderWidth: 1, borderColor: '#C8BFB0' }}
                   onSubmitEditing={sendMessage}
                   returnKeyType="send"
                 />
@@ -487,11 +487,11 @@ export default function ActiveMeetingRoomScreen() {
           ) : (
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, gap: 10 }}>
               {MOCK_PARTICIPANTS.map((name, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#1E1B2A', borderRadius: 12 }}>
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#DDD6C9', borderRadius: 12 }}>
                   <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: i === 0 ? '#FF624020' : '#0DD4C320', borderWidth: 1.5, borderColor: i === 0 ? '#FF6240' : '#0DD4C3', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: i === 0 ? '#FF6240' : '#0DD4C3', fontSize: 14, fontWeight: '700' }}>{name.charAt(0)}</Text>
                   </View>
-                  <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: '500', flex: 1 }} numberOfLines={1}>{name}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '500', flex: 1 }} numberOfLines={1}>{name}</Text>
                   {i === 1 && (
                     <Text style={{ color: '#475569', fontSize: 11 }}>You</Text>
                   )}
@@ -505,7 +505,7 @@ export default function ActiveMeetingRoomScreen() {
       {/* ── Controls bar ─────────────────────────────────────────────────── */}
       <View style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: '#0D0C14', borderTopWidth: 1, borderTopColor: '#3D3850',
+        backgroundColor: '#F5F0E8', borderTopWidth: 1, borderTopColor: '#C8BFB0',
         paddingBottom: insets.bottom + 12, paddingTop: 16, paddingHorizontal: 20,
       }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>

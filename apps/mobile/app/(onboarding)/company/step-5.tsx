@@ -21,6 +21,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { stateNameToId } from '@/lib/nigerianStates'
 import { Input as FormInput } from '@/components/ui/Input'
 import { PickerModal } from '@/components/ui/PickerModal'
 
@@ -88,17 +89,17 @@ function ImageUploadButton({
 }) {
   return (
     <View className="mb-5">
-      <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>{label}</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>{label}</Text>
       <Pressable
         onPress={onPress}
         disabled={isUploading}
         style={{
           width: '100%',
           aspectRatio,
-          backgroundColor: '#131118',
+          backgroundColor: '#EDE7DB',
           borderRadius: 14,
           borderWidth: 1.5,
-          borderColor: imageUri ? '#FF624040' : '#1E1B2E',
+          borderColor: imageUri ? '#FF624040' : '#DDD6C9',
           borderStyle: imageUri ? 'solid' : 'dashed',
           overflow: 'hidden',
           alignItems: 'center',
@@ -203,6 +204,8 @@ export default function CompanyStep5() {
         company_size: data.companySize,
         website_url: data.websiteUrl || null,
         linkedin_url: data.linkedinUrl || null,
+        headquarters_state: stateNameToId(data.headquartersState) ?? null,
+        headquarters_state_text: data.headquartersState || null,
         headquarters_city: data.headquartersCity,
         headquarters_address: data.headquartersAddress,
         logo_url: logoUri,
@@ -245,7 +248,7 @@ export default function CompanyStep5() {
           </View>
           <Text className="text-slate-500 text-xs mb-8">Step 5 of {STEPS_TOTAL}</Text>
 
-          <Text className="text-white text-3xl font-bold mb-2">Company profile</Text>
+          <Text className="text-[#1A1625] text-3xl font-bold mb-2">Company profile</Text>
           <Text className="text-slate-400 text-base mb-8">
             This is what candidates see when they browse your jobs. Make a strong first impression.
           </Text>
@@ -286,7 +289,7 @@ export default function CompanyStep5() {
             />
 
             <View>
-              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
                 About your company
               </Text>
               <Controller
@@ -302,11 +305,11 @@ export default function CompanyStep5() {
                       value={value}
                       onChangeText={onChange}
                       style={{
-                        backgroundColor: '#131118',
+                        backgroundColor: '#EDE7DB',
                         borderRadius: 12,
                         borderWidth: 1,
-                        borderColor: errors.about ? '#EF4444' : '#1E1B2E',
-                        color: '#fff',
+                        borderColor: errors.about ? '#EF4444' : '#DDD6C9',
+                        color: '#1A1625',
                         fontSize: 14,
                         padding: 14,
                         minHeight: 120,
@@ -322,7 +325,7 @@ export default function CompanyStep5() {
             </View>
 
             <View>
-              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
                 Culture & values <Text style={{ color: '#475569', fontWeight: '400' }}>(optional)</Text>
               </Text>
               <Controller
@@ -337,11 +340,11 @@ export default function CompanyStep5() {
                     value={value}
                     onChangeText={onChange}
                     style={{
-                      backgroundColor: '#131118',
+                      backgroundColor: '#EDE7DB',
                       borderRadius: 12,
                       borderWidth: 1,
-                      borderColor: '#1E1B2E',
-                      color: '#fff',
+                      borderColor: '#DDD6C9',
+                      color: '#1A1625',
                       fontSize: 14,
                       padding: 14,
                       minHeight: 80,
@@ -473,10 +476,10 @@ export default function CompanyStep5() {
             {isSubmitting ? (
               <View className="flex-row items-center gap-3">
                 <ActivityIndicator color="#fff" size="small" />
-                <Text className="text-white font-bold text-base">Saving profile…</Text>
+                <Text className="text-[#1A1625] font-bold text-base">Saving profile…</Text>
               </View>
             ) : (
-              <Text className="text-white font-bold text-base">Continue</Text>
+              <Text className="text-[#1A1625] font-bold text-base">Continue</Text>
             )}
           </Pressable>
         </ScrollView>

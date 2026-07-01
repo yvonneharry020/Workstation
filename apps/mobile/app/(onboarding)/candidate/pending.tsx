@@ -161,11 +161,11 @@ function StepRow({ step, index, isLast }: { step: CheckStep; index: number; isLa
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#F59E0B' }} />
           )}
         </View>
-        {!isLast && <View style={{ width: 1.5, height: 28, backgroundColor: '#1E1B2E', marginTop: 4 }} />}
+        {!isLast && <View style={{ width: 1.5, height: 28, backgroundColor: '#DDD6C9', marginTop: 4 }} />}
       </View>
       <View style={{ flex: 1, paddingBottom: isLast ? 0 : 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-          <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600' }}>{step.label}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>{step.label}</Text>
           <View
             style={{
               paddingHorizontal: 7,
@@ -197,7 +197,7 @@ export default function CandidatePending() {
   }, [user?.id])
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 48 }}
@@ -213,7 +213,7 @@ export default function CandidatePending() {
             <Text style={{ color: '#F59E0B', fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>REVIEW IN PROGRESS</Text>
           </View>
 
-          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, textAlign: 'center', lineHeight: 36, marginBottom: 12 }}>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, textAlign: 'center', lineHeight: 36, marginBottom: 12 }}>
             Almost there.{'\n'}Hold tight!
           </Text>
           <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, maxWidth: 300 }}>
@@ -224,16 +224,16 @@ export default function CandidatePending() {
         <View style={{ paddingHorizontal: 20 }}>
           {/* ── Verification progress card ── */}
           <Animated.View entering={FadeInUp.delay(150).duration(400)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 20 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 20 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Verification progress</Text>
+                <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>Verification progress</Text>
                 <View style={{ backgroundColor: '#FF624015', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#FF624030' }}>
                   <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700' }}>3 / 4</Text>
                 </View>
               </View>
 
               {/* Progress bar */}
-              <View style={{ height: 5, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden', marginBottom: 22 }}>
+              <View style={{ height: 5, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden', marginBottom: 22 }}>
                 <Animated.View
                   entering={FadeInDown.delay(400).duration(1000)}
                   style={{ height: '100%', width: '75%', backgroundColor: '#FF6240', borderRadius: 3 }}
@@ -244,7 +244,7 @@ export default function CandidatePending() {
                 <StepRow key={step.label} step={step} index={i} isLast={i === STEPS.length - 1} />
               ))}
 
-              <View style={{ marginTop: 16, backgroundColor: '#131118', borderRadius: 12, padding: 12 }}>
+              <View style={{ marginTop: 16, backgroundColor: '#EDE7DB', borderRadius: 12, padding: 12 }}>
                 <Text style={{ color: '#475569', fontSize: 12, lineHeight: 18 }}>
                   📬{'  '}You'll receive a push notification and email once your account is approved.
                 </Text>
@@ -254,20 +254,20 @@ export default function CandidatePending() {
 
           {/* ── What happens next ── */}
           <Animated.View entering={FadeInUp.delay(280).duration(400)} style={{ marginBottom: 16 }}>
-            <View style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 20 }}>
-              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 20 }}>What happens next</Text>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 20 }}>
+              <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700', marginBottom: 20 }}>What happens next</Text>
               {NEXT_STEPS.map((item, i) => (
                 <View key={item.title} style={{ flexDirection: 'row', gap: 14, marginBottom: i < NEXT_STEPS.length - 1 ? 18 : 0 }}>
                   <View style={{ alignItems: 'center' }}>
-                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 18 }}>{item.emoji}</Text>
                     </View>
                     {i < NEXT_STEPS.length - 1 && (
-                      <View style={{ width: 1, flex: 1, backgroundColor: '#1E1B2E', marginTop: 6 }} />
+                      <View style={{ width: 1, flex: 1, backgroundColor: '#DDD6C9', marginTop: 6 }} />
                     )}
                   </View>
                   <View style={{ flex: 1, paddingBottom: i < NEXT_STEPS.length - 1 ? 12 : 0 }}>
-                    <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>{item.title}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>{item.title}</Text>
                     <Text style={{ color: '#64748B', fontSize: 13, lineHeight: 19 }}>{item.detail}</Text>
                   </View>
                 </View>
@@ -282,9 +282,9 @@ export default function CandidatePending() {
                 <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18 }}>⚡</Text>
                 </View>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>Boost your chances while you wait</Text>
+                <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }}>Boost your chances while you wait</Text>
               </View>
-              <Text style={{ color: '#94A3B8', fontSize: 13, lineHeight: 20, marginBottom: 16 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, lineHeight: 20, marginBottom: 16 }}>
                 Candidates with complete work history are{' '}
                 <Text style={{ color: '#FF6240', fontWeight: '700' }}>3× more likely</Text>
                 {' '}to get shortlisted by top employers.
@@ -293,7 +293,7 @@ export default function CandidatePending() {
                 onPress={() => router.push('/(onboarding)/candidate/employment-history')}
                 style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
               >
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Add employment history</Text>
+                <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>Add employment history</Text>
               </Pressable>
             </View>
           </Animated.View>

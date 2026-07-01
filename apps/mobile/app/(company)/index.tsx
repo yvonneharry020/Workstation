@@ -163,7 +163,7 @@ function VerificationBanner({ userId }: { userId: string }) {
             Complete account verification ({completedCount}/{steps.length})
           </Text>
         </View>
-        <Text style={{ color: '#94A3B8', fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
+        <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
           Verified companies can post jobs and access full hiring features.
         </Text>
         <View style={{ gap: 8, marginBottom: 14 }}>
@@ -175,7 +175,7 @@ function VerificationBanner({ userId }: { userId: string }) {
               className="active:opacity-70"
             >
               <CheckCircleIcon done={step.done} />
-              <Text style={{ color: step.done ? '#64748B' : '#E2E8F0', fontSize: 13, fontWeight: step.done ? '400' : '500', textDecorationLine: step.done ? 'line-through' : 'none' }}>
+              <Text style={{ color: step.done ? '#64748B' : '#1A1625', fontSize: 13, fontWeight: step.done ? '400' : '500', textDecorationLine: step.done ? 'line-through' : 'none' }}>
                 {step.label}
               </Text>
             </Pressable>
@@ -199,11 +199,11 @@ function VerificationBanner({ userId }: { userId: string }) {
 
 function EmptyJobsState() {
   return (
-    <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ backgroundColor: '#131118', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 32, alignItems: 'center', marginTop: 12 }}>
+    <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ backgroundColor: '#EDE7DB', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 32, alignItems: 'center', marginTop: 12 }}>
       <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FF624015', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <BriefcaseIcon />
       </View>
-      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>Post your first job</Text>
+      <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 8, textAlign: 'center' }}>Post your first job</Text>
       <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
         Reach thousands of verified Nigerian professionals. Start hiring in minutes.
       </Text>
@@ -212,7 +212,7 @@ function EmptyJobsState() {
         style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}
         className="active:opacity-80"
       >
-        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Post a job</Text>
+        <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 14 }}>Post a job</Text>
       </Pressable>
     </Animated.View>
   )
@@ -230,18 +230,18 @@ function ApplicationRow({ item, index }: { item: RecentApplication; index: numbe
     <Animated.View entering={FadeInDown.delay(index * 60).duration(350)}>
       <Pressable
         onPress={() => router.push(`/(company)/candidates/${item.candidate_profiles?.full_name ?? item.id}` as any)}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
         className="active:opacity-70"
       >
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={{ width: 42, height: 42, borderRadius: 21 }} contentFit="cover" />
         ) : (
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
           </View>
         )}
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{candidateName}</Text>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{candidateName}</Text>
           <Text style={{ color: '#64748B', fontSize: 12, marginTop: 1 }} numberOfLines={1}>{jobTitle}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -297,10 +297,10 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
     <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: '#00000070', justifyContent: 'flex-end' }}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
-        <View style={{ backgroundColor: '#09080E', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: '#1E1B2E', maxHeight: '80%', paddingBottom: insets.bottom + 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+        <View style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: '#DDD6C9', maxHeight: '80%', paddingBottom: insets.bottom + 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
             <View>
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Notifications</Text>
+              <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Notifications</Text>
               {unreadCount > 0 && <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{unreadCount} unread</Text>}
             </View>
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
@@ -309,7 +309,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
                   <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Mark all read</Text>
                 </Pressable>
               )}
-              <Pressable onPress={onClose} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }} className="active:opacity-70">
+              <Pressable onPress={onClose} style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }} className="active:opacity-70">
                 <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <Path d="M18 6L6 18M6 6l12 12" />
                 </Svg>
@@ -322,7 +322,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
             </View>
           ) : !notifications?.length ? (
             <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <BellIcon />
               </View>
               <Text style={{ color: '#64748B', fontSize: 14 }}>No notifications yet</Text>
@@ -335,12 +335,12 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
               contentContainerStyle={{ paddingVertical: 8 }}
               renderItem={({ item }) => (
                 <Pressable
-                  style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#0F0D1A', backgroundColor: item.read_at ? 'transparent' : '#FF624008' }}
+                  style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F0EBE1', backgroundColor: item.read_at ? 'transparent' : '#FF624008' }}
                   className="active:opacity-70"
                 >
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.read_at ? 'transparent' : '#FF6240', marginTop: 5, flexShrink: 0 }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: item.read_at ? '400' : '600', lineHeight: 18 }}>{item.title}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: item.read_at ? '400' : '600', lineHeight: 18 }}>{item.title}</Text>
                     <Text style={{ color: '#64748B', fontSize: 12, marginTop: 3, lineHeight: 17 }}>{item.body}</Text>
                     <Text style={{ color: '#475569', fontSize: 11, marginTop: 5 }}>{timeAgo(item.created_at)}</Text>
                   </View>
@@ -417,13 +417,13 @@ export default function CompanyDashboard() {
         <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#64748B', fontSize: 13 }}>{greeting}</Text>
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>
+            <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>
               {isLoading ? '...' : stats?.companyName}
             </Text>
           </View>
           <Pressable
             onPress={() => setShowNotifications(true)}
-            style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}
             className="active:opacity-70"
           >
             <BellIcon />
@@ -431,12 +431,12 @@ export default function CompanyDashboard() {
         </View>
 
         <Animated.View entering={FadeInDown.delay(50).duration(350)} className="px-5 mb-5">
-          <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}>
+          <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 }}>Trust Score</Text>
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 }}>Trust Score</Text>
               <Text style={{ color: trustColor, fontSize: 18, fontWeight: '800' }}>{trustScore}/100</Text>
             </View>
-            <View style={{ height: 6, backgroundColor: '#1E1B2E', borderRadius: 3, overflow: 'hidden' }}>
+            <View style={{ height: 6, backgroundColor: '#DDD6C9', borderRadius: 3, overflow: 'hidden' }}>
               <View style={{ height: '100%', width: `${trustScore}%`, backgroundColor: trustColor, borderRadius: 3 }} />
             </View>
             <Text style={{ color: '#475569', fontSize: 11, marginTop: 6 }}>
@@ -452,7 +452,7 @@ export default function CompanyDashboard() {
             {statCards.map((card) => (
               <View
                 key={card.label}
-                style={{ flex: 1, minWidth: '46%', backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16 }}
+                style={{ flex: 1, minWidth: '46%', backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}
               >
                 <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '500', marginBottom: 8 }}>{card.label}</Text>
                 <Text style={{ color: card.color, fontSize: 28, fontWeight: '800' }}>{isLoading ? '-' : card.value}</Text>
@@ -462,7 +462,7 @@ export default function CompanyDashboard() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(150).duration(350)} className="px-5 mb-5">
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Quick actions</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Quick actions</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Pressable
               onPress={() => router.push('/(company)/jobs/post' as any)}
@@ -492,16 +492,16 @@ export default function CompanyDashboard() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(350)} className="px-5">
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Recent applications</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Recent applications</Text>
 
           {!stats?.hasJobs ? (
             <EmptyJobsState />
           ) : stats?.recentApplications.length === 0 ? (
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 24, alignItems: 'center' }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 24, alignItems: 'center' }}>
               <Text style={{ color: '#64748B', fontSize: 13 }}>No applications yet</Text>
             </View>
           ) : (
-            <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', paddingHorizontal: 16 }}>
+            <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', paddingHorizontal: 16 }}>
               {stats.recentApplications.map((item, index) => (
                 <ApplicationRow key={item.id} item={item} index={index} />
               ))}

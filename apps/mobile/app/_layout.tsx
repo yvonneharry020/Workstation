@@ -110,7 +110,7 @@ function SystemOverlay() {
       transparent={false}
       animationType="fade"
     >
-      <View style={{ flex: 1, backgroundColor: '#09080E' }}>
+      <View style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
         {showOffline ? (
           <OfflineScreen onRetry={() => setRetryCount((c) => c + 1)} key={retryCount} />
         ) : showUpdate ? (

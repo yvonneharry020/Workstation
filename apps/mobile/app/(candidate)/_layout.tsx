@@ -7,15 +7,15 @@ export default function CandidateLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0D0C14',
-          borderTopColor: '#1E1B2E',
+          backgroundColor: '#F5F0E8',
+          borderTopColor: '#C8BFB0',
           borderTopWidth: 1,
           height: 90,
           paddingBottom: 28,
           paddingTop: 10,
         },
         tabBarActiveTintColor: '#FF6240',
-        tabBarInactiveTintColor: '#475569',
+        tabBarInactiveTintColor: '#7A6E88',
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}
     >

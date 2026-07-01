@@ -81,15 +81,15 @@ function CategoryTag({
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1.5,
-        borderColor: selected ? '#FF6240' : '#3D3850',
-        backgroundColor: selected ? '#FF624015' : '#131118',
+        borderColor: selected ? '#FF6240' : '#C8BFB0',
+        backgroundColor: selected ? '#FF624015' : '#EDE7DB',
         marginRight: 8,
         marginBottom: 8,
       }}
     >
       <Text
         style={{
-          color: selected ? '#FF6240' : '#94A3B8',
+          color: selected ? '#FF6240' : '#5A4F6E',
           fontSize: 13,
           fontWeight: selected ? '600' : '400',
         }}
@@ -141,6 +141,8 @@ export default function CandidateProfileSetup() {
           desired_salary_max: maxSalary ? parseInt(maxSalary) * 1000 : null,
           preferred_work_mode: workMode,
           bio: bio.trim() || null,
+          preferred_categories: selectedCategories,
+          availability,
         }).eq('id', user.id)
       }
 
@@ -183,7 +185,7 @@ export default function CandidateProfileSetup() {
             </Text>
             <Text
               style={{
-                color: '#fff',
+                color: '#1A1625',
                 fontSize: 26,
                 fontWeight: '700',
                 letterSpacing: -0.3,
@@ -243,7 +245,7 @@ export default function CandidateProfileSetup() {
                     value={minSalary}
                     onChangeText={(t) => setMinSalary(t.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base"
                   />
                 </View>
                 <View className="flex-1">
@@ -253,7 +255,7 @@ export default function CandidateProfileSetup() {
                     value={maxSalary}
                     onChangeText={(t) => setMaxSalary(t.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base"
                   />
                 </View>
               </View>
@@ -294,7 +296,7 @@ export default function CandidateProfileSetup() {
                 multiline
                 numberOfLines={5}
                 textAlignVertical="top"
-                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                 style={{ minHeight: 110 }}
               />
               <Text className="text-slate-600 text-xs mt-1 text-right">{bio.length}/500</Text>
@@ -306,7 +308,7 @@ export default function CandidateProfileSetup() {
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               style={{ opacity: !isValid || isSubmitting ? 0.4 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#1A1625] font-semibold text-base">
                 {isSubmitting ? 'Saving…' : 'Continue'}
               </Text>
             </Pressable>

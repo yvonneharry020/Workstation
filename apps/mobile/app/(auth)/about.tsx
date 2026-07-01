@@ -128,7 +128,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
           </View>
           {index < CANDIDATE_STEPS.length - 1 && (
             <View
-              style={{ width: 1, height: 24, backgroundColor: '#3D3850', marginTop: 4 }}
+              style={{ width: 1, height: 24, backgroundColor: '#C8BFB0', marginTop: 4 }}
             />
           )}
         </View>
@@ -145,7 +145,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
             >
               {step.number}
             </Text>
-            <Text className="text-white font-semibold text-sm">{step.title}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm">{step.title}</Text>
           </View>
           <Text className="text-slate-400 text-sm leading-5">{step.desc}</Text>
         </View>
@@ -181,7 +181,7 @@ export default function AboutScreen() {
           </Text>
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 28,
               fontWeight: '700',
               letterSpacing: -0.5,
@@ -213,7 +213,7 @@ export default function AboutScreen() {
 
         <Text
           style={{
-            color: '#fff',
+            color: '#1A1625',
             fontSize: 16,
             fontWeight: '600',
             marginBottom: 16,
@@ -230,7 +230,7 @@ export default function AboutScreen() {
           <View className="flex-row items-start gap-3">
             <ShieldIcon size={20} color="#0DD4C3" />
             <View className="flex-1">
-              <Text className="text-white font-semibold text-sm mb-1">For companies</Text>
+              <Text className="text-[#1A1625] font-semibold text-sm mb-1">For companies</Text>
               <Text className="text-slate-400 text-sm leading-5">
                 Register with your CAC RC number. Get verified in 24–48 hours by our team. Post jobs immediately after approval. Access a pre-screened pool of NIN-verified candidates.
               </Text>
@@ -243,7 +243,7 @@ export default function AboutScreen() {
             onPress={() => router.push('/(auth)/register')}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">Get started</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Get started</Text>
           </Pressable>
           <Pressable
             onPress={() => router.push('/(auth)/contact')}

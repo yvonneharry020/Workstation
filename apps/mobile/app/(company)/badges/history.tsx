@@ -88,7 +88,7 @@ function LockIcon() {
 
 function StarIcon({ filled }: { filled: boolean }) {
   return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : '#1E1B2E'} stroke={filled ? '#F59E0B' : '#334155'} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : '#DDD6C9'} stroke={filled ? '#F59E0B' : '#334155'} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </Svg>
   )
@@ -159,7 +159,7 @@ export default function BadgesHistoryScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold flex-1">Issued Badges</Text>
+        <Text className="text-[#1A1625] text-lg font-bold flex-1">Issued Badges</Text>
         <Text style={{ color: '#475569', fontSize: 14, fontWeight: '600' }}>{badges.length}</Text>
         <Pressable
           onPress={() => router.push('/(company)/badges/issue')}
@@ -174,9 +174,9 @@ export default function BadgesHistoryScreen() {
           <Pressable
             key={t.key}
             onPress={() => setFilter(t.key)}
-            style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: filter === t.key ? '#FF6240' : '#131118', borderWidth: 1, borderColor: filter === t.key ? '#FF6240' : '#1E1B2E' }}
+            style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: filter === t.key ? '#FF6240' : '#EDE7DB', borderWidth: 1, borderColor: filter === t.key ? '#FF6240' : '#DDD6C9' }}
           >
-            <Text style={{ color: filter === t.key ? '#fff' : '#94A3B8', fontSize: 12, fontWeight: '600' }}>{t.label}</Text>
+            <Text style={{ color: filter === t.key ? '#1A1625' : '#5A4F6E', fontSize: 12, fontWeight: '600' }}>{t.label}</Text>
           </Pressable>
         ))}
       </View>
@@ -205,7 +205,7 @@ export default function BadgesHistoryScreen() {
             const rating = item.performance_rating ?? 0
 
             return (
-              <View style={{ backgroundColor: '#131118', borderRadius: 16, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 10 }}>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
                   {item.candidate_profiles?.profiles?.avatar_url ? (
                     <Image source={{ uri: item.candidate_profiles.profiles.avatar_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
@@ -215,8 +215,8 @@ export default function BadgesHistoryScreen() {
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{name}</Text>
-                    <Text style={{ color: '#E2E8F0', fontSize: 13, marginTop: 2 }}>{item.role_held}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>{name}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 13, marginTop: 2 }}>{item.role_held}</Text>
                     <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>
                       {formatDate(item.start_date)} — {item.is_current ? 'Present' : (item.end_date ? formatDate(item.end_date) : '—')}
                     </Text>

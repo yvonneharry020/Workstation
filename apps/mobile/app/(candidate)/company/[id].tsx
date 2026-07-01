@@ -52,10 +52,10 @@ function formatSalary(min: number | null, max: number | null, isConfidential: bo
 }
 
 function Pill({ label, color }: { label: string; color?: string }) {
-  const bg = color ?? '#1E1B2E'
+  const bg = color ?? '#DDD6C9'
   return (
     <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: bg + (color ? '20' : ''), borderWidth: 1, borderColor: bg + (color ? '40' : '') }}>
-      <Text style={{ color: color ?? '#94A3B8', fontSize: 11, fontWeight: '500', textTransform: 'capitalize' }}>
+      <Text style={{ color: color ?? '#5A4F6E', fontSize: 11, fontWeight: '500', textTransform: 'capitalize' }}>
         {label.replace('_', ' ')}
       </Text>
     </View>
@@ -124,7 +124,7 @@ export default function CompanyProfileScreen() {
           <Text style={{ color: '#FF6240' }}>← Back</Text>
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }}>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
+          <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
             Company not found
           </Text>
           <Text style={{ color: '#64748B', fontSize: 13, marginTop: 8, textAlign: 'center' }}>
@@ -159,7 +159,7 @@ export default function CompanyProfileScreen() {
           {company.logo_url ? (
             <Image
               source={{ uri: company.logo_url }}
-              style={{ width: 80, height: 80, borderRadius: 18, marginBottom: 14, backgroundColor: '#1E1B2E' }}
+              style={{ width: 80, height: 80, borderRadius: 18, marginBottom: 14, backgroundColor: '#DDD6C9' }}
               contentFit="contain"
             />
           ) : (
@@ -178,13 +178,13 @@ export default function CompanyProfileScreen() {
             </View>
           )}
 
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 6 }}>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 6 }}>
             {company.company_name}
           </Text>
 
           {company.industry ? (
-            <View style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, backgroundColor: '#1E1B2E', marginBottom: 10 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 13 }}>{company.industry}</Text>
+            <View style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, backgroundColor: '#DDD6C9', marginBottom: 10 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13 }}>{company.industry}</Text>
             </View>
           ) : null}
 
@@ -215,12 +215,12 @@ export default function CompanyProfileScreen() {
         </Animated.View>
 
         {/* Divider */}
-        <View style={{ height: 1, backgroundColor: '#1E1B2E', marginBottom: 20 }} />
+        <View style={{ height: 1, backgroundColor: '#DDD6C9', marginBottom: 20 }} />
 
         {/* Open positions */}
         <Animated.View entering={FadeInDown.delay(120).duration(400)}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Open Positions</Text>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Open Positions</Text>
             {!loadingJobs ? (
               <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#FF624020' }}>
                 <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>
@@ -234,15 +234,15 @@ export default function CompanyProfileScreen() {
             <ActivityIndicator color="#FF6240" style={{ marginVertical: 20 }} />
           ) : jobs.length === 0 ? (
             <View style={{
-              backgroundColor: '#131118',
+              backgroundColor: '#EDE7DB',
               borderWidth: 1,
-              borderColor: '#1E1B2E',
+              borderColor: '#DDD6C9',
               borderRadius: 14,
               padding: 24,
               alignItems: 'center',
             }}>
               <Text style={{ fontSize: 28, marginBottom: 10 }}>📭</Text>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>No open positions</Text>
+              <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>No open positions</Text>
               <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center' }}>
                 {company.company_name} has no active job listings right now.
               </Text>
@@ -253,15 +253,15 @@ export default function CompanyProfileScreen() {
                 key={job.id}
                 onPress={() => router.push(`/(candidate)/jobs/${job.id}` as Parameters<typeof router.push>[0])}
                 style={{
-                  backgroundColor: '#131118',
+                  backgroundColor: '#EDE7DB',
                   borderWidth: 1,
-                  borderColor: '#1E1B2E',
+                  borderColor: '#DDD6C9',
                   borderRadius: 14,
                   padding: 16,
                   marginBottom: 10,
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 8 }}>
+                <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '600', marginBottom: 8 }}>
                   {job.title}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>

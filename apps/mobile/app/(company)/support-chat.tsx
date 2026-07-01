@@ -120,7 +120,7 @@ function FileBubble({ name, url, isUser }: { name: string; url: string; isUser: 
       }}
     >
       <FileIcon />
-      <Text style={{ color: isUser ? '#fff' : '#374151', fontSize: 13, flex: 1 }} numberOfLines={2}>
+      <Text style={{ color: isUser ? '#1A1625' : '#374151', fontSize: 13, flex: 1 }} numberOfLines={2}>
         {name}
       </Text>
       <DownloadIcon />
@@ -412,7 +412,7 @@ export default function CompanySupportChatScreen() {
                 {!isUser && (
                   <View className="flex-row items-center gap-1.5 mb-1">
                     <View className="w-6 h-6 rounded-full bg-amber-500 items-center justify-center">
-                      <Text className="text-white text-[9px] font-bold">WS</Text>
+                      <Text className="text-[#1A1625] text-[9px] font-bold">WS</Text>
                     </View>
                     <Text className="text-[10px] text-gray-500 font-semibold">{item.sender_name}</Text>
                   </View>
@@ -423,7 +423,7 @@ export default function CompanySupportChatScreen() {
                     <ImageBubble url={item.attachment_url} isUser={isUser} />
                     {item.content ? (
                       <View className={`mt-1.5 max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
-                        <Text className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
+                        <Text className={`text-sm leading-relaxed ${isUser ? 'text-[#1A1625]' : 'text-gray-800'}`}>{item.content}</Text>
                       </View>
                     ) : null}
                   </View>
@@ -431,7 +431,7 @@ export default function CompanySupportChatScreen() {
                   <FileBubble name={item.attachment_name ?? 'File'} url={item.attachment_url} isUser={isUser} />
                 ) : (
                   <View className={`max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
-                    <Text className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
+                    <Text className={`text-sm leading-relaxed ${isUser ? 'text-[#1A1625]' : 'text-gray-800'}`}>{item.content}</Text>
                   </View>
                 )}
 

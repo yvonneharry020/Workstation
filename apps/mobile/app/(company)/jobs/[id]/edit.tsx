@@ -103,7 +103,7 @@ function MultilineField({ label, value, onChange, error, placeholder, minHeight 
 }) {
   return (
     <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>{label}</Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>{label}</Text>
       <TextInput
         multiline
         value={value}
@@ -111,11 +111,11 @@ function MultilineField({ label, value, onChange, error, placeholder, minHeight 
         placeholder={placeholder}
         placeholderTextColor="#475569"
         style={{
-          backgroundColor: '#131118',
+          backgroundColor: '#EDE7DB',
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: error ? '#EF4444' : '#1E1B2E',
-          color: '#fff',
+          borderColor: error ? '#EF4444' : '#DDD6C9',
+          color: '#1A1625',
           fontSize: 14,
           padding: 14,
           minHeight,
@@ -276,11 +276,11 @@ export default function EditJobScreen() {
           <Pressable onPress={() => router.back()} hitSlop={8} className="active:opacity-70">
             <BackIcon />
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 }}>Edit job</Text>
+          <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700', flex: 1 }}>Edit job</Text>
         </View>
 
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 48 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16, marginTop: 4 }}>Role details</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16, marginTop: 4 }}>Role details</Text>
 
           <Controller control={control} name="title" render={({ field: { onChange, value } }) => (
             <Input label="Job title" placeholder="e.g. Senior Product Designer" value={value} onChangeText={onChange} error={errors.title?.message} />
@@ -301,7 +301,7 @@ export default function EditJobScreen() {
             <Input label="City" placeholder="e.g. Lagos" value={value} onChangeText={onChange} error={errors.city?.message} />
           )} />
 
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16, marginTop: 8 }}>Job details</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16, marginTop: 8 }}>Job details</Text>
 
           <Controller control={control} name="description" render={({ field: { onChange, value } }) => (
             <MultilineField label="Job description *" value={value} onChange={onChange} error={errors.description?.message} placeholder="Describe the role and responsibilities..." minHeight={120} />
@@ -314,11 +314,11 @@ export default function EditJobScreen() {
           )} />
 
           <View style={{ marginBottom: 16 }}>
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Salary</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#131118', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 12 }}>
-              <Text style={{ color: '#94A3B8', fontSize: 14 }}>Mark salary as confidential</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Salary</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 12 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 14 }}>Mark salary as confidential</Text>
               <Controller control={control} name="salary_is_confidential" render={({ field: { onChange, value } }) => (
-                <Switch value={value} onValueChange={onChange} trackColor={{ false: '#1E1B2E', true: '#FF6240' }} thumbColor="#fff" />
+                <Switch value={value} onValueChange={onChange} trackColor={{ false: '#DDD6C9', true: '#FF6240' }} thumbColor="#fff" />
               )} />
             </View>
             {!salaryConfidential && (
@@ -341,10 +341,10 @@ export default function EditJobScreen() {
             <Input label="Application deadline (optional)" placeholder="DD/MM/YYYY" value={value ?? ''} onChangeText={onChange} keyboardType="number-pad" />
           )} />
 
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12, marginTop: 8 }}>Screening questions</Text>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12, marginTop: 8 }}>Screening questions</Text>
 
           {fields.map((field, index) => (
-            <Animated.View key={field.id} entering={FadeInDown.duration(300)} style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 10 }}>
+            <Animated.View key={field.id} entering={FadeInDown.duration(300)} style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '600' }}>Question {index + 1}</Text>
                 <Pressable onPress={() => remove(index)} hitSlop={8} className="active:opacity-70">
@@ -360,7 +360,7 @@ export default function EditJobScreen() {
                     onChangeText={onChange}
                     placeholder="e.g. How many years of experience do you have?"
                     placeholderTextColor="#475569"
-                    style={{ backgroundColor: '#09080E', borderRadius: 10, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 13, padding: 12, marginBottom: 10 }}
+                    style={{ backgroundColor: '#F5F0E8', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 13, padding: 12, marginBottom: 10 }}
                   />
                 )}
               />
@@ -370,7 +370,7 @@ export default function EditJobScreen() {
                   control={control}
                   name={`screening_questions.${index}.required`}
                   render={({ field: { onChange, value } }) => (
-                    <Switch value={value} onValueChange={onChange} trackColor={{ false: '#1E1B2E', true: '#FF6240' }} thumbColor="#fff" />
+                    <Switch value={value} onValueChange={onChange} trackColor={{ false: '#DDD6C9', true: '#FF6240' }} thumbColor="#fff" />
                   )}
                 />
               </View>
@@ -397,7 +397,7 @@ export default function EditJobScreen() {
             {updateMutation.isPending ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save changes</Text>
+              <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Save changes</Text>
             )}
           </Pressable>
 

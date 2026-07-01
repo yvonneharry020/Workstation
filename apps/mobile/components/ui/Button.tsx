@@ -14,10 +14,10 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<Variant, { container: string; text: string }> = {
-  primary: { container: 'bg-primary-500', text: 'text-white' },
-  secondary: { container: 'bg-surface-card border border-surface-border', text: 'text-white' },
+  primary: { container: 'bg-primary-500', text: 'text-[#1A1625]' },
+  secondary: { container: 'bg-surface-card border border-surface-border', text: 'text-[#1A1625]' },
   ghost: { container: 'bg-transparent', text: 'text-primary-400' },
-  destructive: { container: 'bg-red-600', text: 'text-white' },
+  destructive: { container: 'bg-red-600', text: 'text-[#1A1625]' },
 }
 
 const sizeStyles: Record<Size, { container: string; text: string }> = {

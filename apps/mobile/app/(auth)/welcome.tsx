@@ -84,7 +84,7 @@ function FeatureRow({ icon, title, desc }: FeatureItem) {
         <Text style={{ fontSize: 18 }}>{icon}</Text>
       </View>
       <View className="flex-1">
-        <Text className="text-white font-semibold text-sm">{title}</Text>
+        <Text className="text-[#1A1625] font-semibold text-sm">{title}</Text>
         <Text className="text-slate-400 font-sans text-xs mt-0.5 leading-4">{desc}</Text>
       </View>
     </View>
@@ -93,7 +93,7 @@ function FeatureRow({ icon, title, desc }: FeatureItem) {
 
 export default function WelcomeScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView className="flex-1 bg-surface" style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
@@ -116,7 +116,7 @@ export default function WelcomeScreen() {
           >
             <Text
               style={{
-                color: '#fff',
+                color: '#1A1625',
                 fontSize: 36,
                 fontWeight: '800',
                 lineHeight: 40,
@@ -128,7 +128,7 @@ export default function WelcomeScreen() {
 
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 32,
               fontWeight: '700',
               textAlign: 'center',
@@ -159,7 +159,7 @@ export default function WelcomeScreen() {
                 Why it matters
               </Text>
             </View>
-            <Text className="text-white text-sm leading-5">
+            <Text className="text-[#1A1625] text-sm leading-5">
               <Text className="text-primary-400 font-semibold">₦22M+ </Text>
               stolen from Nigerian job seekers in documented fraud cases. Workstation was built to end this.
             </Text>
@@ -193,7 +193,7 @@ export default function WelcomeScreen() {
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             style={{ backgroundColor: '#FF6240', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
-            <Text className="text-white font-semibold text-base" style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Create an account</Text>
+            <Text className="text-[#1A1625] font-semibold text-base" style={{ color: '#1A1625', fontWeight: '600', fontSize: 16 }}>Create an account</Text>
           </Pressable>
 
           <Pressable
@@ -201,7 +201,7 @@ export default function WelcomeScreen() {
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-70"
             style={{ backgroundColor: '#1A1825', borderWidth: 1, borderColor: '#2A2738', borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
           >
-            <Text className="text-white font-semibold text-base" style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Sign in</Text>
+            <Text className="text-[#1A1625] font-semibold text-base" style={{ color: '#1A1625', fontWeight: '600', fontSize: 16 }}>Sign in</Text>
           </Pressable>
 
           <Pressable

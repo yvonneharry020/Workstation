@@ -88,7 +88,7 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
         <Text style={{ fontSize: 16 }}>{icon}</Text>
       </View>
       <View className="flex-1">
-        <Text className="text-white font-semibold text-sm">{label}</Text>
+        <Text className="text-[#1A1625] font-semibold text-sm">{label}</Text>
         <Text className="text-slate-400 font-sans text-xs mt-0.5">{sub}</Text>
       </View>
     </View>
@@ -105,7 +105,7 @@ function SlideProgress({ current }: { current: number }) {
             height: 4,
             width: i === current ? 24 : 8,
             borderRadius: 2,
-            backgroundColor: i === current ? '#FF6240' : '#3D3850',
+            backgroundColor: i === current ? '#FF6240' : '#C8BFB0',
           }}
         />
       ))}
@@ -148,7 +148,7 @@ export default function Tutorial3() {
 
       <View className="px-6 pb-8 gap-4">
         <Animated.View entering={FadeInDown.delay(150).duration(500)} className="gap-1.5">
-          <Text className="text-white font-display text-[26px] leading-tight tracking-tight">
+          <Text className="text-[#1A1625] font-display text-[26px] leading-tight tracking-tight">
             Hire people you can{'\n'}
             <Text className="text-teal-500">actually trust</Text>
           </Text>
@@ -180,13 +180,13 @@ export default function Tutorial3() {
             onPress={handleGetStarted}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">Get started</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Get started</Text>
           </Pressable>
           <Pressable
             onPress={handleSkip}
             className="border border-surface-border rounded-2xl py-4 items-center active:opacity-80"
           >
-            <Text className="text-white font-semibold text-base">Sign in</Text>
+            <Text className="text-[#1A1625] font-semibold text-base">Sign in</Text>
           </Pressable>
         </Animated.View>
       </View>

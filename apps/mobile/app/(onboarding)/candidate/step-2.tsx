@@ -5,9 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
+import { stateNameToId } from '@/lib/nigerianStates'
 
 const TOTAL_STEPS = 5
-const OTP_LENGTH = 6
+const OTP_LENGTH = 8
 const RESEND_COOLDOWN = 60
 
 function MailIcon() {
@@ -28,6 +29,7 @@ export default function CandidateStep2() {
     dateOfBirth?: string
     gender?: string
     phone?: string
+    stateOfOrigin?: string
   }>()
 
   const email = params.email ?? ''
@@ -68,7 +70,7 @@ export default function CandidateStep2() {
 
   const handleVerify = async () => {
     if (otp.length !== OTP_LENGTH) {
-      Alert.alert('Enter the full code', 'Please enter all 6 digits.')
+      Alert.alert('Enter the full code', 'Please enter all 8 digits.')
       return
     }
     if (!email) {
@@ -99,6 +101,7 @@ export default function CandidateStep2() {
           other_names: params.otherNames || null,
           date_of_birth: params.dateOfBirth || null,
           gender: params.gender || null,
+          state_of_origin_id: params.stateOfOrigin ? stateNameToId(params.stateOfOrigin) : null,
         })
 
         if (params.phone) {
@@ -150,7 +153,7 @@ export default function CandidateStep2() {
               flex: 1,
               height: 3,
               borderRadius: 2,
-              backgroundColor: i <= 1 ? '#FF6240' : '#1E1B2E',
+              backgroundColor: i <= 1 ? '#FF6240' : '#DDD6C9',
             }}
           />
         ))}
@@ -166,7 +169,7 @@ export default function CandidateStep2() {
         </View>
         <Text
           style={{
-            color: '#fff',
+            color: '#1A1625',
             fontSize: 24,
             fontWeight: '700',
             letterSpacing: -0.3,
@@ -177,8 +180,8 @@ export default function CandidateStep2() {
           Verify your email
         </Text>
         <Text className="text-slate-400 text-sm text-center leading-5 px-4">
-          We sent a 6-digit code to{'\n'}
-          <Text className="text-white font-medium">{maskedEmail}</Text>
+          We sent an 8-digit code to{'\n'}
+          <Text className="text-[#1A1625] font-medium">{maskedEmail}</Text>
         </Text>
       </Animated.View>
 
@@ -198,16 +201,16 @@ export default function CandidateStep2() {
                   width: 46,
                   height: 56,
                   borderRadius: 12,
-                  backgroundColor: '#131118',
+                  backgroundColor: '#EDE7DB',
                   borderWidth: 1.5,
-                  borderColor: isFilled ? '#FF6240' : isActive ? '#564F6A' : '#3D3850',
+                  borderColor: isFilled ? '#FF6240' : isActive ? '#564F6A' : '#C8BFB0',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <Text
                   style={{
-                    color: '#fff',
+                    color: '#1A1625',
                     fontSize: 24,
                     fontWeight: '700',
                     fontFamily: 'JetBrainsMono_700Bold',
@@ -238,7 +241,7 @@ export default function CandidateStep2() {
           className="bg-primary-500 rounded-2xl py-4 items-center mb-5 active:opacity-80"
           style={{ opacity: isVerifying || otp.length !== OTP_LENGTH ? 0.5 : 1 }}
         >
-          <Text className="text-white font-semibold text-base">
+          <Text className="text-[#1A1625] font-semibold text-base">
             {isVerifying ? 'Verifying…' : 'Verify code'}
           </Text>
         </Pressable>

@@ -140,13 +140,13 @@ export default function CvEditScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-5 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
+      <View className="flex-row items-center justify-between px-5 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text className="text-white text-base font-semibold">{versionId ? 'Edit CV' : 'Build CV'}</Text>
+        <Text className="text-[#1A1625] text-base font-semibold">{versionId ? 'Edit CV' : 'Build CV'}</Text>
         <Pressable onPress={handleSave} disabled={isSaving} className="active:opacity-70">
           <Text style={{ color: '#FF6240', fontSize: 15, fontWeight: '700', opacity: isSaving ? 0.5 : 1 }}>
             {isSaving ? 'Saving…' : 'Save'}
@@ -169,7 +169,7 @@ export default function CvEditScreen() {
               onChangeText={setCvName}
               placeholder="e.g. Senior Engineer CV"
               placeholderTextColor="#475569"
-              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base font-semibold"
+              className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base font-semibold"
             />
           </View>
 
@@ -185,7 +185,7 @@ export default function CvEditScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: activeTab === tab ? '#fff' : '#94A3B8', fontSize: 14, fontWeight: '600', textTransform: 'capitalize' }}>
+                <Text style={{ color: activeTab === tab ? '#1A1625' : '#5A4F6E', fontSize: 14, fontWeight: '600', textTransform: 'capitalize' }}>
                   {tab}
                 </Text>
               </Pressable>
@@ -203,15 +203,15 @@ export default function CvEditScreen() {
                   placeholderTextColor="#475569"
                   multiline
                   textAlignVertical="top"
-                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                   style={{ minHeight: 100 }}
                 />
               </View>
             ))
           ) : (
             <View className="bg-surface-card border border-surface-border rounded-2xl p-5">
-              <Text className="text-white text-xl font-bold mb-1">{cvName}</Text>
-              <View style={{ height: 1, backgroundColor: '#1E1B2E', marginBottom: 16 }} />
+              <Text className="text-[#1A1625] text-xl font-bold mb-1">{cvName}</Text>
+              <View style={{ height: 1, backgroundColor: '#DDD6C9', marginBottom: 16 }} />
               {SECTION_LABELS.map(({ key, title }) =>
                 sections[key] ? (
                   <View key={key} className="mb-4">

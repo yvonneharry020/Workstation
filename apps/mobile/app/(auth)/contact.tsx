@@ -76,7 +76,7 @@ function FaqItem({ faq }: { faq: Faq }) {
       accessibilityState={{ expanded }}
     >
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-white text-sm font-medium flex-1 leading-5" style={{ flexShrink: 1 }}>
+        <Text className="text-[#1A1625] text-sm font-medium flex-1 leading-5" style={{ flexShrink: 1 }}>
           {faq.q}
         </Text>
         <ChevronIcon expanded={expanded} />
@@ -146,7 +146,7 @@ export default function ContactScreen() {
           </Text>
           <Text
             style={{
-              color: '#fff',
+              color: '#1A1625',
               fontSize: 28,
               fontWeight: '700',
               letterSpacing: -0.5,
@@ -166,7 +166,7 @@ export default function ContactScreen() {
             className="bg-surface-card border border-surface-border rounded-2xl p-6 items-center mb-8"
           >
             <Text style={{ fontSize: 40, marginBottom: 12 }}>✉️</Text>
-            <Text className="text-white font-semibold text-lg mb-2">Message sent!</Text>
+            <Text className="text-[#1A1625] font-semibold text-lg mb-2">Message sent!</Text>
             <Text className="text-slate-400 text-sm text-center leading-5">
               We'll review your message and respond to your email within 24 hours.
             </Text>
@@ -180,7 +180,7 @@ export default function ContactScreen() {
                 <View className="mb-4">
                   <Text className="text-slate-300 text-sm mb-2">Full name</Text>
                   <TextInput
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                     placeholder="Your name"
                     placeholderTextColor="#475569"
                     autoComplete="name"
@@ -201,7 +201,7 @@ export default function ContactScreen() {
                 <View className="mb-4">
                   <Text className="text-slate-300 text-sm mb-2">Email address</Text>
                   <TextInput
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                     placeholder="you@example.com"
                     placeholderTextColor="#475569"
                     keyboardType="email-address"
@@ -224,7 +224,7 @@ export default function ContactScreen() {
                 <View className="mb-4">
                   <Text className="text-slate-300 text-sm mb-2">Subject</Text>
                   <TextInput
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                     placeholder="What's this about?"
                     placeholderTextColor="#475569"
                     value={value}
@@ -254,7 +254,7 @@ export default function ContactScreen() {
                     </Text>
                   </View>
                   <TextInput
-                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-sm"
+                    className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-sm"
                     placeholder="Tell us what's on your mind…"
                     placeholderTextColor="#475569"
                     multiline
@@ -277,7 +277,7 @@ export default function ContactScreen() {
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               style={{ opacity: isSubmitting ? 0.7 : 1 }}
             >
-              <Text className="text-white font-semibold text-base">
+              <Text className="text-[#1A1625] font-semibold text-base">
                 {isSubmitting ? 'Sending…' : 'Send message'}
               </Text>
             </Pressable>
@@ -285,7 +285,7 @@ export default function ContactScreen() {
         )}
 
         <View className="mb-4">
-          <Text className="text-white font-semibold text-base mb-1">Frequently asked</Text>
+          <Text className="text-[#1A1625] font-semibold text-base mb-1">Frequently asked</Text>
           <Text className="text-slate-500 text-xs mb-1">Common questions answered below.</Text>
         </View>
 

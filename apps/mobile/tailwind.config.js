@@ -8,18 +8,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ── Surface layers ─────────────────────────────────────────────────
-        // Deep Obsidian: not pure black, warm near-black with a purple tint
-        surface:            '#09080E', // bg-surface — every screen background
-        'surface-card':     '#131118', // bg-surface-card — cards, panels, inputs
-        'surface-elevated': '#1E1B2A', // modals, bottom sheets, dropdowns
-        'surface-muted':    '#2A2638', // hover, pressed, selected rows
-        'surface-border':   '#3D3850', // bg-surface-border, border-surface-border — dividers
-        'border-strong':    '#564F6A', // focused inputs, active tabs
+        // ── Surface layers — eggshell light theme ──────────────────────────
+        surface:            '#F5F0E8', // bg-surface — every screen background
+        'surface-card':     '#EDE7DB', // bg-surface-card — cards, panels, inputs
+        'surface-elevated': '#E5DFD3', // modals, bottom sheets, dropdowns
+        'surface-muted':    '#D4CCBE', // hover, pressed, selected rows
+        'surface-border':   '#C8BFB0', // bg-surface-border, border-surface-border — dividers
+        'border-strong':    '#9A8FA6', // focused inputs, active tabs
 
         // ── Brand Primary: Coral Orange ─────────────────────────────────────
-        // Nigerian energy. Lagos sunsets. Opportunity and urgency.
-        // No major recruitment platform uses this — it is uniquely Workstation.
         brand: {
           200:     '#FFD8CE',
           300:     '#FFAB97',
@@ -31,8 +28,6 @@ module.exports = {
         },
 
         // ── primary: backward-compat alias → maps to Coral Orange ──────────
-        // All existing screens that use bg-primary-500, text-primary-400 etc.
-        // will automatically show coral orange instead of indigo.
         primary: {
           200:     '#FFD8CE',
           300:     '#FFAB97',
@@ -45,8 +40,6 @@ module.exports = {
         },
 
         // ── Secondary: Electric Teal ────────────────────────────────────────
-        // Precision. Verification. Ice-cool technology.
-        // Complementary to coral on the colour wheel — creates visual tension.
         teal: {
           400:     '#3EFFE0',
           500:     '#0DD4C3',
@@ -56,17 +49,15 @@ module.exports = {
         },
 
         // ── Trust Score ─────────────────────────────────────────────────────
-        // Non-negotiable. These exact colours must appear on every trust-
-        // related element across all 98 screens without variation.
         trust: {
-          high:          '#22C55E', // 70–100: verified, safe
-          'high-bg':     '#052E16',
+          high:          '#22C55E',
+          'high-bg':     '#DCFCE7', // light green tint for light theme
           'high-border': '#15803D',
-          mid:           '#F59E0B', // 40–69: partial / pending
-          'mid-bg':      '#2D1B00',
+          mid:           '#F59E0B',
+          'mid-bg':      '#FEF3C7', // light amber tint for light theme
           'mid-border':  '#92400E',
-          low:           '#EF4444', // 0–39: unverified, flagged
-          'low-bg':      '#2D0E0E',
+          low:           '#EF4444',
+          'low-bg':      '#FEE2E2', // light red tint for light theme
           'low-border':  '#991B1B',
         },
 
@@ -77,17 +68,21 @@ module.exports = {
         info:           '#0DD4C3',
         gold:           '#F59E0B',
         'admin-accent': '#A855F7',
+
+        // ── Slate overrides — darken light greys for readability on eggshell
+        slate: {
+          300: '#2D2640', // was #CBD5E1 (too light on eggshell)
+          400: '#5A4F6E', // was #94A3B8 (too light on eggshell)
+          // 500–900 are dark enough, kept at Tailwind defaults
+        },
       },
 
       fontFamily: {
-        // Plus Jakarta Sans — all headlines, display text, screen titles (20px+)
         display:  ['PlusJakartaSans_700Bold', 'sans-serif'],
-        // Inter — all body copy, UI labels, buttons, inputs, captions
         sans:     ['Inter_400Regular', 'sans-serif'],
         medium:   ['Inter_500Medium', 'sans-serif'],
         semibold: ['Inter_600SemiBold', 'sans-serif'],
         bold:     ['Inter_700Bold', 'sans-serif'],
-        // JetBrains Mono — NIN, RC numbers, OTP, trust scores, reference codes
         mono:     ['JetBrainsMono_400Regular', 'monospace'],
         'mono-bold': ['JetBrainsMono_700Bold', 'monospace'],
       },

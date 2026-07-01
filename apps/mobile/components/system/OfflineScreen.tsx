@@ -54,7 +54,7 @@ export function OfflineScreen({ onRetry }: Props) {
       <WifiOffIcon />
 
       <View className="items-center gap-2">
-        <Text className="text-white font-display text-2xl text-center">
+        <Text className="text-[#1A1625] font-display text-2xl text-center">
           No connection
         </Text>
         <Text className="text-slate-400 font-sans text-base text-center leading-relaxed">

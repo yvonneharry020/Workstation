@@ -110,13 +110,13 @@ function CandidateCard({
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
 
           <View className="flex-1">
-            <Text className="text-white font-semibold text-sm" numberOfLines={1}>{name}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
             {headline && <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{headline}</Text>}
           </View>
 
@@ -147,7 +147,7 @@ function CandidateCard({
           className="flex-row items-center gap-1.5 active:opacity-70"
         >
           <TagIcon />
-          <Text style={{ color: entry.tag ? '#94A3B8' : '#475569', fontSize: 12 }}>
+          <Text style={{ color: entry.tag ? '#5A4F6E' : '#475569', fontSize: 12 }}>
             {entry.tag || 'Add tag…'}
           </Text>
         </Pressable>
@@ -242,7 +242,7 @@ export default function SavedCandidatesScreen() {
           <ArrowLeftIcon />
         </Pressable>
         <View className="flex-1">
-          <Text className="text-white text-xl font-bold">Saved Candidates</Text>
+          <Text className="text-[#1A1625] text-xl font-bold">Saved Candidates</Text>
           {!isLoading && (
             <Text className="text-slate-400 text-xs">
               {savedEntries.length} candidate{savedEntries.length !== 1 ? 's' : ''} saved
@@ -267,7 +267,7 @@ export default function SavedCandidatesScreen() {
             style={{ backgroundColor: '#FF6240', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 }}
             className="active:opacity-80"
           >
-            <Text className="text-white font-semibold text-sm">Browse Talent</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm">Browse Talent</Text>
           </Pressable>
         </View>
       ) : (
@@ -290,20 +290,20 @@ export default function SavedCandidatesScreen() {
 
       <Modal visible={tagModalVisible} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#131118', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 }}>
-            <Text className="text-white font-bold text-lg mb-4">Add tag</Text>
+          <View style={{ backgroundColor: '#EDE7DB', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 }}>
+            <Text className="text-[#1A1625] font-bold text-lg mb-4">Add tag</Text>
             <TextInput
               placeholder="e.g. Strong frontend, Follow up next week…"
               placeholderTextColor="#475569"
               value={tagInput}
               onChangeText={setTagInput}
               autoFocus
-              style={{ backgroundColor: '#09080E', borderRadius: 12, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 14, marginBottom: 16 }}
+              style={{ backgroundColor: '#F5F0E8', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
             />
             <View className="flex-row gap-3">
               <Pressable
                 onPress={() => setTagModalVisible(false)}
-                style={{ flex: 1, backgroundColor: '#1E1B2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
+                style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
                 className="active:opacity-70"
               >
                 <Text className="text-slate-300 font-semibold">Cancel</Text>
@@ -313,7 +313,7 @@ export default function SavedCandidatesScreen() {
                 style={{ flex: 1, backgroundColor: '#FF6240', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
                 className="active:opacity-80"
               >
-                <Text className="text-white font-semibold">Save tag</Text>
+                <Text className="text-[#1A1625] font-semibold">Save tag</Text>
               </Pressable>
             </View>
           </View>

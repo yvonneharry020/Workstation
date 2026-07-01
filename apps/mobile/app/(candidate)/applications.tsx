@@ -44,7 +44,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ]
 
 const STAGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  new:         { bg: '#1E293B', text: '#94A3B8', label: 'Submitted' },
+  new:         { bg: '#1E293B', text: '#5A4F6E', label: 'Submitted' },
   reviewing:   { bg: '#78350F20', text: '#F59E0B', label: 'Reviewing' },
   shortlisted: { bg: '#14532D20', text: '#22C55E', label: 'Shortlisted' },
   rejected:    { bg: '#7F1D1D20', text: '#EF4444', label: 'Rejected' },
@@ -159,12 +159,12 @@ function ApplicationItem({
 }) {
   const company = item.job_postings?.company_profiles
   const companyName = company?.company_name ?? 'Company'
-  const stage = STAGE_STYLES[item.pipeline_stage] ?? { bg: '#1E293B', text: '#94A3B8', label: 'Submitted' }
+  const stage = STAGE_STYLES[item.pipeline_stage] ?? { bg: '#1E293B', text: '#5A4F6E', label: 'Submitted' }
 
   return (
     <Pressable
       onPress={onPress}
-      style={{ backgroundColor: '#0F0D1A', borderRadius: 20, borderWidth: 1, borderColor: '#1E1B2E', padding: 16, marginBottom: 12, overflow: 'hidden' }}
+      style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 12, overflow: 'hidden' }}
     >
       {/* Left accent line */}
       <View style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, backgroundColor: stage.text, borderRadius: 2 }} />
@@ -173,7 +173,7 @@ function ApplicationItem({
         <CompanyLogo name={companyName} logoUrl={company?.logo_url ?? null} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', flex: 1, marginRight: 8, lineHeight: 20 }} numberOfLines={2}>
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', flex: 1, marginRight: 8, lineHeight: 20 }} numberOfLines={2}>
               {item.job_postings?.title ?? 'Job'}
             </Text>
             <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: stage.bg, borderWidth: 1, borderColor: `${stage.text}30` }}>
@@ -202,7 +202,7 @@ function EmptyState({ filter }: { filter: FilterKey }) {
   return (
     <View className="flex-1 items-center justify-center px-8 mt-16">
       <Text style={{ fontSize: 40, marginBottom: 16 }}>📋</Text>
-      <Text className="text-white font-semibold text-base text-center mb-2">
+      <Text className="text-[#1A1625] font-semibold text-base text-center mb-2">
         No applications
       </Text>
       <Text className="text-slate-400 text-sm text-center leading-5">
@@ -252,14 +252,14 @@ export default function ApplicationsScreen() {
   const reviewingCount = data?.filter((a) => a.pipeline_stage === 'reviewing').length ?? 0
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       {/* Header */}
       <Animated.View
         entering={FadeInDown.duration(350)}
         style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
             Applications
           </Text>
           {totalCount > 0 && (
@@ -277,7 +277,7 @@ export default function ApplicationsScreen() {
               { label: 'Reviewing', value: reviewingCount, color: '#F59E0B' },
               { label: 'Shortlisted', value: shortlistedCount, color: '#22C55E' },
             ].map((s) => (
-              <View key={s.label} style={{ flex: 1, backgroundColor: '#0F0D1A', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', paddingVertical: 12, alignItems: 'center' }}>
+              <View key={s.label} style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: s.color, fontSize: 22, fontWeight: '800' }}>{s.value}</Text>
                 <Text style={{ color: '#475569', fontSize: 10, marginTop: 2 }}>{s.label}</Text>
               </View>
@@ -303,12 +303,12 @@ export default function ApplicationsScreen() {
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderRadius: 20,
-                backgroundColor: isActive ? '#FF6240' : '#0F0D1A',
+                backgroundColor: isActive ? '#FF6240' : '#F0EBE1',
                 borderWidth: 1,
-                borderColor: isActive ? '#FF6240' : '#1E1B2E',
+                borderColor: isActive ? '#FF6240' : '#DDD6C9',
               }}
             >
-              <Text style={{ color: isActive ? '#fff' : '#64748B', fontSize: 13, fontWeight: isActive ? '700' : '400' }}>
+              <Text style={{ color: isActive ? '#1A1625' : '#64748B', fontSize: 13, fontWeight: isActive ? '700' : '400' }}>
                 {f.label}
               </Text>
             </Pressable>

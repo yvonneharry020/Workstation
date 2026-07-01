@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+  <title>Your Workstation verification code</title>
+  <!--[if mso]>
+  <noscript>
+    <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Reset */
+    * { box-sizing: border-box; }
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; background-color: #F5F0E8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    a { color: #FF6240; }
+    /* Code cell — dark override for code block */
+    .code-digit { background-color: #1A1625 !important; }
+    /* Mobile */
+    @media screen and (max-width: 600px) {
+      .email-wrapper { width: 100% !important; }
+      .email-body { padding: 24px 20px !important; }
+      .code-row td { padding: 0 4px !important; }
+      .code-digit { min-width: 38px !important; font-size: 28px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0E8;">
+
+<!-- Preheader (hidden, shows in inbox preview) -->
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#F5F0E8;">
+  Your Workstation verification code is {{ .Token }} — expires in 10 minutes.
+  &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+</div>
+
+<!-- Wrapper table -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F0E8;min-width:100%;">
+  <tr>
+    <td align="center" style="padding:40px 16px;">
+
+      <!-- Email card -->
+      <table class="email-wrapper" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(26,22,37,0.08);">
+
+        <!-- Header band -->
+        <tr>
+          <td style="background-color:#1A1625;padding:28px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <!-- Logo mark -->
+                  <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="background-color:#FF6240;border-radius:12px;width:44px;height:44px;text-align:center;vertical-align:middle;">
+                        <span style="color:#FFFFFF;font-size:22px;font-weight:800;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:44px;display:block;">W</span>
+                      </td>
+                      <td style="padding-left:14px;vertical-align:middle;">
+                        <span style="color:#FFFFFF;font-size:18px;font-weight:700;letter-spacing:1.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">WORKSTATION</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td align="right" style="vertical-align:middle;">
+                  <span style="color:#FF6240;font-size:11px;font-weight:600;letter-spacing:1px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;text-transform:uppercase;">Email Verification</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td class="email-body" style="padding:40px 40px 32px;">
+
+            <!-- Greeting -->
+            <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#FF6240;letter-spacing:0.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+              Hello,
+            </p>
+            <h1 style="margin:0 0 20px;font-size:26px;font-weight:700;color:#1A1625;line-height:1.3;letter-spacing:-0.3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+              {{ if index .Data "first_name" }}{{ index .Data "first_name" }}{{ else if index .Data "full_name" }}{{ index .Data "full_name" }}{{ else }}Welcome{{ end }} 👋
+            </h1>
+
+            <p style="margin:0 0 28px;font-size:15px;color:#5A4F6E;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+              To complete your Workstation registration, enter the verification code below in the app. This confirms your email address and secures your account.
+            </p>
+
+            <!-- Code block -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
+              <tr>
+                <td align="center">
+                  <table cellpadding="0" cellspacing="0" border="0" style="background-color:#1A1625;border-radius:16px;padding:28px 32px;">
+                    <tr>
+                      <td align="center">
+                        <p style="margin:0 0 12px;font-size:11px;font-weight:600;color:#7A6E88;letter-spacing:1.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                          Your verification code
+                        </p>
+                        <!-- The code itself -->
+                        <p style="margin:0;font-size:48px;font-weight:800;color:#FF6240;letter-spacing:12px;font-family:'Courier New',Courier,monospace;line-height:1;">
+                          {{ .Token }}
+                        </p>
+                        <p style="margin:16px 0 0;font-size:12px;color:#7A6E88;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                          ⏱ Expires in <strong style="color:#F59E0B;">10 minutes</strong>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Instructions -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FEF3C7;border-radius:12px;margin-bottom:28px;">
+              <tr>
+                <td style="padding:16px 20px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="width:24px;vertical-align:top;padding-top:2px;">
+                        <span style="font-size:16px;">💡</span>
+                      </td>
+                      <td style="padding-left:10px;">
+                        <p style="margin:0;font-size:13px;color:#92400E;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                          Open the Workstation app and enter this 6-digit code on the verification screen. Do not share this code with anyone — our team will never ask for it.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Divider -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+              <tr>
+                <td style="border-top:1px solid #EDE7DB;"></td>
+              </tr>
+            </table>
+
+            <!-- Security notice -->
+            <p style="margin:0;font-size:13px;color:#7A6E88;line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+              🔒 <strong style="color:#5A4F6E;">Didn't create a Workstation account?</strong><br>
+              If you didn't request this, you can safely ignore this email. No account will be created without this code.
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color:#F5F0E8;padding:24px 40px;border-top:1px solid #EDE7DB;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <p style="margin:0 0 8px;font-size:12px;color:#9A8FA6;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                    This email was sent to <strong>{{ .Email }}</strong> because an account was requested on Workstation — Nigeria's trust infrastructure for recruitment.
+                  </p>
+                  <p style="margin:0;font-size:11px;color:#B5ACA0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+                    © 2026 Workstation · Lagos, Nigeria &nbsp;·&nbsp;
+                    <a href="{{ .SiteURL }}" style="color:#FF6240;text-decoration:none;">Visit website</a>
+                    &nbsp;·&nbsp;
+                    <a href="mailto:support@workstation.ng" style="color:#FF6240;text-decoration:none;">Contact support</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Email card -->
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

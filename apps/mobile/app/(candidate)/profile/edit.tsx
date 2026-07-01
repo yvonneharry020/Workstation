@@ -37,13 +37,13 @@ function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
         width: 44,
         height: 24,
         borderRadius: 12,
-        backgroundColor: value ? '#FF6240' : '#3D3850',
+        backgroundColor: value ? '#FF6240' : '#C8BFB0',
         padding: 2,
         justifyContent: 'center',
         alignItems: value ? 'flex-end' : 'flex-start',
       }}
     >
-      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
+      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#1A1625' }} />
     </Pressable>
   )
 }
@@ -51,9 +51,9 @@ function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
     <View style={{
-      backgroundColor: '#131118',
+      backgroundColor: '#EDE7DB',
       borderWidth: 1,
-      borderColor: '#1E1B2E',
+      borderColor: '#DDD6C9',
       borderRadius: 16,
       padding: 16,
       marginBottom: 16,
@@ -65,7 +65,7 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 
 function FieldLabel({ text }: { text: string }) {
   return (
-    <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>{text}</Text>
+    <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>{text}</Text>
   )
 }
 
@@ -98,13 +98,13 @@ function StyledInput({
       autoCapitalize={autoCapitalize ?? 'sentences'}
       textAlignVertical={multiline ? 'top' : 'center'}
       style={{
-        backgroundColor: '#09080E',
+        backgroundColor: '#F5F0E8',
         borderWidth: 1,
-        borderColor: '#1E1B2E',
+        borderColor: '#DDD6C9',
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 12,
-        color: '#fff',
+        color: '#1A1625',
         fontSize: 14,
         minHeight: multiline ? 88 : undefined,
       }}
@@ -226,12 +226,12 @@ export default function EditProfileScreen() {
           paddingHorizontal: 20,
           paddingVertical: 14,
           borderBottomWidth: 1,
-          borderBottomColor: '#1E1B2E',
+          borderBottomColor: '#DDD6C9',
         }}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text style={{ color: '#94A3B8', fontSize: 14 }}>← Back</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 14 }}>← Back</Text>
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Edit Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Edit Profile</Text>
           <Pressable
             onPress={handleSave}
             disabled={isSaving}
@@ -254,7 +254,7 @@ export default function EditProfileScreen() {
             <View style={{ alignItems: 'center' }}>
               <Image
                 source={avatarUrl ? { uri: avatarUrl } : undefined}
-                style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#1E1B2E', marginBottom: 12 }}
+                style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#DDD6C9', marginBottom: 12 }}
                 contentFit="cover"
               />
               <Pressable
@@ -278,7 +278,7 @@ export default function EditProfileScreen() {
 
           {/* Basic info */}
           <SectionCard>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Basic Info</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Basic Info</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               <View style={{ flex: 1 }}>
                 <FieldLabel text="First name" />
@@ -301,7 +301,7 @@ export default function EditProfileScreen() {
           {/* Bio */}
           <SectionCard>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Professional Summary</Text>
+              <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }}>Professional Summary</Text>
               <Text style={{ color: '#64748B', fontSize: 12 }}>{bio.length}/500</Text>
             </View>
             <StyledInput
@@ -314,7 +314,7 @@ export default function EditProfileScreen() {
 
           {/* Social links */}
           <SectionCard>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Social Links</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Social Links</Text>
             <FieldLabel text="GitHub URL" />
             <View style={{ marginBottom: 12 }}>
               <StyledInput
@@ -347,13 +347,13 @@ export default function EditProfileScreen() {
 
           {/* Preferences */}
           <SectionCard>
-            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Preferences</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', marginBottom: 14 }}>Preferences</Text>
             <Pressable
               onPress={() => setIsOpenToWork((v) => !v)}
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
             >
               <View style={{ flex: 1, marginRight: 16 }}>
-                <Text style={{ color: '#fff', fontSize: 14 }}>Open to work</Text>
+                <Text style={{ color: '#1A1625', fontSize: 14 }}>Open to work</Text>
                 <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>
                   Lets companies know you're actively looking
                 </Text>
@@ -374,7 +374,7 @@ export default function EditProfileScreen() {
               opacity: isSaving ? 0.6 : 1,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>
               {isSaving ? 'Saving…' : 'Save changes'}
             </Text>
           </Pressable>

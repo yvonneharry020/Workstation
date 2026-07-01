@@ -58,7 +58,7 @@ function ArrowLeftIcon() {
 
 function StarIcon({ filled }: { filled: boolean }) {
   return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : 'none'} stroke={filled ? '#F59E0B' : '#1E1B2E'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={28} height={28} viewBox="0 0 24 24" fill={filled ? '#F59E0B' : 'none'} stroke={filled ? '#F59E0B' : '#DDD6C9'} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </Svg>
   )
@@ -189,7 +189,7 @@ export default function InterviewNotesScreen() {
           <ArrowLeftIcon />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text className="text-white text-base font-bold" numberOfLines={1}>{candidateName}</Text>
+          <Text className="text-[#1A1625] text-base font-bold" numberOfLines={1}>{candidateName}</Text>
           <Text style={{ color: '#64748B', fontSize: 12 }} numberOfLines={1}>{jobTitle}</Text>
         </View>
         {isSaving && <ActivityIndicator color="#94A3B8" size="small" />}
@@ -202,15 +202,15 @@ export default function InterviewNotesScreen() {
         <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingVertical: 20 }}>
           <Animated.View entering={FadeInDown.duration(300)}>
             {slotDate && (
-              <View style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, marginBottom: 20 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 12 }}>{slotDate} · {slotTime}</Text>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 20 }}>
+                <Text style={{ color: '#5A4F6E', fontSize: 12 }}>{slotDate} · {slotTime}</Text>
                 <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2, textTransform: 'capitalize' }}>
                   {booking?.interview_slots?.meeting_type?.replace('_', ' ')} · {booking?.interview_slots?.duration_mins}min
                 </Text>
               </View>
             )}
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>INTERNAL RATING</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>INTERNAL RATING</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <Pressable key={n} onPress={() => setRating(n)} hitSlop={8}>
@@ -224,7 +224,7 @@ export default function InterviewNotesScreen() {
               )}
             </View>
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>INTERVIEW NOTES</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>INTERVIEW NOTES</Text>
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -232,23 +232,23 @@ export default function InterviewNotesScreen() {
               placeholder="How did the interview go? Key impressions, strengths, concerns..."
               placeholderTextColor="#334155"
               multiline
-              style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', color: '#fff', fontSize: 14, padding: 16, minHeight: 200, textAlignVertical: 'top', lineHeight: 22, marginBottom: 24 }}
+              style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 16, minHeight: 200, textAlignVertical: 'top', lineHeight: 22, marginBottom: 24 }}
             />
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>UPDATE STATUS</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>UPDATE STATUS</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {STATUS_OPTIONS.map((o) => (
                 <Pressable
                   key={o.key}
                   onPress={() => setStatus(o.key)}
-                  style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: status === o.key ? `${o.color}20` : '#131118', borderWidth: 1.5, borderColor: status === o.key ? o.color : '#1E1B2E' }}
+                  style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: status === o.key ? `${o.color}20` : '#EDE7DB', borderWidth: 1.5, borderColor: status === o.key ? o.color : '#DDD6C9' }}
                 >
                   <Text style={{ color: status === o.key ? o.color : '#64748B', fontSize: 13, fontWeight: '600' }}>{o.label}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>NEXT STEPS</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 12 }}>NEXT STEPS</Text>
             <View style={{ gap: 8, marginBottom: 32 }}>
               <Pressable
                 onPress={moveToOffer}
@@ -278,7 +278,7 @@ export default function InterviewNotesScreen() {
               {saveMutation.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Save notes</Text>
+                <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Save notes</Text>
               )}
             </Pressable>
           </Animated.View>

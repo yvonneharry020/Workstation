@@ -77,7 +77,7 @@ function PermissionScreen({ onRequest }: { onRequest: () => void }) {
       </View>
       <Text
         style={{
-          color: '#fff',
+          color: '#1A1625',
           fontSize: 22,
           fontWeight: '700',
           textAlign: 'center',
@@ -94,7 +94,7 @@ function PermissionScreen({ onRequest }: { onRequest: () => void }) {
         onPress={onRequest}
         className="w-full bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
       >
-        <Text className="text-white font-semibold text-base">Allow camera</Text>
+        <Text className="text-[#1A1625] font-semibold text-base">Allow camera</Text>
       </Pressable>
     </View>
   )
@@ -183,7 +183,7 @@ export default function CandidateStep4() {
                 flex: 1,
                 height: 3,
                 borderRadius: 2,
-                backgroundColor: i <= 3 ? '#FF6240' : '#1E1B2E',
+                backgroundColor: i <= 3 ? '#FF6240' : '#DDD6C9',
               }}
             />
           ))}
@@ -194,7 +194,7 @@ export default function CandidateStep4() {
           <Animated.View entering={FadeInDown.duration(400)}>
             <Text
               style={{
-                color: '#fff',
+                color: '#1A1625',
                 fontSize: 24,
                 fontWeight: '700',
                 letterSpacing: -0.3,
@@ -233,7 +233,7 @@ export default function CandidateStep4() {
                   }}
                 >
                   <Text style={{ fontSize: 28, marginBottom: 4 }}>{currentStep.icon}</Text>
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
+                  <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
                     {currentStep.instruction}
                   </Text>
                 </View>
@@ -253,7 +253,7 @@ export default function CandidateStep4() {
                       ? '#22C55E'
                       : index === currentStepIndex && checkState === 'running'
                       ? '#FF6240'
-                      : '#3D3850',
+                      : '#C8BFB0',
                   }}
                 />
               ))}
@@ -264,7 +264,7 @@ export default function CandidateStep4() {
                 onPress={handleStart}
                 className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
               >
-                <Text className="text-white font-semibold text-base">Start liveness check</Text>
+                <Text className="text-[#1A1625] font-semibold text-base">Start liveness check</Text>
               </Pressable>
             )}
 
@@ -290,7 +290,7 @@ export default function CandidateStep4() {
                   onPress={handleRetry}
                   className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
                 >
-                  <Text className="text-white font-semibold text-base">Try again</Text>
+                  <Text className="text-[#1A1625] font-semibold text-base">Try again</Text>
                 </Pressable>
               </View>
             )}
@@ -321,7 +321,7 @@ export default function CandidateStep4() {
             </View>
             <Text
               style={{
-                color: '#fff',
+                color: '#1A1625',
                 fontSize: 24,
                 fontWeight: '700',
                 textAlign: 'center',
@@ -359,7 +359,7 @@ export default function CandidateStep4() {
               onPress={() => router.push('/(onboarding)/candidate/step-5')}
               className="w-full bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             >
-              <Text className="text-white font-semibold text-base">Continue to documents</Text>
+              <Text className="text-[#1A1625] font-semibold text-base">Continue to documents</Text>
             </Pressable>
           </Animated.View>
         )}

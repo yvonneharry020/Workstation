@@ -119,12 +119,12 @@ function ApplicationCard({
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
           <View className="flex-1">
-            <Text className="text-white font-semibold text-sm" numberOfLines={1}>{name}</Text>
+            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
             {headline && <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{headline}</Text>}
           </View>
           <View style={{ backgroundColor: stage.bg, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
@@ -138,7 +138,7 @@ function ApplicationCard({
               <Text className="text-slate-400 text-xs">Skills match</Text>
               <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '600' }}>{item.skills_match_pct}%</Text>
             </View>
-            <View style={{ height: 4, backgroundColor: '#1E1B2E', borderRadius: 2, overflow: 'hidden' }}>
+            <View style={{ height: 4, backgroundColor: '#DDD6C9', borderRadius: 2, overflow: 'hidden' }}>
               <View style={{ height: '100%', width: `${item.skills_match_pct}%`, backgroundColor: '#FF6240', borderRadius: 2 }} />
             </View>
           </View>
@@ -162,7 +162,7 @@ function ApplicationCard({
             <Pressable
               onPress={() => onMoveStage(item.id, item.pipeline_stage)}
               disabled={isMoving}
-              style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 4 }}
               className="active:opacity-70"
             >
               <Text className="text-slate-300 text-xs">Stage</Text>
@@ -270,7 +270,7 @@ export default function JobAtsScreen() {
             <ArrowLeftIcon />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-white text-lg font-bold">Applicants</Text>
+            <Text className="text-[#1A1625] text-lg font-bold">Applicants</Text>
             <Text className="text-slate-400 text-xs" numberOfLines={1}>{jobTitle}</Text>
           </View>
           <Pressable
@@ -285,7 +285,7 @@ export default function JobAtsScreen() {
                 { text: 'Cancel', style: 'cancel' as const },
               ])
             }}
-            style={{ backgroundColor: '#131118', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#1E1B2E' }}
+            style={{ backgroundColor: '#EDE7DB', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#DDD6C9' }}
           >
             <Text className="text-slate-300 text-xs">Sort</Text>
           </Pressable>
@@ -300,12 +300,12 @@ export default function JobAtsScreen() {
                   key={tab.value}
                   onPress={() => setActiveStage(tab.value)}
                   style={{
-                    backgroundColor: active ? '#FF6240' : '#131118',
+                    backgroundColor: active ? '#FF6240' : '#EDE7DB',
                     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,
-                    borderWidth: 1, borderColor: active ? '#FF6240' : '#1E1B2E',
+                    borderWidth: 1, borderColor: active ? '#FF6240' : '#DDD6C9',
                   }}
                 >
-                  <Text style={{ color: active ? '#fff' : '#64748B', fontSize: 12, fontWeight: active ? '600' : '400' }}>
+                  <Text style={{ color: active ? '#1A1625' : '#64748B', fontSize: 12, fontWeight: active ? '600' : '400' }}>
                     {tab.label}
                   </Text>
                 </Pressable>

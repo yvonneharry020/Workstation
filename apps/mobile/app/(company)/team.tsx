@@ -40,7 +40,7 @@ interface TeamMember {
 const ROLE_CONFIG: Record<MemberRole, { label: string; color: string; bg: string }> = {
   admin: { label: 'Admin', color: '#FF6240', bg: '#FF624020' },
   recruiter: { label: 'Recruiter', color: '#0DD4C3', bg: '#0DD4C320' },
-  viewer: { label: 'Viewer', color: '#64748B', bg: '#1E1B2E' },
+  viewer: { label: 'Viewer', color: '#64748B', bg: '#DDD6C9' },
 }
 
 const ROLE_OPTIONS: { label: string; value: string }[] = [
@@ -112,13 +112,13 @@ function MemberRow({
   }
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', marginBottom: 8 }}>
-      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: isCurrentUser ? '#FF624025' : '#1E1B2E', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', marginBottom: 8 }}>
+      <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: isCurrentUser ? '#FF624025' : '#DDD6C9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Text style={{ color: isCurrentUser ? '#FF6240' : '#64748B', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>
+          <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>
             {displayName ?? member.email}
             {isCurrentUser && <Text style={{ color: '#64748B', fontWeight: '400' }}> (you)</Text>}
           </Text>
@@ -236,14 +236,14 @@ export default function TeamScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Pressable
             onPress={() => router.back()}
-            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#1E1B2E' }}
+            style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#DDD6C9' }}
             className="active:opacity-70"
           >
             <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <Path d="M19 12H5M12 5l-7 7 7 7" />
             </Svg>
           </Pressable>
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Team Members</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Team Members</Text>
         </View>
         <Pressable
           onPress={() => setShowInviteModal(true)}
@@ -251,7 +251,7 @@ export default function TeamScreen() {
           className="active:opacity-80"
         >
           <PlusIcon />
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Invite</Text>
+          <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>Invite</Text>
         </Pressable>
       </View>
 
@@ -277,7 +277,7 @@ export default function TeamScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View className="items-center justify-center py-20">
-              <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#131118', borderWidth: 1, borderColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                   <Path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                 </Svg>
@@ -292,16 +292,16 @@ export default function TeamScreen() {
       <Modal visible={showInviteModal} animationType="slide" transparent presentationStyle="overFullScreen">
         <View style={{ flex: 1, backgroundColor: '#00000080', justifyContent: 'flex-end' }}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={{ backgroundColor: '#09080E', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 36, borderTopWidth: 1, borderColor: '#1E1B2E' }}>
+            <View style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 36, borderTopWidth: 1, borderColor: '#DDD6C9' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-                <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>Invite team member</Text>
+                <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Invite team member</Text>
                 <Pressable onPress={() => setShowInviteModal(false)} className="active:opacity-70">
                   <XIcon />
                 </Pressable>
               </View>
 
               <View style={{ marginBottom: 16 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>Email address</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 8 }}>Email address</Text>
                 <TextInput
                   value={inviteEmail}
                   onChangeText={(v) => { setInviteEmail(v); setEmailError('') }}
@@ -311,11 +311,11 @@ export default function TeamScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   style={{
-                    backgroundColor: '#131118',
+                    backgroundColor: '#EDE7DB',
                     borderRadius: 12,
                     borderWidth: 1,
-                    borderColor: emailError ? '#EF4444' : '#1E1B2E',
-                    color: '#fff',
+                    borderColor: emailError ? '#EF4444' : '#DDD6C9',
+                    color: '#1A1625',
                     fontSize: 15,
                     padding: 14,
                   }}
@@ -333,7 +333,7 @@ export default function TeamScreen() {
                 placeholder="Select role"
               />
 
-              <View style={{ backgroundColor: '#131118', borderRadius: 12, padding: 12, marginTop: 12, marginBottom: 20, borderWidth: 1, borderColor: '#1E1B2E' }}>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 12, padding: 12, marginTop: 12, marginBottom: 20, borderWidth: 1, borderColor: '#DDD6C9' }}>
                 <Text style={{ color: '#475569', fontSize: 12, lineHeight: 18 }}>
                   <Text style={{ color: '#FF6240', fontWeight: '600' }}>Admin</Text> — full access to all features{'\n'}
                   <Text style={{ color: '#0DD4C3', fontWeight: '600' }}>Recruiter</Text> — manage jobs and applicants{'\n'}
@@ -349,7 +349,7 @@ export default function TeamScreen() {
               >
                 {inviteMutation.isPending
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Send invitation</Text>
+                  : <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Send invitation</Text>
                 }
               </Pressable>
             </View>

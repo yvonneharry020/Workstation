@@ -111,7 +111,7 @@ function DirectorBadge({ name }: { name: string }) {
       >
         <Text style={{ color: '#0DD4C3', fontSize: 13, fontWeight: '700' }}>{initials}</Text>
       </View>
-      <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '500', flex: 1 }}>{name}</Text>
+      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '500', flex: 1 }}>{name}</Text>
     </View>
   )
 }
@@ -229,7 +229,7 @@ export default function CompanyStep2() {
         </View>
         <Text className="text-slate-500 text-xs mb-8">Step 2 of {STEPS_TOTAL}</Text>
 
-        <Text className="text-white text-3xl font-bold mb-2">CAC Verification</Text>
+        <Text className="text-[#1A1625] text-3xl font-bold mb-2">CAC Verification</Text>
         <Text className="text-slate-400 text-base mb-8">
           We'll verify your company's registration with the Corporate Affairs Commission.
         </Text>
@@ -237,7 +237,7 @@ export default function CompanyStep2() {
         {rcNumber ? (
           <Animated.View entering={FadeInDown.duration(300)} className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-8">
             <Text className="text-slate-400 text-xs mb-1">RC Number on file</Text>
-            <Text style={{ color: '#fff', fontFamily: 'monospace', fontSize: 20, fontWeight: '700', letterSpacing: 2 }}>
+            <Text style={{ color: '#1A1625', fontFamily: 'monospace', fontSize: 20, fontWeight: '700', letterSpacing: 2 }}>
               {rcNumber}
             </Text>
           </Animated.View>
@@ -250,7 +250,7 @@ export default function CompanyStep2() {
                 <ShieldIcon verified={false} />
               </View>
             </View>
-            <Text className="text-white font-semibold text-base text-center mb-2">Ready to verify</Text>
+            <Text className="text-[#1A1625] font-semibold text-base text-center mb-2">Ready to verify</Text>
             <Text className="text-slate-400 text-sm text-center leading-5 mb-8 px-4">
               Tap the button below to run your CAC check. This typically takes 5–10 seconds.
             </Text>
@@ -258,7 +258,7 @@ export default function CompanyStep2() {
               onPress={handleVerify}
               className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80 w-full"
             >
-              <Text className="text-white font-bold text-base">Verify company registration</Text>
+              <Text className="text-[#1A1625] font-bold text-base">Verify company registration</Text>
             </Pressable>
           </Animated.View>
         )}
@@ -271,7 +271,7 @@ export default function CompanyStep2() {
                 <ActivityIndicator color="#FF6240" size="large" />
               </View>
             </View>
-            <Text className="text-white font-semibold text-base mb-1">Querying CAC database…</Text>
+            <Text className="text-[#1A1625] font-semibold text-base mb-1">Querying CAC database…</Text>
             <Text className="text-slate-400 text-sm text-center">Connecting to the Corporate Affairs Commission</Text>
           </Animated.View>
         )}
@@ -282,7 +282,7 @@ export default function CompanyStep2() {
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#22C55E15', borderWidth: 1.5, borderColor: '#22C55E40', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <ShieldIcon verified />
               </View>
-              <Text className="text-white font-bold text-lg">Registration confirmed</Text>
+              <Text className="text-[#1A1625] font-bold text-lg">Registration confirmed</Text>
             </View>
 
             <View className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-4">
@@ -290,7 +290,7 @@ export default function CompanyStep2() {
               <View className="gap-3">
                 <View>
                   <Text className="text-slate-500 text-xs mb-0.5">Registered legal name</Text>
-                  <Text className="text-white font-semibold">{cacResult.companyName}</Text>
+                  <Text className="text-[#1A1625] font-semibold">{cacResult.companyName}</Text>
                 </View>
                 <View>
                   <Text className="text-slate-500 text-xs mb-0.5">Registration status</Text>
@@ -322,7 +322,7 @@ export default function CompanyStep2() {
               onPress={() => router.push('/(onboarding)/company/step-3')}
               className="bg-primary-500 rounded-2xl py-4 items-center mb-12 active:opacity-80"
             >
-              <Text className="text-white font-bold text-base">Continue to director verification</Text>
+              <Text className="text-[#1A1625] font-bold text-base">Continue to director verification</Text>
             </Pressable>
           </Animated.View>
         )}
@@ -332,17 +332,17 @@ export default function CompanyStep2() {
             <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#EF444415', borderWidth: 1.5, borderColor: '#EF444440', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <AlertIcon />
             </View>
-            <Text className="text-white font-semibold text-base text-center mb-2">Verification failed</Text>
+            <Text className="text-[#1A1625] font-semibold text-base text-center mb-2">Verification failed</Text>
             <Text className="text-slate-400 text-sm text-center leading-5 mb-8 px-4">
               We could not find an active registration for RC number{' '}
-              <Text className="text-white font-medium">{rcNumber}</Text>.
+              <Text className="text-[#1A1625] font-medium">{rcNumber}</Text>.
               Please double-check the number and try again.
             </Text>
             <Pressable
               onPress={handleRetry}
               className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center w-full active:opacity-80 mb-3"
             >
-              <Text className="text-white font-semibold text-base">Try again</Text>
+              <Text className="text-[#1A1625] font-semibold text-base">Try again</Text>
             </Pressable>
             <Pressable onPress={() => router.back()}>
               <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>Update my RC number</Text>

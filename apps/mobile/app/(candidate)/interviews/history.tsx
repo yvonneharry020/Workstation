@@ -39,7 +39,7 @@ interface Interview {
 const STATUS_STYLES: Record<InterviewStatus, { bg: string; text: string; label: string }> = {
   booked:    { bg: '#1E3A8A20', text: '#60A5FA', label: 'Upcoming' },
   completed: { bg: '#14532D20', text: '#22C55E', label: 'Completed' },
-  cancelled: { bg: '#1E293B',   text: '#94A3B8', label: 'Cancelled' },
+  cancelled: { bg: '#1E293B',   text: '#5A4F6E', label: 'Cancelled' },
   no_show:   { bg: '#78350F20', text: '#F59E0B', label: 'No show' },
 }
 
@@ -84,7 +84,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
             contentFit="cover"
           />
         ) : (
-          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#1E1B2E', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ color: '#475569', fontSize: 18, fontWeight: '700' }}>
               {company?.company_name?.charAt(0) ?? '?'}
             </Text>
@@ -92,7 +92,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
         )}
 
         <View className="flex-1">
-          <Text className="text-white font-semibold text-sm">{company?.company_name ?? 'Company'}</Text>
+          <Text className="text-[#1A1625] font-semibold text-sm">{company?.company_name ?? 'Company'}</Text>
           {slot && (
             <Text className="text-slate-400 text-xs mt-0.5">
               {formatDate(slot.slot_date)} · {formatTime(slot.start_time)}
@@ -100,14 +100,14 @@ function InterviewCard({ interview }: { interview: Interview }) {
           )}
           <View className="flex-row items-center gap-2 mt-2">
             {slot && (
-              <View style={{ backgroundColor: '#1E1B2E', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
-                <Text style={{ color: '#94A3B8', fontSize: 11 }}>{slot.duration_mins} min</Text>
+              <View style={{ backgroundColor: '#DDD6C9', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+                <Text style={{ color: '#5A4F6E', fontSize: 11 }}>{slot.duration_mins} min</Text>
               </View>
             )}
             {slot && (
               <View className="flex-row items-center gap-1">
                 <VideoIcon />
-                <Text style={{ color: '#94A3B8', fontSize: 11, textTransform: 'capitalize' }}>{slot.meeting_type}</Text>
+                <Text style={{ color: '#5A4F6E', fontSize: 11, textTransform: 'capitalize' }}>{slot.meeting_type}</Text>
               </View>
             )}
           </View>
@@ -183,7 +183,7 @@ export default function InterviewHistoryScreen() {
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text className="text-white text-2xl font-bold">My Interviews</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold">My Interviews</Text>
       </View>
 
       {/* Filter tabs */}
@@ -194,11 +194,11 @@ export default function InterviewHistoryScreen() {
             onPress={() => setActiveTab(key)}
             style={{
               paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-              backgroundColor: activeTab === key ? '#FF6240' : '#131118',
-              borderWidth: 1, borderColor: activeTab === key ? '#FF6240' : '#1E1B2E',
+              backgroundColor: activeTab === key ? '#FF6240' : '#EDE7DB',
+              borderWidth: 1, borderColor: activeTab === key ? '#FF6240' : '#DDD6C9',
             }}
           >
-            <Text style={{ color: activeTab === key ? '#fff' : '#94A3B8', fontSize: 13, fontWeight: '600' }}>
+            <Text style={{ color: activeTab === key ? '#1A1625' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>
               {label}
             </Text>
           </Pressable>
@@ -218,7 +218,7 @@ export default function InterviewHistoryScreen() {
             </View>
           ) : (
             <View className="py-16 items-center px-6">
-              <Text className="text-white text-base font-semibold text-center mb-2">{emptyLabels[activeTab]}</Text>
+              <Text className="text-[#1A1625] text-base font-semibold text-center mb-2">{emptyLabels[activeTab]}</Text>
               <Text className="text-slate-400 text-sm text-center leading-5">
                 {activeTab === 'upcoming'
                   ? 'When a company invites you to interview, it will appear here.'

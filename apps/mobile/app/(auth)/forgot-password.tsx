@@ -64,7 +64,7 @@ export default function ForgotPasswordScreen() {
         </View>
         <Text
           style={{
-            color: '#fff',
+            color: '#1A1625',
             fontSize: 26,
             fontWeight: '700',
             textAlign: 'center',
@@ -87,7 +87,7 @@ export default function ForgotPasswordScreen() {
             <View className="mb-6">
               <Text className="text-slate-300 text-sm mb-2">Email address</Text>
               <TextInput
-                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+                className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base"
                 placeholder="you@company.com"
                 placeholderTextColor="#475569"
                 keyboardType="email-address"
@@ -109,7 +109,7 @@ export default function ForgotPasswordScreen() {
           className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           style={{ opacity: isSubmitting ? 0.7 : 1 }}
         >
-          <Text className="text-white font-semibold text-base">
+          <Text className="text-[#1A1625] font-semibold text-base">
             {isSubmitting ? 'Sending code…' : 'Send reset code'}
           </Text>
         </Pressable>

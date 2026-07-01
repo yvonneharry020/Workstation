@@ -182,7 +182,7 @@ export default function InterviewCalendarScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-white text-lg font-bold flex-1">Interview Calendar</Text>
+        <Text className="text-[#1A1625] text-lg font-bold flex-1">Interview Calendar</Text>
         <Pressable
           onPress={() => router.push('/(company)/interviews/schedule')}
           style={{ backgroundColor: '#FF624015', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#FF624030' }}
@@ -193,10 +193,10 @@ export default function InterviewCalendarScreen() {
 
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 12 }}>
         <Pressable onPress={() => setWeekBase(addDays(weekBase, -7))} hitSlop={12}><ChevronLeftIcon /></Pressable>
-        <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '600', flex: 1, textAlign: 'center' }}>{weekRange}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600', flex: 1, textAlign: 'center' }}>{weekRange}</Text>
         <Pressable onPress={() => setWeekBase(addDays(weekBase, 7))} hitSlop={12}><ChevronRightIcon /></Pressable>
-        <Pressable onPress={() => setWeekBase(weekStart(new Date()))} style={{ backgroundColor: '#1E1B2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 12 }}>Today</Text>
+        <Pressable onPress={() => setWeekBase(weekStart(new Date()))} style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 12 }}>Today</Text>
         </Pressable>
       </View>
 
@@ -211,7 +211,7 @@ export default function InterviewCalendarScreen() {
                 <View key={key} style={{ width: 100 }}>
                   <View style={{ alignItems: 'center', paddingVertical: 8, marginBottom: 6 }}>
                     <Text style={{ color: isToday ? '#FF6240' : '#64748B', fontSize: 11, fontWeight: '600' }}>{DAY_LABELS[i]}</Text>
-                    <Text style={{ color: isToday ? '#FF6240' : '#94A3B8', fontSize: 18, fontWeight: '700' }}>{d.getDate()}</Text>
+                    <Text style={{ color: isToday ? '#FF6240' : '#5A4F6E', fontSize: 18, fontWeight: '700' }}>{d.getDate()}</Text>
                   </View>
                   {dayBookings.map((b) => {
                     const name = b.candidate_profiles?.profiles?.full_name ?? 'Candidate'
@@ -223,7 +223,7 @@ export default function InterviewCalendarScreen() {
                         onPress={() => setSelected(b)}
                         style={{ backgroundColor: `${color}20`, borderRadius: 8, padding: 8, marginBottom: 6, borderLeftWidth: 3, borderLeftColor: color }}
                       >
-                        <Text style={{ color: '#fff', fontSize: 11, fontWeight: '600' }} numberOfLines={1}>{name.split(' ')[0]}</Text>
+                        <Text style={{ color: '#1A1625', fontSize: 11, fontWeight: '600' }} numberOfLines={1}>{name.split(' ')[0]}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
                           <VideoIcon color={color} />
                           <Text style={{ color, fontSize: 10 }}>{time}</Text>
@@ -238,7 +238,7 @@ export default function InterviewCalendarScreen() {
         </ScrollView>
 
         <View style={{ paddingHorizontal: 20, marginTop: 16 }}>
-          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>
+          <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 12 }}>
             THIS WEEK ({thisWeekList.length})
           </Text>
           {thisWeekList.length === 0 ? (
@@ -257,7 +257,7 @@ export default function InterviewCalendarScreen() {
                 <Pressable
                   key={b.id}
                   onPress={() => setSelected(b)}
-                  style={{ backgroundColor: '#131118', borderRadius: 14, borderWidth: 1, borderColor: '#1E1B2E', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}
+                  style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}
                 >
                   {b.candidate_profiles?.profiles?.avatar_url ? (
                     <Image source={{ uri: b.candidate_profiles.profiles.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
@@ -267,7 +267,7 @@ export default function InterviewCalendarScreen() {
                     </View>
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{name}</Text>
+                    <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600' }}>{name}</Text>
                     <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>
                       {b.interview_slots?.slot_date ? new Date(b.interview_slots.slot_date).toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' }) : ''} · {formatTime(b.interview_slots?.start_time ?? '')}
                     </Text>
@@ -288,34 +288,34 @@ export default function InterviewCalendarScreen() {
 
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         {selected && (
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#09080E' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#1E1B2E' }}>
-              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 }}>Interview Detail</Text>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+              <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700', flex: 1 }}>Interview Detail</Text>
               <Pressable onPress={() => setSelected(null)}><XIcon /></Pressable>
             </View>
             <ScrollView style={{ flex: 1, padding: 20 }}>
-              <Text style={{ color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>
+              <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>
                 {selected.candidate_profiles?.profiles?.full_name ?? 'Unknown Candidate'}
               </Text>
               {selected.job_postings?.title && (
                 <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 16 }}>{selected.job_postings.title}</Text>
               )}
-              <View style={{ backgroundColor: '#131118', borderRadius: 14, padding: 14, marginBottom: 14 }}>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14, marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ color: '#94A3B8', fontSize: 13 }}>Date & time</Text>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+                  <Text style={{ color: '#5A4F6E', fontSize: 13 }}>Date & time</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600' }}>
                     {selected.interview_slots?.slot_date ? new Date(selected.interview_slots.slot_date).toLocaleDateString('en-NG', { weekday: 'short', month: 'short', day: 'numeric' }) : '—'} · {formatTime(selected.interview_slots?.start_time ?? '')}
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ color: '#94A3B8', fontSize: 13 }}>Type</Text>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600', textTransform: 'capitalize' }}>
+                  <Text style={{ color: '#5A4F6E', fontSize: 13 }}>Type</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600', textTransform: 'capitalize' }}>
                     {selected.interview_slots?.meeting_type?.replace('_', ' ') ?? '—'}
                   </Text>
                 </View>
                 {selected.interview_slots?.meeting_link && (
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ color: '#94A3B8', fontSize: 13 }}>Link</Text>
+                    <Text style={{ color: '#5A4F6E', fontSize: 13 }}>Link</Text>
                     <Text style={{ color: '#0DD4C3', fontSize: 13 }} numberOfLines={1}>{selected.interview_slots.meeting_link}</Text>
                   </View>
                 )}
@@ -325,8 +325,8 @@ export default function InterviewCalendarScreen() {
               </View>
               {selected.interview_notes && (
                 <>
-                  <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 6 }}>NOTES</Text>
-                  <Text style={{ color: '#E2E8F0', fontSize: 14, lineHeight: 22 }}>{selected.interview_notes}</Text>
+                  <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 6 }}>NOTES</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 22 }}>{selected.interview_notes}</Text>
                 </>
               )}
               <Pressable

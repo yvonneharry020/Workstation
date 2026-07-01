@@ -93,7 +93,7 @@ export default function ResetPasswordScreen() {
         </View>
         <Text
           style={{
-            color: '#fff',
+            color: '#1A1625',
             fontSize: 26,
             fontWeight: '700',
             textAlign: 'center',
@@ -117,7 +117,7 @@ export default function ResetPasswordScreen() {
               <Text className="text-slate-300 text-sm mb-2">New password</Text>
               <View className="relative">
                 <TextInput
-                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base pr-12"
+                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base pr-12"
                   placeholder="••••••••"
                   placeholderTextColor="#475569"
                   secureTextEntry={!showPassword}
@@ -148,7 +148,7 @@ export default function ResetPasswordScreen() {
               <Text className="text-slate-300 text-sm mb-2">Confirm password</Text>
               <View className="relative">
                 <TextInput
-                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-white text-base pr-12"
+                  className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 text-[#1A1625] text-base pr-12"
                   placeholder="••••••••"
                   placeholderTextColor="#475569"
                   secureTextEntry={!showConfirm}
@@ -177,7 +177,7 @@ export default function ResetPasswordScreen() {
           className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           style={{ opacity: isSubmitting ? 0.7 : 1 }}
         >
-          <Text className="text-white font-semibold text-base">
+          <Text className="text-[#1A1625] font-semibold text-base">
             {isSubmitting ? 'Updating…' : 'Update password'}
           </Text>
         </Pressable>
