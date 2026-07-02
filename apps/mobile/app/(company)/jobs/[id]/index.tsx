@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path, Circle } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -93,7 +93,7 @@ function FunnelBar({ bucket, max }: { bucket: StageBucket; max: number }) {
 
 export default function JobApplicantsOverview() {
   const { id: jobId } = useLocalSearchParams<{ id: string }>()
-  const user = useAuthStore((s) => s.user)
+  const _user = useAuthStore((s) => s.user)
 
   const { data: job, isLoading: jobLoading } = useQuery<JobDetail | null>({
     queryKey: ['job-detail', jobId],
