@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated'
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera'
+import { CameraView, useCameraPermissions } from 'expo-camera'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
