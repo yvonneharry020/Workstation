@@ -62,15 +62,39 @@ export default function SetupAccountPage() {
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    createClient()
-      .auth.getUser()
-      .then(({ data: { user } }) => {
-        if (!user) {
-          router.replace('/login')
-        } else {
-          setEmail(user.email ?? '')
-        }
-      })
+    const supabase = createClient()
+
+    // The invite link contains the session tokens in the URL hash (implicit flow).
+    // Parse and set the session before checking getUser().
+    const hash = window.location.hash.slice(1)
+    const hashParams = new URLSearchParams(hash)
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
+    const tokenType = hashParams.get('type')
+
+    if (accessToken && refreshToken && tokenType === 'invite') {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ data: { user }, error }) => {
+          if (error || !user) {
+            router.replace('/login?error=invite_expired')
+          } else {
+            setEmail(user.email ?? '')
+            // Clean the hash from the URL without a page reload
+            window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          }
+        })
+      return
+    }
+
+    // No hash — check if already has a valid session (e.g. page refresh)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace('/login?error=invite_expired')
+      } else {
+        setEmail(user.email ?? '')
+      }
+    })
   }, [router])
 
   function handleSubmit(e: React.FormEvent) {

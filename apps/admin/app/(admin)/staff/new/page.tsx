@@ -97,10 +97,20 @@ export default function NewStaffPage() {
       return
     }
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin
-    const loginUrl = `${origin}/login`
+    // Generate a real Supabase invite link via the server (requires service-role key)
+    const inviteRes = await fetch('/api/staff/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    })
+    const inviteJson = await inviteRes.json() as { inviteUrl?: string; error?: string }
+    if (!inviteRes.ok || !inviteJson.inviteUrl) {
+      setError(inviteJson.error ?? 'Failed to generate invite link. Please try again.')
+      setSaving(false)
+      return
+    }
 
-    // Send beautiful invite email via Resend
+    // Send branded invite email with the real invite link
     const roomLabels: Record<string, string> = {
       admin: 'Admin Room', management: 'Management Room', technical: 'Technical Room', finance: 'Finance Room',
     }
@@ -113,13 +123,8 @@ export default function NewStaffPage() {
       email: email.trim().toLowerCase(),
       role,
       rooms: enabledRooms,
-      loginUrl,
+      loginUrl: inviteJson.inviteUrl,
       invitedBy: user?.email ?? 'Admin',
-    })
-
-    // Also trigger Supabase invite so they can set their password
-    await supabase.auth.admin?.inviteUserByEmail?.(email.trim().toLowerCase(), {
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
     })
 
     await supabase.from('audit_logs').insert({
