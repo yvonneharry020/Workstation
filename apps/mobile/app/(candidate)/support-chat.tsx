@@ -9,7 +9,7 @@ import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
-import Svg, { Path, Circle } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { logEvent } from '@/lib/audit'
 
