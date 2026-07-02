@@ -163,7 +163,6 @@ export default function CandidateStep5() {
 
   const requiredSlots = slots.filter((s) => s.required)
   const allRequiredPassed = requiredSlots.every((s) => s.status === 'passed')
-  const _anyFailed = slots.some((s) => s.status === 'failed')
 
   const handleSubmit = async () => {
     if (!allRequiredPassed) {
