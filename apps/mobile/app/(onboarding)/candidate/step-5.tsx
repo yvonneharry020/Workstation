@@ -9,9 +9,9 @@ import {
 import { useState } from 'react'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import * as DocumentPicker from 'expo-document-picker'
-import Svg, { Path, Rect } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -163,7 +163,7 @@ export default function CandidateStep5() {
 
   const requiredSlots = slots.filter((s) => s.required)
   const allRequiredPassed = requiredSlots.every((s) => s.status === 'passed')
-  const anyFailed = slots.some((s) => s.status === 'failed')
+  const _anyFailed = slots.some((s) => s.status === 'failed')
 
   const handleSubmit = async () => {
     if (!allRequiredPassed) {
