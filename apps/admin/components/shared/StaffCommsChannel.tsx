@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { createTabClient } from '@/lib/supabase/tab-client'
 
@@ -89,10 +89,10 @@ function extractName(row: Record<string, unknown>, fallback: string): string {
 }
 
 export default function StaffCommsChannel() {
-  // createTabClient() reads THIS tab's account token from localStorage.
-  // Finance tab uses Jessica Lanre's JWT, Admin tab uses Yvonne Harry's JWT —
-  // independently, even when both are open in the same browser.
-  const supabase = createTabClient()
+  // Stable client — created once per mount, not on every render.
+  // Creating a new client each render would tear down and recreate the
+  // real-time WebSocket subscription on every state update, dropping messages.
+  const supabase = useMemo(() => createTabClient(), [])
   const [messages, setMessages]       = useState<Message[]>([])
   const [loading, setLoading]         = useState(true)
   const [body, setBody]               = useState('')

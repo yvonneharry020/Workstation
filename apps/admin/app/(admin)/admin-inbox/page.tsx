@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { createTabClient } from '@/lib/supabase/tab-client'
 
@@ -52,7 +52,7 @@ function fmtTime(iso: string) {
 }
 
 export default function AdminInboxPage() {
-  const supabase = createTabClient()
+  const supabase = useMemo(() => createTabClient(), [])
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
