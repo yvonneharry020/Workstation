@@ -77,7 +77,7 @@ export default function ResetPasswordScreen() {
     )
   }
 
-  const requirements = [
+  const _requirements = [
     { label: `At least ${PASSWORD_MIN} characters`, done: true },
     { label: 'Mix of letters and numbers recommended', done: false },
   ]
