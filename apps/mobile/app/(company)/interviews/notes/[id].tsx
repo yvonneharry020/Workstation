@@ -73,7 +73,6 @@ const STATUS_OPTIONS: { key: InterviewStatus; label: string; color: string }[] =
 
 export default function InterviewNotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const _user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
 
   const [notes, setNotes] = useState('')
