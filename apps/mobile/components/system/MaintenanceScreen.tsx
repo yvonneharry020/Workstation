@@ -29,7 +29,6 @@ function WrenchIcon() {
 function PulsingDot({ delay }: { delay: number }) {
   const opacity = useSharedValue(0.3)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const id = setTimeout(() => {
       opacity.value = withRepeat(
@@ -39,6 +38,7 @@ function PulsingDot({ delay }: { delay: number }) {
       )
     }, delay)
     return () => clearTimeout(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delay])
 
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
