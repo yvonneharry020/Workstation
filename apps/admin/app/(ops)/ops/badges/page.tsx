@@ -615,7 +615,7 @@ export default function BadgeDisputesPage() {
                           {dispute.created_by_staff_email && <Row label="Logged by" value={dispute.created_by_staff_email} mono />}
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Client's Complaint</p>
+                          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Client&apos;s Complaint</p>
                           <p className="text-xs text-text-secondary leading-relaxed bg-surface-elevated rounded-lg p-3">{dispute.reason}</p>
                           {dispute.admin_notes && (
                             <p className="text-[10px] text-text-muted mt-2 italic">{dispute.admin_notes}</p>
