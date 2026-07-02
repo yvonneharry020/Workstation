@@ -20,6 +20,7 @@ function SplashContent() {
   const taglineOpacity = useSharedValue(isWeb ? 1 : 0)
   const dotsOpacity = useSharedValue(isWeb ? 1 : 0)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     logoScale.value = withSpring(1, { damping: 14, stiffness: 120 })
     logoOpacity.value = withTiming(1, { duration: 400 })
