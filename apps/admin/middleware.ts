@@ -6,6 +6,44 @@ const PUBLIC_PREFIXES = ['/auth', '/_next', '/favicon', '/unauthorized', '/acces
 
 type Permissions = { admin: boolean; management: boolean; technical: boolean; finance: boolean }
 type StaffRow    = { is_active: boolean; role: string; permissions: Permissions; full_name: string | null }
+type SessionMeta = { id: string; name: string; role: string; department: string | null; permissions: Permissions }
+
+/**
+ * Parse the _wk_sessions cookie — a registry of all accounts currently
+ * logged in across tabs in this browser.  Written by loginAction server-side,
+ * so it can't be forged without a real Supabase auth call.
+ */
+function parseSessionsCookie(request: NextRequest): Record<string, SessionMeta> {
+  const raw = request.cookies.get('_wk_sessions')?.value
+  if (!raw) return {}
+  try { return JSON.parse(raw) as Record<string, SessionMeta> } catch { return {} }
+}
+
+/**
+ * Find the best matching session for a given room from the multi-session registry.
+ * This is how we support Finance + Admin open in the same browser simultaneously:
+ * each route prefix picks the right account's metadata.
+ */
+function pickSessionForRoom(
+  room: string | null,
+  sessions: Record<string, SessionMeta>
+): SessionMeta | null {
+  const list = Object.values(sessions)
+  if (list.length === 0) return null
+
+  if (!room) return list.find(s => s.role === 'superadmin' || s.permissions.admin) ?? list[0]
+
+  if (room === 'admin') {
+    return list.find(s => s.role === 'superadmin' || s.role === 'admin' || s.permissions.admin) ?? null
+  }
+  // For finance / technical / management rooms — prefer a non-superadmin staff match
+  const staffMatch = list.find(s =>
+    s.role !== 'superadmin' && s.permissions[room as keyof Permissions]
+  )
+  if (staffMatch) return staffMatch
+  // Fall back to superadmin (they have access to everything)
+  return list.find(s => s.role === 'superadmin') ?? null
+}
 
 const SUPER_ADMIN_EMAIL = 'yvonne2okis@gmail.com'
 
@@ -69,6 +107,14 @@ const COOKIE_OPTS = {
   httpOnly: false,  // must be readable by client JS for UI permission checks
 } as const
 
+function setSecurityHeaders(response: NextResponse) {
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -98,9 +144,44 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-
   const isAuthRoute = AUTH_ROUTES.some(r => pathname.startsWith(r))
 
+  // ── Multi-session fast-path ───────────────────────────────────────────────
+  // If _wk_sessions cookie has been populated (by loginAction), use it to
+  // serve the correct account's metadata per route — this is what enables
+  // multiple accounts to be open in the same browser simultaneously.
+  const sessions = parseSessionsCookie(request)
+  const hasSessions = Object.keys(sessions).length > 0
+
+  if (hasSessions && user) {
+    const room = getRoomForPath(pathname)
+    const match = pickSessionForRoom(room, sessions)
+
+    if (match) {
+      // Redirect away from login if any session exists
+      if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
+        return NextResponse.redirect(
+          new URL(getPrimaryDest(match.permissions, match.role), request.url)
+        )
+      }
+
+      // Permission check: superadmin bypasses all; others need explicit room permission
+      if (match.role !== 'superadmin' && match.role !== 'admin' && room) {
+        if (!match.permissions[room as keyof Permissions]) {
+          return NextResponse.redirect(new URL('/unauthorized', request.url))
+        }
+      }
+
+      // Stamp the route-appropriate account's metadata
+      response.cookies.set('_wk_role',  match.role, COOKIE_OPTS)
+      response.cookies.set('_wk_perms', JSON.stringify(match.permissions), COOKIE_OPTS)
+      response.cookies.set('_wk_name',  match.name, COOKIE_OPTS)
+      setSecurityHeaders(response)
+      return response
+    }
+  }
+
+  // ── No multi-session cookie — fall back to single-session behaviour ────────
   if (!user && !isAuthRoute) {
     const loginUrl = new URL('/login', request.url)
     if (pathname !== '/') loginUrl.searchParams.set('next', pathname)
@@ -108,9 +189,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    // ── Super admin fast-path ─────────────────────────────────────────────────
-    // Identified by email — bypass staff_members entirely and stamp fresh cookies
-    // so stale staff cookies from a previous session are always overwritten.
+    // Super admin fast-path
     if (user.email === SUPER_ADMIN_EMAIL) {
       if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -122,17 +201,12 @@ export async function middleware(request: NextRequest) {
       response.cookies.set('_wk_role',  'superadmin', COOKIE_OPTS)
       response.cookies.set('_wk_perms', JSON.stringify(SUPER_ADMIN_PERMS), COOKIE_OPTS)
       response.cookies.set('_wk_name',  superAdminName, COOKIE_OPTS)
-      response.headers.set('X-Frame-Options', 'DENY')
-      response.headers.set('X-Content-Type-Options', 'nosniff')
-      response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-      response.headers.set('X-XSS-Protection', '1; mode=block')
-      response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      setSecurityHeaders(response)
       return response
     }
 
-    // ── Staff / regular admin path ────────────────────────────────────────────
+    // Staff / regular admin path
     try {
-      // Service role key bypasses RLS — anon key + user JWT is blocked on staff_members
       const staffRes = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/staff_members` +
         `?email=eq.${encodeURIComponent(user.email ?? '')}` +
@@ -156,15 +230,12 @@ export async function middleware(request: NextRequest) {
           admin: false, management: false, technical: false, finance: false,
         }
 
-        // Redirect logged-in staff away from login / forgot-password
-        // (/reset-password stays accessible — recovery links need it while logged in)
         if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
           return NextResponse.redirect(
             new URL(getPrimaryDest(perms, staffMember.role), request.url)
           )
         }
 
-        // Admin role bypasses all room checks; otherwise verify room access
         if (staffMember.role !== 'admin') {
           const room = getRoomForPath(pathname)
           if (room && !perms[room as keyof Permissions]) {
@@ -172,33 +243,22 @@ export async function middleware(request: NextRequest) {
           }
         }
 
-        // Stamp permission cookies so client components can read them without a DB round-trip
         response.cookies.set('_wk_role',  staffMember.role, COOKIE_OPTS)
         response.cookies.set('_wk_perms', JSON.stringify(perms), COOKIE_OPTS)
         response.cookies.set('_wk_name',  staffMember.full_name ?? '', COOKIE_OPTS)
-
-        response.headers.set('X-Frame-Options', 'DENY')
-        response.headers.set('X-Content-Type-Options', 'nosniff')
-        response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-        response.headers.set('X-XSS-Protection', '1; mode=block')
-        response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        setSecurityHeaders(response)
         return response
       }
 
-      // No staff_members record and not super admin — deny access
       if (!isAuthRoute) {
         return NextResponse.redirect(new URL('/login', request.url))
       }
     } catch {
-      // Fail open on any DB error — do not lock out users
+      // Fail open on DB errors
     }
   }
 
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  setSecurityHeaders(response)
   return response
 }
 

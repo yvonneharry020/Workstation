@@ -4,6 +4,7 @@ import { useTransition, useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loginAction, type LoginState } from '@/lib/auth-actions'
+import { saveAccountToken, tokenKey } from '@/lib/supabase/tab-client'
 
 function ShieldIcon() {
   return (
@@ -72,7 +73,20 @@ function LoginForm() {
       const result = await loginAction(state, formData)
       if (result?.redirectTo) {
         if (result.tabSession) {
+          const { email, access_token, refresh_token, expires_at, expires_in, token_type, supabaseUser } = result.tabSession
+          // Store per-tab identity (tab-specific, not shared across tabs)
           sessionStorage.setItem('_wk_session', JSON.stringify(result.tabSession))
+          // Store this account's JWT in its own localStorage slot so createTabClient()
+          // can authenticate API calls as the correct user, independent of which
+          // account's shared Supabase cookie is currently "active"
+          saveAccountToken(email, {
+            access_token,
+            refresh_token,
+            expires_at,
+            expires_in,
+            token_type,
+            user: supabaseUser,
+          })
         }
         router.replace(result.redirectTo)
       } else {

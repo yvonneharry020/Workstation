@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient } from '@/lib/supabase/tab-client'
 
 interface Message {
   id: string
@@ -89,7 +89,10 @@ function extractName(row: Record<string, unknown>, fallback: string): string {
 }
 
 export default function StaffCommsChannel() {
-  const supabase = createClient()
+  // createTabClient() reads THIS tab's account token from localStorage.
+  // Finance tab uses Jessica Lanre's JWT, Admin tab uses Yvonne Harry's JWT —
+  // independently, even when both are open in the same browser.
+  const supabase = createTabClient()
   const [messages, setMessages]       = useState<Message[]>([])
   const [loading, setLoading]         = useState(true)
   const [body, setBody]               = useState('')

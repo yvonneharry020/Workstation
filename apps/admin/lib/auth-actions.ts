@@ -1,6 +1,6 @@
 'use server'
 
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from './supabase/server'
@@ -10,6 +10,35 @@ import { validatePassword } from './password-validator'
 import { logAdminEvent } from './audit'
 import { sendEmail } from './email'
 import { passwordResetEmail, staffInviteEmail } from './email/templates'
+
+// ─── Multi-session cookie helpers ─────────────────────────────────────────────
+
+type SessionMeta = {
+  id: string
+  name: string
+  role: string
+  department: string | null
+  permissions: { admin: boolean; management: boolean; technical: boolean; finance: boolean }
+}
+
+const SESSIONS_COOKIE_OPTS = {
+  path: '/',
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  httpOnly: false, // client JS needs to read it for logout
+}
+
+async function readSessionsCookie(): Promise<Record<string, SessionMeta>> {
+  const store = await cookies()
+  const raw = store.get('_wk_sessions')?.value
+  if (!raw) return {}
+  try { return JSON.parse(raw) as Record<string, SessionMeta> } catch { return {} }
+}
+
+async function writeSessionsCookie(sessions: Record<string, SessionMeta>) {
+  const store = await cookies()
+  store.set('_wk_sessions', JSON.stringify(sessions), SESSIONS_COOKIE_OPTS)
+}
 
 async function getClientIp(): Promise<string> {
   const h = await headers()
@@ -35,6 +64,13 @@ export type TabSession = {
   role: string
   department: string | null
   permissions: { admin: boolean; management: boolean; technical: boolean; finance: boolean }
+  // Auth tokens — stored per-account in localStorage so each tab can use its own session
+  access_token: string
+  refresh_token: string
+  expires_at: number
+  expires_in: number
+  token_type: string
+  supabaseUser: Record<string, unknown>
 }
 
 export type LoginState = {
@@ -116,8 +152,11 @@ export async function loginAction(
     metadata: { ip },
   })
 
-  // Get authenticated user ID for the tab session
-  const { data: { user: authUser } } = await supabase.auth.getUser()
+  // Get authenticated user + session tokens
+  const [{ data: { user: authUser } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ])
 
   const isSuperAdmin = parsed.data.email === 'yvonne2okis@gmail.com'
   const superAdminName =
@@ -125,19 +164,40 @@ export async function loginAction(
     (authUser?.user_metadata?.name as string | undefined) ??
     'Yvonne Harry'
 
+  const permissions: TabSession['permissions'] = isSuperAdmin
+    ? { admin: true, management: true, technical: true, finance: true }
+    : (staffRecord?.permissions as TabSession['permissions']) ?? { admin: false, management: false, technical: false, finance: false }
+
   const tabSession: TabSession = {
-    id:          authUser?.id ?? '',
-    name:        isSuperAdmin
-                   ? superAdminName
-                   : ((staffRecord as Record<string, unknown> | null)?.full_name as string | null)
-                     ?? parsed.data.email.split('@')[0],
-    email:       parsed.data.email,
-    role:        isSuperAdmin ? 'superadmin' : ((staffRecord?.role as string | null) ?? 'staff'),
-    department:  isSuperAdmin ? 'admin' : ((staffRecord as Record<string, unknown> | null)?.department as string | null) ?? null,
-    permissions: isSuperAdmin
-                   ? { admin: true, management: true, technical: true, finance: true }
-                   : (staffRecord?.permissions as TabSession['permissions']) ?? { admin: false, management: false, technical: false, finance: false },
+    id:           authUser?.id ?? '',
+    name:         isSuperAdmin
+                    ? superAdminName
+                    : ((staffRecord as Record<string, unknown> | null)?.full_name as string | null)
+                      ?? parsed.data.email.split('@')[0],
+    email:        parsed.data.email,
+    role:         isSuperAdmin ? 'superadmin' : ((staffRecord?.role as string | null) ?? 'staff'),
+    department:   isSuperAdmin ? 'admin' : ((staffRecord as Record<string, unknown> | null)?.department as string | null) ?? null,
+    permissions,
+    // Auth tokens for per-tab localStorage slot
+    access_token:  session?.access_token ?? '',
+    refresh_token: session?.refresh_token ?? '',
+    expires_at:    session?.expires_at ?? Math.floor(Date.now() / 1000) + 3600,
+    expires_in:    session?.expires_in ?? 3600,
+    token_type:    'bearer',
+    supabaseUser:  (authUser ?? {}) as Record<string, unknown>,
   }
+
+  // Register this account in the multi-session cookie so middleware can serve
+  // the correct room even when another account's Supabase cookie is "active"
+  const sessions = await readSessionsCookie()
+  sessions[parsed.data.email] = {
+    id:          tabSession.id,
+    name:        tabSession.name,
+    role:        tabSession.role,
+    department:  tabSession.department,
+    permissions: tabSession.permissions,
+  }
+  await writeSessionsCookie(sessions)
 
   // Route to the correct room dashboard based on permissions
   let destination = '/dashboard'
@@ -500,4 +560,27 @@ export async function toggleStaffActiveAction(
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
+}
+
+/**
+ * Removes a single account from the multi-session cookie.
+ * Only signs out from Supabase if this was the last active session.
+ * Other tabs remain unaffected — each uses its own localStorage token.
+ */
+export async function logoutSingleAction(email: string): Promise<{ wasLast: boolean }> {
+  const sessions = await readSessionsCookie()
+  delete sessions[email]
+  const remaining = Object.keys(sessions).length
+
+  if (remaining === 0) {
+    // Last account logged out — clear the Supabase shared session too
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    const store = await cookies()
+    store.delete('_wk_sessions')
+  } else {
+    await writeSessionsCookie(sessions)
+  }
+
+  return { wasLast: remaining === 0 }
 }
