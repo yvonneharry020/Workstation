@@ -72,7 +72,7 @@ export default function CompanySupportTicketScreen() {
     let channelName = 'company-tickets'
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      const ch = supabase
+      const _ch = supabase
         .channel(`company-tickets-${user.id}`)
         .on('postgres_changes', {
           event: 'UPDATE', schema: 'public', table: 'support_tickets',
