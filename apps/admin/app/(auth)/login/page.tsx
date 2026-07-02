@@ -53,6 +53,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
   deactivated: 'Your access has been deactivated. Contact your administrator for help.',
   viewer: 'Your access level has been updated. Please sign in again to continue.',
   permissions_changed: 'Your room access has been updated. Please sign in again.',
+  session_changed: 'Another account signed in on this device. Please sign in again to continue.',
 }
 
 function LoginForm() {
