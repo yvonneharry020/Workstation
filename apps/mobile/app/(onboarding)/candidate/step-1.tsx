@@ -141,7 +141,7 @@ export default function CandidateStep1() {
     try {
       const dob = `${data.dobYear}-${data.dobMonth.padStart(2, '0')}-${data.dobDay.padStart(2, '0')}`
 
-      const { error, data: authData } = await supabase.auth.signUp({
+      const { error, data: _authData } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
