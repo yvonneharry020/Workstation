@@ -6,7 +6,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/stores/authStore'
 
 type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
 type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired'
