@@ -80,7 +80,7 @@ export default function OtpVerifyScreen() {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: mode === 'reset' ? 'recovery' : 'signup',
+        type: mode === 'reset' ? 'recovery' : 'email',
       })
 
       if (error) {
@@ -94,13 +94,17 @@ export default function OtpVerifyScreen() {
       } else if (mode === 'company_signup') {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          await supabase.from('company_profiles').upsert({
+          const { error: profileError } = await supabase.from('company_profiles').upsert({
             id: user.id,
             company_name: companyName ?? user.user_metadata?.company_name ?? '',
             business_email: businessEmail ?? user.email ?? '',
-            phone: phone ?? user.user_metadata?.phone ?? '',
+            business_phone: phone ?? user.user_metadata?.phone ?? '',
             rc_number: rcNumber ?? '',
           }, { onConflict: 'id' })
+          if (profileError) {
+            Alert.alert('Error', 'Could not save your company profile. Please try again.')
+            return
+          }
         }
         router.replace('/(company)/' as never)
       } else {

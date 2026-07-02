@@ -100,6 +100,8 @@ export default function CompanyLayout() {
 
       <Tabs.Screen name="profile/index" options={{ href: null }} />
       <Tabs.Screen name="profile/edit" options={{ href: null }} />
+      <Tabs.Screen name="change-password" options={{ href: null }} />
+      <Tabs.Screen name="notification-settings" options={{ href: null }} />
     </Tabs>
   )
 }

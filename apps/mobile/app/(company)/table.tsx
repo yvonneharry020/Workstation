@@ -135,20 +135,22 @@ export default function AtsTablesScreen() {
   })
 
   const { mutate: createTable, isPending: isCreating } = useMutation({
-    mutationFn: async () => {
-      if (!companyId || !formName.trim()) return
-      const { error } = await supabase.from('ats_tables').insert({
+    mutationFn: async (): Promise<string | null> => {
+      if (!companyId || !formName.trim()) return null
+      const { data, error } = await supabase.from('ats_tables').insert({
         company_id: companyId,
         name: formName.trim(),
         description: formDesc.trim() || null,
-      })
+      }).select('id').single()
       if (error) throw error
+      return data.id as string
     },
-    onSuccess: () => {
+    onSuccess: (newId) => {
       void queryClient.invalidateQueries({ queryKey: ['ats-tables', companyId] })
       setShowCreate(false)
       setFormName('')
       setFormDesc('')
+      if (newId) router.push({ pathname: '/(company)/ats-tables/[id]', params: { id: newId } })
     },
     onError: () => {
       Alert.alert('Error', 'Could not create table. Please try again.')

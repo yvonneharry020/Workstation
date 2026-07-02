@@ -58,7 +58,7 @@ export default function CandidateLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'More',
+          title: 'Settings',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="menu-outline" size={size} color={color} />
           ),
@@ -86,6 +86,9 @@ export default function CandidateLayout() {
       <Tabs.Screen name="jobs/applied" options={{ href: null }} />
       <Tabs.Screen name="jobs/apply" options={{ href: null }} />
       <Tabs.Screen name="profile/edit" options={{ href: null }} />
+      <Tabs.Screen name="profile-template" options={{ href: null }} />
+      <Tabs.Screen name="push-notifications" options={{ href: null }} />
+      <Tabs.Screen name="email-notifications" options={{ href: null }} />
     </Tabs>
   )
 }
