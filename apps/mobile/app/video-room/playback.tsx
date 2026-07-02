@@ -179,10 +179,8 @@ function Timeline({ currentSecs, totalSecs, annotations, onSeek, onAnnotationPre
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function InterviewRecordingPlaybackScreen() {
-  const { bookingId, _recordingId } = useLocalSearchParams<{
-    bookingId: string
-    _recordingId: string
-  }>()
+  const { bookingId } = useLocalSearchParams<{
+    bookingId: string}>()
 
   const role = useAuthStore((s) => s.role)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -191,7 +189,6 @@ export default function InterviewRecordingPlaybackScreen() {
   const [currentSecs, setCurrentSecs] = useState(0)
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1)
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null)
-  const [_showSpeedPicker, _setShowSpeedPicker] = useState(false)
 
   // Access guard — recording is company-only
   const isAuthorised = role === 'company'
