@@ -2,30 +2,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
-import Svg, { Path, Circle, Rect } from 'react-native-svg'
-
-function ShieldIcon({ size = 28, color = '#FF6240' }: { size?: number; color?: string }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 2L4 6V12C4 16.4 7.4 20.5 12 22C16.6 20.5 20 16.4 20 12V6L12 2Z"
-        fill={color}
-        fillOpacity={0.15}
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M9 12L11 14L15 10"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  )
-}
+import Svg, { Path } from 'react-native-svg'
 
 function CheckBadge({ color = '#0DD4C3' }: { color?: string }) {
   return (
