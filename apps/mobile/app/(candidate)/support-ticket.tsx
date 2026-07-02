@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
-  ScrollView, ActivityIndicator, Alert, Pressable,
-} from 'react-native'
+  ScrollView, ActivityIndicator, Alert,} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { supabase } from '@/lib/supabase'
@@ -74,7 +73,7 @@ export default function CandidateSupportTicketScreen() {
     let channelName = 'candidate-tickets'
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      const ch = supabase
+      const _ch = supabase
         .channel(channelName)
         .on('postgres_changes', {
           event: 'UPDATE', schema: 'public', table: 'support_tickets',
