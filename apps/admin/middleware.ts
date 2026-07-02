@@ -154,17 +154,19 @@ export async function middleware(request: NextRequest) {
   const hasSessions = Object.keys(sessions).length > 0
 
   if (hasSessions && user) {
+    // When multiple accounts are active, always allow /login to be shown.
+    // A second user opening a new tab needs to be able to sign in as themselves
+    // even though another account's session already exists in _wk_sessions.
+    // The login page itself handles redirecting already-logged-in tabs via sessionStorage.
+    if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
+      setSecurityHeaders(response)
+      return response
+    }
+
     const room = getRoomForPath(pathname)
     const match = pickSessionForRoom(room, sessions)
 
     if (match) {
-      // Redirect away from login if any session exists
-      if (['/login', '/forgot-password'].some(r => pathname.startsWith(r))) {
-        return NextResponse.redirect(
-          new URL(getPrimaryDest(match.permissions, match.role), request.url)
-        )
-      }
-
       // Permission check: superadmin bypasses all; others need explicit room permission
       if (match.role !== 'superadmin' && match.role !== 'admin' && room) {
         if (!match.permissions[room as keyof Permissions]) {

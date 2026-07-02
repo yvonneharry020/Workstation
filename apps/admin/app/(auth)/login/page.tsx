@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState, useRef, Suspense } from 'react'
+import { useTransition, useState, useRef, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { loginAction, type LoginState } from '@/lib/auth-actions'
@@ -65,6 +65,28 @@ function LoginForm() {
   const [isPending, startTransition] = useTransition()
   const [showPw, setShowPw] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+
+  // If THIS tab already has its own session, redirect back to the correct room.
+  // This handles: Admin on Tab 0 accidentally navigates to /login — send them back.
+  // It does NOT affect Tab 1 (no sessionStorage → stays on login so they can sign in).
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('_wk_session')
+      if (!stored) return
+      const s = JSON.parse(stored) as { role?: string; permissions?: { admin?: boolean; management?: boolean; technical?: boolean; finance?: boolean } }
+      if (!s.role) return
+      const perms = s.permissions ?? {}
+      if (s.role === 'superadmin' || s.role === 'admin' || perms.admin) {
+        router.replace('/dashboard')
+      } else if (perms.management) {
+        router.replace('/ops/dashboard')
+      } else if (perms.technical) {
+        router.replace('/tech/dashboard')
+      } else if (perms.finance) {
+        router.replace('/finance/dashboard')
+      }
+    } catch { /* ignore */ }
+  }, [router])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
