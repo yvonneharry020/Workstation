@@ -233,7 +233,7 @@ export default function IntegrationsPage() {
           {historyLoading ? (
             <p className="text-[13px]" style={{ color: 'var(--tx-3)' }}>Loading…</p>
           ) : history.length === 0 ? (
-            <p className="text-[13px]" style={{ color: 'var(--tx-3)' }}>No history yet. Click "Check All Services" to begin.</p>
+            <p className=&quot;text-[13px]&quot; style={{ color: 'var(--tx-3)' }}>No history yet. Click &quot;Check All Services&quot; to begin.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
