@@ -51,7 +51,9 @@ export default function JobQueuePage() {
   const supabase = createTabClient()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [toggling, setToggling] = useState<string | null>(null)
 
   useEffect(() => {
@@ -95,6 +97,12 @@ export default function JobQueuePage() {
     setLoading(false)
   }
 
+  async function handleRefresh() {
+    setRefreshing(true)
+    await load()
+    setRefreshing(false)
+  }
+
   async function toggleClose(job: Job) {
     if (toggling) return
     setToggling(job.id)
@@ -123,15 +131,51 @@ export default function JobQueuePage() {
     setToggling(null)
   }
 
-  const filtered = filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
+  const byStatus = filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
+  const filtered = search.trim() === ''
+    ? byStatus
+    : byStatus.filter(j => {
+        const q = search.toLowerCase()
+        return (
+          j.title.toLowerCase().includes(q) ||
+          (j.company_profiles?.company_name ?? '').toLowerCase().includes(q)
+        )
+      })
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold font-display text-text-primary">Job Queue</h1>
-        <p className="text-sm text-text-muted mt-1">
-          All job postings across every company on Workstation. Applications and status update in real time.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold font-display text-text-primary">Job Queue</h1>
+          <p className="text-sm text-text-muted mt-1">
+            All job postings across every company on Workstation. Applications and status update in real time.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="relative">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search company or role…"
+              className="pl-8 pr-3 py-1.5 text-xs bg-surface-elevated border border-surface-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-ops-500 w-52 transition-colors"
+            />
+          </div>
+          <button
+            onClick={() => void handleRefresh()}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-surface-elevated border border-surface-border rounded-lg text-text-primary hover:bg-surface-card transition-colors disabled:opacity-50"
+          >
+            <svg className={refreshing ? 'animate-spin' : ''} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-1 mb-4 border-b border-surface-border pb-2">
