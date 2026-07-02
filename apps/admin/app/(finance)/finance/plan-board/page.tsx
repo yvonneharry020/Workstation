@@ -469,7 +469,7 @@ export default function PlanBoardPage() {
                     Plan Highlights (key → value)
                   </label>
                   <p className="text-[11px] mb-3" style={{ color: 'var(--tx-3)' }}>
-                    E.g. "Job Alerts" → "Unlimited" or "Profile Views" → "50/month"
+                    E.g. &quot;Job Alerts&quot; → &quot;Unlimited&quot; or &quot;Profile Views&quot; → &quot;50/month&quot;
                   </p>
                   {Object.entries(form.highlights).map(([k, v]) => (
                     <div key={k} className="flex items-center gap-2 mb-2">
