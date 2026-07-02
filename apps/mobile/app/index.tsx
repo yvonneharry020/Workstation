@@ -20,13 +20,13 @@ function SplashContent() {
   const taglineOpacity = useSharedValue(isWeb ? 1 : 0)
   const dotsOpacity = useSharedValue(isWeb ? 1 : 0)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     logoScale.value = withSpring(1, { damping: 14, stiffness: 120 })
     logoOpacity.value = withTiming(1, { duration: 400 })
     titleOpacity.value = withDelay(260, withTiming(1, { duration: 500 }))
     taglineOpacity.value = withDelay(480, withTiming(1, { duration: 500 }))
     dotsOpacity.value = withDelay(700, withTiming(1, { duration: 400 }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const logoStyle = useAnimatedStyle(() => ({
