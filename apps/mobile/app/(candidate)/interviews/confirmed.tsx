@@ -18,7 +18,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { useQuery } from '@tanstack/react-query'
-import Svg, { Path, Circle, Polyline } from 'react-native-svg'
+import Svg, { Path, Polyline } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 
 interface BookingDetail {
