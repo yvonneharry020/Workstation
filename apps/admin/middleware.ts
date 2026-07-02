@@ -174,7 +174,14 @@ export async function middleware(request: NextRequest) {
         }
       }
 
-      // Stamp the route-appropriate account's metadata
+      // Stamp on request so Server Components (layouts) read the correct values.
+      // NextResponse.next({ request }) forwards the mutated request to RSC.
+      request.cookies.set('_wk_role',  match.role)
+      request.cookies.set('_wk_perms', JSON.stringify(match.permissions))
+      request.cookies.set('_wk_name',  match.name)
+      response = NextResponse.next({ request })
+
+      // Also stamp on response so the browser persists the updated cookies.
       response.cookies.set('_wk_role',  match.role, COOKIE_OPTS)
       response.cookies.set('_wk_perms', JSON.stringify(match.permissions), COOKIE_OPTS)
       response.cookies.set('_wk_name',  match.name, COOKIE_OPTS)

@@ -1,28 +1,18 @@
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-const SUPER_ADMIN_EMAIL = 'yvonne2okis@gmail.com'
-
 export default async function TechRootLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const cookieStore = await cookies()
+  const role     = cookieStore.get('_wk_role')?.value
+  const permsRaw = cookieStore.get('_wk_perms')?.value
 
-  if (user.email !== SUPER_ADMIN_EMAIL) {
-    const admin = createAdminClient()
-    const { data: staffMember } = await admin
-      .from('staff_members')
-      .select('role, permissions, is_active')
-      .eq('email', user.email!)
-      .maybeSingle()
+  if (!role) redirect('/login')
 
-    const perms = (staffMember?.permissions as Record<string, boolean>) ?? {}
-    const hasAccess =
-      staffMember?.is_active &&
-      (staffMember.role === 'admin' || perms.technical === true)
-
-    if (!hasAccess) redirect('/unauthorized')
+  if (role !== 'superadmin' && role !== 'admin') {
+    const perms = permsRaw
+      ? (JSON.parse(permsRaw) as { technical?: boolean })
+      : {}
+    if (!perms.technical) redirect('/unauthorized')
   }
 
   return <>{children}</>

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient } from '@/lib/supabase/tab-client'
 import DeptSidebar from '@/components/department/DeptSidebar'
 
 interface TechCounts {
@@ -78,7 +78,7 @@ export default function TechLayout({ children }: { children: React.ReactNode }) 
   const [counts, setCounts] = useState<TechCounts>(ZERO)
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = createTabClient()
 
     async function refreshCounts() {
       const [

@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -34,7 +35,10 @@ export function createTabClient() {
 
   const email = getTabEmail()
   if (!email) {
-    return createClient(SUPABASE_URL, SUPABASE_ANON)
+    // No tab session — fall back to the SSR browser client which reads the
+    // shared Supabase cookie. This covers: users already logged in before
+    // this multi-account system was deployed, page reloads in new tabs, etc.
+    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON)
   }
 
   const slotKey = tokenKey(email)

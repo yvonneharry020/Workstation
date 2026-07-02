@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient } from '@/lib/supabase/tab-client'
 
 type TicketStatus = 'sent' | 'in_progress' | 'resolved' | 'closed'
 type TicketPriority = 'low' | 'normal' | 'high' | 'urgent'
@@ -52,7 +52,7 @@ function fmtTime(iso: string) {
 }
 
 export default function AdminInboxPage() {
-  const supabase = createClient()
+  const supabase = createTabClient()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
