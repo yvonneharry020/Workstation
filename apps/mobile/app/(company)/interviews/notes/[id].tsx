@@ -16,7 +16,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuthStore } from '@/stores/authStore'
 
 type InterviewStatus = 'booked' | 'completed' | 'cancelled' | 'no_show'
 type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
