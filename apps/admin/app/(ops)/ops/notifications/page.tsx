@@ -57,7 +57,7 @@ export default function OpsNotificationsPage() {
   useEffect(() => {
     async function load() {
       const { data } = await supabase
-        .from('notifications')
+        .from('admin_broadcasts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50)
@@ -71,7 +71,7 @@ export default function OpsNotificationsPage() {
     if (!form.title.trim() || !form.body.trim()) return
     setCreating(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from('notifications').insert({
+    const { data, error } = await supabase.from('admin_broadcasts').insert({
       title: form.title.trim(),
       body: form.body.trim(),
       type: form.type,
@@ -101,7 +101,7 @@ export default function OpsNotificationsPage() {
   }
 
   async function handleToggle(id: string, current: boolean) {
-    await supabase.from('notifications').update({ is_active: !current }).eq('id', id)
+    await supabase.from('admin_broadcasts').update({ is_active: !current }).eq('id', id)
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_active: !current } : n))
   }
 

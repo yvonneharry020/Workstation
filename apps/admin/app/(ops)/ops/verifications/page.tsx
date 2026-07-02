@@ -144,11 +144,11 @@ export default function VerificationsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('admin_notifications').insert({
       type: 'reupload_request',
+      category: 'verification',
       title: 'Document Re-upload Required',
       body: `Please re-upload your ${DOC_LABELS[doc.doc_type] ?? doc.doc_type}. Notes: ${docNotes[doc.id] ?? 'Please provide a clearer photo.'}`,
-      target_user_id: doc.candidate_id,
-      actor_id: user?.id ?? null,
       is_read: false,
+      metadata: { doc_id: doc.id, candidate_id: doc.candidate_id, requested_by: user?.id ?? null },
     })
     setDocActing(null)
     alert('Re-upload request sent to candidate')
@@ -157,7 +157,7 @@ export default function VerificationsPage() {
   async function updateCandidateStatus(id: string, status: string) {
     setActing(id)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('candidates').update({ verification_status: status }).eq('id', id)
+    await supabase.from('candidate_verification').update({ overall_status: status }).eq('candidate_id', id)
     await supabase.from('audit_logs').insert({
       event: `admin.candidate_verification_${status}`,
       actor_email: user?.email ?? null,
@@ -175,7 +175,7 @@ export default function VerificationsPage() {
   async function updateCompanyStatus(id: string, status: string) {
     setActing(id)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('companies').update({ verification_status: status }).eq('id', id)
+    await supabase.from('company_verification').update({ overall_status: status }).eq('company_id', id)
     await supabase.from('audit_logs').insert({
       event: `admin.company_verification_${status}`,
       actor_email: user?.email ?? null,

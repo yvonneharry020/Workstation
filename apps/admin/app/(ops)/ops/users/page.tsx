@@ -68,13 +68,38 @@ export default function OpsUsersPage() {
     setActing(null)
   }
 
-  async function freezeUser(user: User) {
+  async function suspendUser(user: User) {
     setActing(user.id)
     const { data: { user: admin } } = await supabase.auth.getUser()
-    const table = user.type === 'candidate' ? 'candidates' : 'companies'
-    await supabase.from(table as never).update({ verification_status: 'rejected' }).eq('id', user.id)
+    await supabase.from('profiles').update({
+      is_suspended: true,
+      suspended_at: new Date().toISOString(),
+      suspended_reason: 'Suspended by admin',
+    }).eq('id', user.id)
     await supabase.from('audit_logs').insert({
-      event: 'admin.user_frozen',
+      event: 'admin.user_suspended',
+      actor_email: admin?.email ?? null,
+      actor_id: admin?.id ?? null,
+      actor_type: 'admin',
+      target_id: user.id,
+      target_type: user.type,
+      target_name: user.full_name,
+      severity: 'warning',
+      app: 'admin_panel',
+    })
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, verification_status: 'suspended' } : u))
+    setActing(null)
+  }
+
+  async function banUser(user: User) {
+    setActing(user.id)
+    const { data: { user: admin } } = await supabase.auth.getUser()
+    await supabase.from('profiles').update({ is_active: false }).eq('id', user.id)
+    const verTable = user.type === 'candidate' ? 'candidate_verification' : 'company_verification'
+    const verKey   = user.type === 'candidate' ? 'candidate_id'           : 'company_id'
+    await supabase.from(verTable as never).update({ overall_status: 'rejected' }).eq(verKey, user.id)
+    await supabase.from('audit_logs').insert({
+      event: 'admin.user_banned',
       actor_email: admin?.email ?? null,
       actor_id: admin?.id ?? null,
       actor_type: 'admin',
@@ -140,11 +165,10 @@ export default function OpsUsersPage() {
                     <td className="px-4 py-3 text-text-muted">{user.trust_score !== null ? `${user.trust_score}%` : '—'}</td>
                     <td className="px-4 py-3 text-text-muted text-xs">{formatDate(user.created_at)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => void warnUser(user)} disabled={acting === user.id} className="px-3 py-1.5 bg-yellow-900/20 border border-yellow-800/30 text-yellow-400 text-xs font-semibold rounded-lg hover:bg-yellow-900/30 transition-colors disabled:opacity-40">Warn</button>
-                        {user.verification_status !== 'rejected' && (
-                          <button onClick={() => void freezeUser(user)} disabled={acting === user.id} className="px-3 py-1.5 bg-red-900/20 border border-red-800/30 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/30 transition-colors disabled:opacity-40">Freeze</button>
-                        )}
+                      <div className="flex gap-1.5">
+                        <button onClick={() => void warnUser(user)} disabled={acting === user.id} className="px-2.5 py-1.5 bg-yellow-900/20 border border-yellow-800/30 text-yellow-400 text-xs font-semibold rounded-lg hover:bg-yellow-900/30 transition-colors disabled:opacity-40">Warn</button>
+                        <button onClick={() => void suspendUser(user)} disabled={acting === user.id} className="px-2.5 py-1.5 bg-orange-900/20 border border-orange-800/30 text-orange-400 text-xs font-semibold rounded-lg hover:bg-orange-900/30 transition-colors disabled:opacity-40">Suspend</button>
+                        <button onClick={() => void banUser(user)} disabled={acting === user.id} className="px-2.5 py-1.5 bg-red-900/20 border border-red-800/30 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/30 transition-colors disabled:opacity-40">Ban</button>
                       </div>
                     </td>
                   </tr>

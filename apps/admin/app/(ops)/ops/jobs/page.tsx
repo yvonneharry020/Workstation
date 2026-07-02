@@ -49,7 +49,7 @@ export default function JobsPage() {
   async function updateJobStatus(id: string, status: string) {
     setActing(id)
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('jobs').update({ status }).eq('id', id)
+    await supabase.from('job_postings').update({ status }).eq('id', id)
     await supabase.from('audit_logs').insert({
       event: `admin.job_${status}`,
       actor_email: user?.email ?? null,
