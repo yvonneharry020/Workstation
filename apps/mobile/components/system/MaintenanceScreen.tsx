@@ -29,6 +29,7 @@ function WrenchIcon() {
 function PulsingDot({ delay }: { delay: number }) {
   const opacity = useSharedValue(0.3)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const id = setTimeout(() => {
       opacity.value = withRepeat(
