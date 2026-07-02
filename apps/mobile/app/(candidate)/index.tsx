@@ -24,7 +24,7 @@ interface CandidateProfile {
   avatar_url: string | null
   profile_completion: number
   is_open_to_work: boolean
-  trust_scores: Array<{ score: number; level: string }> | null
+  trust_scores: { score: number; level: string }[] | null
 }
 
 interface JobPosting {
@@ -96,16 +96,6 @@ function TrustRing({ score }: { score: number }) {
         <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '800' }}>{score}</Text>
         <Text style={{ color: '#64748B', fontSize: 9 }}>/ 100</Text>
       </View>
-    </View>
-  )
-}
-
-function WorkBadge({ mode }: { mode: string }) {
-  const label = mode === 'remote' ? 'Remote' : mode === 'hybrid' ? 'Hybrid' : 'On-site'
-  const color = mode === 'remote' ? '#0DD4C3' : mode === 'hybrid' ? '#A78BFA' : '#F59E0B'
-  return (
-    <View style={{ paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6, backgroundColor: `${color}20`, borderWidth: 1, borderColor: `${color}40` }}>
-      <Text style={{ color, fontSize: 10, fontWeight: '600' }}>{label}</Text>
     </View>
   )
 }
