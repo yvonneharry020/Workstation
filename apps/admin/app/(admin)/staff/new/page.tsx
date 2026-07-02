@@ -153,7 +153,7 @@ export default function NewStaffPage() {
         </button>
         <div>
           <h1 className="text-lg font-semibold font-display text-text-primary">Add Staff Member</h1>
-          <p className="text-xs text-text-muted mt-0.5">They'll receive a login invite to their email</p>
+          <p className="text-xs text-text-muted mt-0.5">{"They'll receive a login invite to their email"}</p>
         </div>
       </div>
 
