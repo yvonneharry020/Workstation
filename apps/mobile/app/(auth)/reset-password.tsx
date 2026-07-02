@@ -77,11 +77,6 @@ export default function ResetPasswordScreen() {
     )
   }
 
-  const _requirements = [
-    { label: `At least ${PASSWORD_MIN} characters`, done: true },
-    { label: 'Mix of letters and numbers recommended', done: false },
-  ]
-
   return (
     <SafeAreaView className="flex-1 bg-surface px-5">
       <Animated.View entering={FadeInUp.delay(50).duration(500)} className="items-center mt-10 mb-8">
