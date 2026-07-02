@@ -180,7 +180,7 @@ export default function OpsTicketsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('audit_logs').insert({
       event: 'admin.ticket_opened', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-      actor_type: 'staff', target_id: id, target_type: 'support_ticket',
+      actor_type: 'admin', target_id: id, target_type: 'support_ticket',
       target_name: ticket.subject, severity: 'info', app: 'admin_panel',
       metadata: { ticket_number: ticket.ticket_number },
     })
@@ -207,7 +207,7 @@ export default function OpsTicketsPage() {
       : t))
     await supabase.from('audit_logs').insert({
       event: 'admin.ticket_resolved', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-      actor_type: 'staff', target_id: selectedId, target_type: 'support_ticket',
+      actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',
       target_name: selected.subject, severity: 'info', app: 'admin_panel',
       metadata: { ticket_number: selected.ticket_number },
     })
@@ -244,7 +244,7 @@ export default function OpsTicketsPage() {
       priority: selected.priority,
       status: 'sent',
       department: targetDept,
-      source: 'dept_copy',
+      source: 'admin_created',
       internal_notes: null,
       created_by_email: user?.email ?? null,
     })
@@ -325,7 +325,7 @@ export default function OpsTicketsPage() {
       })
       await supabase.from('audit_logs').insert({
         event: 'admin.ticket_created', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-        actor_type: 'staff', target_id: (data as Ticket).id, target_type: 'support_ticket',
+        actor_type: 'admin', target_id: (data as Ticket).id, target_type: 'support_ticket',
         target_name: createForm.subject, severity: 'info', app: 'admin_panel',
       })
       setShowCreate(false)

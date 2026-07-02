@@ -150,7 +150,7 @@ function NewDisputeModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
     await supabase.from('audit_logs').insert({
       event: 'ops.badge_dispute_created',
-      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'staff',
+      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'admin',
       severity: 'info', app: 'admin_panel',
       metadata: { candidate: form.candidateName, company: form.companyName },
     })
@@ -327,7 +327,7 @@ function DecisionModal({
 
     await supabase.from('audit_logs').insert({
       event: `ops.badge_dispute_${action}`,
-      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'staff',
+      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'admin',
       target_id: disputeId, target_type: 'badge_dispute', target_name: candidateName,
       severity: action === 'denied' ? 'warning' : 'info', app: 'admin_panel',
       metadata: { note: note.trim() || null },
@@ -402,7 +402,7 @@ function SendToAdminModal({ dispute, onClose, onDone }: { dispute: Dispute; onCl
 
     await supabase.from('audit_logs').insert({
       event: 'ops.badge_dispute_sent_to_admin',
-      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'staff',
+      actor_email: user?.email ?? null, actor_id: user?.id ?? null, actor_type: 'admin',
       target_id: dispute.id, target_type: 'badge_dispute', target_name: dispute.candidate_name,
       severity: 'info', app: 'admin_panel',
     })

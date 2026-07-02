@@ -89,7 +89,7 @@ export default function OpsNotificationsPage() {
         event: 'ops.notification_sent',
         actor_email: user?.email ?? null,
         actor_id: user?.id ?? null,
-        actor_type: 'staff',
+        actor_type: 'admin',
         target_type: 'notification',
         target_name: form.title,
         severity: 'info',

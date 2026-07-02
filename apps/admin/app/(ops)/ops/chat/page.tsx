@@ -177,7 +177,7 @@ export default function OpsLiveChatPage() {
         event: 'admin.support_reply_sent',
         actor_email: staffEmail,
         actor_id: user?.id ?? null,
-        actor_type: 'staff',
+        actor_type: 'admin',
         target_id: selectedId,
         target_type: 'chat_thread',
         target_name: selected?.user_name,

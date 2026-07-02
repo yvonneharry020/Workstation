@@ -135,7 +135,7 @@ export default function TechTicketsPage() {
     }).eq('id', selectedId)
     await supabase.from('audit_logs').insert({
       event: 'tech.ticket_resolved', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-      actor_type: 'staff', target_id: selectedId, target_type: 'support_ticket',
+      actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',
       target_name: selected.subject, severity: 'info', app: 'admin_panel',
       metadata: { ticket_number: selected.ticket_number },
     })
@@ -156,7 +156,7 @@ export default function TechTicketsPage() {
     }).eq('id', selectedId)
     await supabase.from('audit_logs').insert({
       event: 'tech.ticket_returned', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-      actor_type: 'staff', target_id: selectedId, target_type: 'support_ticket',
+      actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',
       target_name: selected.subject, severity: 'info', app: 'admin_panel',
       metadata: { ticket_number: selected.ticket_number, returned_to: 'Management' },
     })
