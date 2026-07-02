@@ -205,7 +205,7 @@ export default function TechAdminInboxPage() {
               {selected.status === 'in_progress' && (
                 <div className="bg-tech-900/10 border border-tech-800/30 rounded-xl p-4">
                   <p className="text-xs font-semibold text-tech-400 mb-1">Admin is reviewing this message</p>
-                  <p className="text-xs text-text-muted">You'll see their response here once they've handled it.</p>
+                  <p className="text-xs text-text-muted"{"You'll see their response here once they've handled it."}</p>
                 </div>
               )}
             </div>
