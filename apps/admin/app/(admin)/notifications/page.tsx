@@ -57,7 +57,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     async function load() {
       const { data } = await supabase
-        .from('notifications')
+        .from('admin_broadcasts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50)

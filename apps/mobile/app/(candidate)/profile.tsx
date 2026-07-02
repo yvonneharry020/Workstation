@@ -35,7 +35,7 @@ interface CandidateData {
 
 interface WorkHistory {
   id: string
-  job_title: string
+  role_title: string
   company_name: string
   start_date: string
   end_date: string | null
@@ -146,9 +146,9 @@ export default function CandidateProfileScreen() {
         .from('candidate_profiles')
         .select('*, trust_scores(score, level)')
         .eq('id', user!.id)
-        .single()
+        .maybeSingle()
       if (error) throw new Error(error.message)
-      return data as unknown as CandidateData
+      return (data ?? {}) as unknown as CandidateData
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 2,
@@ -329,7 +329,7 @@ export default function CandidateProfileScreen() {
                   </View>
                   <View style={{ flex: 1, paddingBottom: idx < workHistory.length - 1 ? 12 : 0 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', flex: 1 }}>{w.job_title}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', flex: 1 }}>{w.role_title}</Text>
                       {w.is_current && (
                         <View style={{ backgroundColor: '#22C55E15', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3, marginLeft: 8 }}>
                           <Text style={{ color: '#22C55E', fontSize: 10, fontWeight: '700' }}>Current</Text>

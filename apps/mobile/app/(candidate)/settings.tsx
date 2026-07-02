@@ -1,182 +1,74 @@
 import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
+  View, Text, Pressable, ScrollView,
+  Alert, ActivityIndicator, Modal, TextInput,
 } from 'react-native'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import Svg, { Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { logEvent } from '@/lib/audit'
 
-interface NotifPrefs {
-  push_profile_viewed: boolean
-  push_application: boolean
-  push_email_opened: boolean
-  push_interview: boolean
-  push_badge: boolean
-  push_job_match: boolean
-  email_application: boolean
-  email_interview: boolean
-  email_badge: boolean
-  email_job_match: boolean
-}
+const DELETE_PHRASE = 'DELETE MY ACCOUNT'
 
-const DEFAULT_PREFS: NotifPrefs = {
-  push_profile_viewed: true,
-  push_application: true,
-  push_email_opened: true,
-  push_interview: true,
-  push_badge: true,
-  push_job_match: true,
-  email_application: true,
-  email_interview: true,
-  email_badge: true,
-  email_job_match: true,
-}
-
-function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
+function ChevronIcon() {
   return (
-    <Pressable
-      onPress={onToggle}
-      style={{
-        width: 44,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: value ? '#FF6240' : '#C8BFB0',
-        padding: 2,
-        justifyContent: 'center',
-        alignItems: value ? 'flex-end' : 'flex-start',
-      }}
-    >
-      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#1A1625' }} />
-    </Pressable>
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M9 18l6-6-6-6" />
+    </Svg>
   )
 }
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <Text style={{
-      color: '#FF6240',
-      fontSize: 11,
-      fontWeight: '700',
-      letterSpacing: 1,
-      textTransform: 'uppercase',
-      marginBottom: 12,
-      marginTop: 24,
-    }}>
+    <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10, marginTop: 24 }}>
       {title}
     </Text>
   )
 }
 
-function SettingToggleRow({
-  label,
-  sublabel,
-  value,
-  onToggle,
-}: {
-  label: string
-  sublabel?: string
-  value: boolean
-  onToggle: () => void
-}) {
+function NavRow({ label, sub, onPress, danger }: { label: string; sub?: string; onPress: () => void; danger?: boolean }) {
   return (
     <Pressable
-      onPress={onToggle}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDD6C9',
-      }}
+      onPress={onPress}
+      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
+      className="active:opacity-70"
     >
-      <View style={{ flex: 1, marginRight: 16 }}>
-        <Text style={{ color: '#1A1625', fontSize: 14 }}>{label}</Text>
-        {sublabel ? (
-          <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{sublabel}</Text>
-        ) : null}
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: danger ? '#EF4444' : '#1A1625', fontSize: 14, fontWeight: '500' }}>{label}</Text>
+        {sub && <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{sub}</Text>}
       </View>
-      <Toggle value={value} onToggle={onToggle} />
+      {!danger && <ChevronIcon />}
     </Pressable>
   )
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+    <View style={{ paddingVertical: 13, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
       <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }}>{label}</Text>
       <Text style={{ color: '#5A4F6E', fontSize: 14 }}>{value}</Text>
     </View>
   )
 }
 
-function ActionRow({ label, onPress, destructive }: { label: string; onPress: () => void; destructive?: boolean }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
-    >
-      <Text style={{ color: destructive ? '#EF4444' : '#FF6240', fontSize: 14, fontWeight: '500' }}>
-        {label}
-      </Text>
-    </Pressable>
-  )
-}
-
 export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user)
   const reset = useAuthStore((s) => s.reset)
-  const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS)
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const { data: loadedPrefs, isLoading } = useQuery<NotifPrefs | null>({
-    queryKey: ['notif-prefs', user?.id],
+  const { isLoading } = useQuery({
+    queryKey: ['settings-check', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', user!.id)
-        .maybeSingle()
-      return data as NotifPrefs | null
+      const { data } = await supabase.from('candidate_profiles').select('id').eq('id', user!.id).maybeSingle()
+      return data
     },
     enabled: !!user?.id,
   })
-
-  useEffect(() => {
-    if (loadedPrefs) setPrefs(loadedPrefs)
-  }, [loadedPrefs])
-
-  const updatePref = async (key: keyof NotifPrefs, value: boolean) => {
-    const updated = { ...prefs, [key]: value }
-    setPrefs(updated)
-    setIsSavingPrefs(true)
-    try {
-      await supabase
-        .from('notification_preferences')
-        .upsert({ user_id: user!.id, [key]: value }, { onConflict: 'user_id' })
-    } finally {
-      setIsSavingPrefs(false)
-    }
-  }
-
-  const changePassword = async () => {
-    const email = user?.email ?? ''
-    if (!email) return
-    const { error } = await supabase.auth.resetPasswordForEmail(email)
-    if (error) {
-      Alert.alert('Error', error.message)
-    } else {
-      Alert.alert('Email sent', `We've sent a password reset link to ${email}`)
-    }
-  }
 
   const handleLogout = () => {
     Alert.alert('Log out', 'Are you sure you want to log out?', [
@@ -194,179 +86,150 @@ export default function SettingsScreen() {
     ])
   }
 
-  const handleDeactivate = () => {
-    Alert.alert(
-      'Deactivate account',
-      'Your profile will be hidden from employers. You can reactivate at any time by logging back in.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Deactivate',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase
-              .from('candidate_profiles')
-              .update({ is_open_to_work: false })
-              .eq('id', user!.id)
-            logEvent({ event: 'user.account_deleted', app: 'candidate_app', severity: 'warning', metadata: { type: 'deactivation' } })
-            Alert.alert('Account deactivated', 'Your profile is now hidden from employers.')
-          },
-        },
-      ]
-    )
+  const handleChangePassword = async () => {
+    const email = user?.email ?? ''
+    if (!email) return
+    const { error } = await supabase.auth.resetPasswordForEmail(email)
+    if (error) {
+      Alert.alert('Error', error.message)
+    } else {
+      Alert.alert('Email sent', `We've sent a password reset link to ${email}`)
+    }
   }
 
-  const handleDeleteData = () => {
-    Alert.alert(
-      'Delete all data',
-      'To delete all your data, please contact our support team at support@workstation.ng. We process data deletion requests within 30 days.',
-      [{ text: 'OK' }]
-    )
+  const handleDeleteAccount = async () => {
+    if (deleteText !== DELETE_PHRASE) return
+    setIsDeleting(true)
+    try {
+      logEvent({ event: 'user.account_deleted', app: 'candidate_app', severity: 'warning' })
+      await supabase.rpc('delete_candidate_account')
+      await supabase.auth.signOut()
+      reset()
+      setShowDeleteModal(false)
+      router.replace('/(auth)/welcome' as never)
+    } catch {
+      Alert.alert('Error', 'Could not delete your account. Please contact support@workstation.ng')
+      setIsDeleting(false)
+    }
   }
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-surface items-center justify-center">
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color="#FF6240" />
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      {/* Header */}
-      <View style={{
-        paddingHorizontal: 20,
-        paddingTop: 8,
-        paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#DDD6C9',
-      }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
         <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Settings</Text>
       </View>
 
-      <ScrollView
-        className="flex-1 px-5"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 60 }}
-      >
+      <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+
         {/* Account */}
         <SectionHeader title="Account" />
-        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
           <InfoRow label="Email address" value={user?.email ?? '—'} />
-          <ActionRow label="Change password →" onPress={changePassword} />
+          <NavRow label="Change password" sub="Reset via email link" onPress={handleChangePassword} />
+          <NavRow label="Profile Template" sub="Choose how companies see your profile" onPress={() => router.push('/(candidate)/profile-template' as never)} />
         </View>
 
-        {/* Push notifications */}
-        <SectionHeader title="Push Notifications" />
-        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
-          <SettingToggleRow
-            label="Profile viewed"
-            sublabel="When a company views your profile"
-            value={prefs.push_profile_viewed}
-            onToggle={() => updatePref('push_profile_viewed', !prefs.push_profile_viewed)}
+        {/* Notifications */}
+        <SectionHeader title="Notifications" />
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
+          <NavRow
+            label="Push Notifications"
+            sub="Profile views, applications, interviews, badges"
+            onPress={() => router.push('/(candidate)/push-notifications' as never)}
           />
-          <SettingToggleRow
-            label="Application updates"
-            sublabel="Status changes on your applications"
-            value={prefs.push_application}
-            onToggle={() => updatePref('push_application', !prefs.push_application)}
-          />
-          <SettingToggleRow
-            label="Email opened alerts"
-            sublabel="When a company opens your application email"
-            value={prefs.push_email_opened}
-            onToggle={() => updatePref('push_email_opened', !prefs.push_email_opened)}
-          />
-          <SettingToggleRow
-            label="Interview scheduled"
-            sublabel="New interview invitations"
-            value={prefs.push_interview}
-            onToggle={() => updatePref('push_interview', !prefs.push_interview)}
-          />
-          <SettingToggleRow
-            label="Badge issued"
-            sublabel="When a company issues you a work badge"
-            value={prefs.push_badge}
-            onToggle={() => updatePref('push_badge', !prefs.push_badge)}
-          />
-          <SettingToggleRow
-            label="Job matches"
-            sublabel="New jobs matching your preferences"
-            value={prefs.push_job_match}
-            onToggle={() => updatePref('push_job_match', !prefs.push_job_match)}
+          <NavRow
+            label="Email Notifications"
+            sub="Application updates, reminders, job matches"
+            onPress={() => router.push('/(candidate)/email-notifications' as never)}
           />
         </View>
 
-        {/* Email notifications */}
-        <SectionHeader title="Email Notifications" />
-        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 16, overflow: 'hidden' }}>
-          <SettingToggleRow
-            label="Application updates"
-            value={prefs.email_application}
-            onToggle={() => updatePref('email_application', !prefs.email_application)}
-          />
-          <SettingToggleRow
-            label="Interview reminders"
-            value={prefs.email_interview}
-            onToggle={() => updatePref('email_interview', !prefs.email_interview)}
-          />
-          <SettingToggleRow
-            label="Badge notifications"
-            value={prefs.email_badge}
-            onToggle={() => updatePref('email_badge', !prefs.email_badge)}
-          />
-          <SettingToggleRow
-            label="Job matches"
-            value={prefs.email_job_match}
-            onToggle={() => updatePref('email_job_match', !prefs.email_job_match)}
-          />
-        </View>
-
-        {isSavingPrefs ? (
-          <Text style={{ color: '#64748B', fontSize: 12, textAlign: 'center', marginTop: 8 }}>Saving preferences…</Text>
-        ) : null}
-
-        {/* Support */}
+        {/* Help */}
         <SectionHeader title="Help & Support" />
-        <View style={{
-          backgroundColor: '#ffffff08',
-          borderWidth: 1,
-          borderColor: '#DDD6C9',
-          borderRadius: 16,
-          paddingHorizontal: 16,
-          overflow: 'hidden',
-          marginBottom: 16,
-        }}>
-          <ActionRow
-            label="Chat with Support"
-            onPress={() => router.push('/(candidate)/support-chat')}
-          />
-          <ActionRow
-            label="My Support Tickets"
-            onPress={() => router.push('/(candidate)/support-ticket')}
-          />
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
+          <NavRow label="Chat with Support" onPress={() => router.push('/(candidate)/support-chat')} />
+          <NavRow label="My Support Tickets" onPress={() => router.push('/(candidate)/support-ticket')} />
         </View>
 
         {/* Danger zone */}
         <SectionHeader title="Danger Zone" />
-        <View style={{
-          backgroundColor: '#EF444408',
-          borderWidth: 1,
-          borderColor: '#EF444440',
-          borderRadius: 16,
-          paddingHorizontal: 16,
-          overflow: 'hidden',
-        }}>
-          <ActionRow label="Log out" onPress={handleLogout} destructive />
-          <ActionRow label="Deactivate account" onPress={handleDeactivate} destructive />
-          <ActionRow label="Delete all my data" onPress={handleDeleteData} destructive />
+        <View style={{ backgroundColor: '#EF444408', borderWidth: 1, borderColor: '#EF444440', borderRadius: 16, overflow: 'hidden' }}>
+          <NavRow label="Log out" onPress={handleLogout} danger />
+          <NavRow
+            label="Delete Account"
+            sub="Permanently delete your data — cannot be undone"
+            onPress={() => { setDeleteText(''); setShowDeleteModal(true) }}
+            danger
+          />
         </View>
 
         <Text style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginTop: 24, lineHeight: 18 }}>
           Workstation v1.0.0 · workstation.ng
         </Text>
       </ScrollView>
+
+      <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: '#00000070', justifyContent: 'center', padding: 24 }} onPress={() => !isDeleting && setShowDeleteModal(false)}>
+          <Pressable onPress={e => e.stopPropagation()} style={{ backgroundColor: '#F5F0E8', borderRadius: 20, padding: 24 }}>
+            <Text style={{ color: '#DC2626', fontSize: 18, fontWeight: '800', marginBottom: 8 }}>Delete Account</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 20, marginBottom: 4 }}>
+              This will permanently delete your profile, applications, CV, and all data. Companies will lose access to your information.
+            </Text>
+            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600', marginBottom: 20 }}>
+              This action cannot be undone.
+            </Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
+              Type <Text style={{ fontWeight: '800', letterSpacing: 1 }}>{DELETE_PHRASE}</Text> to confirm
+            </Text>
+            <TextInput
+              value={deleteText}
+              onChangeText={setDeleteText}
+              placeholder={DELETE_PHRASE}
+              placeholderTextColor="#C8BFB0"
+              autoCapitalize="characters"
+              style={{
+                backgroundColor: '#EDE7DB', borderRadius: 10, borderWidth: 1.5,
+                borderColor: deleteText === DELETE_PHRASE ? '#DC2626' : '#DDD6C9',
+                color: '#1A1625', fontSize: 13, fontWeight: '700', letterSpacing: 1,
+                padding: 14, marginBottom: 20,
+              }}
+            />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                onPress={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}
+                className="active:opacity-70"
+              >
+                <Text style={{ color: '#1A1625', fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleDeleteAccount}
+                disabled={deleteText !== DELETE_PHRASE || isDeleting}
+                style={{
+                  flex: 1, backgroundColor: deleteText === DELETE_PHRASE ? '#DC2626' : '#DDD6C9',
+                  borderRadius: 12, paddingVertical: 13, alignItems: 'center',
+                  opacity: (deleteText !== DELETE_PHRASE || isDeleting) ? 0.5 : 1,
+                }}
+                className="active:opacity-80"
+              >
+                {isDeleting
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Delete forever</Text>
+                }
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

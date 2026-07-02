@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
-  Linking, ActionSheetIOS,
+  Modal, ActionSheetIOS, Dimensions, Pressable, Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
@@ -86,9 +86,9 @@ function SendIcon() {
   )
 }
 
-function ImageBubble({ url, isUser }: { url: string; isUser: boolean }) {
+function ImageBubble({ url, isUser, onPress }: { url: string; isUser: boolean; onPress: () => void }) {
   return (
-    <TouchableOpacity onPress={() => Linking.openURL(url)} activeOpacity={0.85}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       <Image
         source={{ uri: url }}
         style={{
@@ -128,6 +128,8 @@ function FileBubble({ name, url, isUser }: { name: string; url: string; isUser: 
   )
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width
+
 export default function CompanySupportChatScreen() {
   const [thread, setThread] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -135,6 +137,7 @@ export default function CompanySupportChatScreen() {
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const listRef = useRef<FlatList>(null)
 
   const initThread = useCallback(async () => {
@@ -213,6 +216,7 @@ export default function CompanySupportChatScreen() {
   async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file') {
     if (!thread) return
     setUploading(true)
+    const optimisticId = `optimistic-${Date.now()}`
     try {
       const resp = await fetch(uri)
       const blob = await resp.blob()
@@ -232,7 +236,23 @@ export default function CompanySupportChatScreen() {
       const profile = await supabase.from('company_profiles').select('company_name').eq('id', user?.id ?? '').maybeSingle()
       const name = profile?.data?.company_name ?? user?.email?.split('@')[0] ?? 'Company'
 
-      await supabase.from('chat_messages').insert({
+      // Add optimistic message so the sender sees it immediately
+      const optimisticMsg: Message = {
+        id: optimisticId,
+        created_at: new Date().toISOString(),
+        thread_id: thread.id,
+        sender_type: 'user',
+        sender_name: name,
+        content: '',
+        is_read: false,
+        attachment_url: urlData.publicUrl,
+        attachment_type: type,
+        attachment_name: filename,
+      }
+      setMessages(prev => [...prev, optimisticMsg])
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
+
+      const { data: inserted, error: insertError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_id: user?.id ?? null,
         sender_type: 'user',
@@ -242,7 +262,13 @@ export default function CompanySupportChatScreen() {
         attachment_url: urlData.publicUrl,
         attachment_type: type,
         attachment_name: filename,
-      })
+      }).select('id').single()
+
+      if (insertError) throw insertError
+
+      if (inserted) {
+        setMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: (inserted as { id: string }).id } : m))
+      }
 
       await supabase.from('chat_threads').update({
         last_message: type === 'image' ? '📷 Image' : `📎 ${filename}`,
@@ -251,8 +277,8 @@ export default function CompanySupportChatScreen() {
       }).eq('id', thread.id)
 
       logEvent({ event: 'company.support_attachment_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
     } catch {
+      setMessages(prev => prev.filter(m => m.id !== optimisticId))
       Alert.alert('Upload failed', 'Could not send the file. Please try again.')
     } finally {
       setUploading(false)
@@ -421,7 +447,7 @@ export default function CompanySupportChatScreen() {
 
                 {item.attachment_type === 'image' && item.attachment_url ? (
                   <View className={`${isUser ? 'items-end' : 'items-start'}`}>
-                    <ImageBubble url={item.attachment_url} isUser={isUser} />
+                    <ImageBubble url={item.attachment_url} isUser={isUser} onPress={() => setPreviewImageUrl(item.attachment_url)} />
                     {item.content ? (
                       <View className={`mt-1.5 max-w-[78%] px-4 py-2.5 rounded-2xl ${isUser ? 'bg-amber-500 rounded-br-sm' : 'bg-gray-100 rounded-bl-sm'}`}>
                         <Text className={`text-sm leading-relaxed ${isUser ? 'text-[#1A1625]' : 'text-gray-800'}`}>{item.content}</Text>
@@ -480,6 +506,22 @@ export default function CompanySupportChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal visible={!!previewImageUrl} transparent animationType="fade" onRequestClose={() => setPreviewImageUrl(null)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: '#000000EE', alignItems: 'center', justifyContent: 'center' }}
+          onPress={() => setPreviewImageUrl(null)}
+        >
+          {previewImageUrl && (
+            <Image
+              source={{ uri: previewImageUrl }}
+              style={{ width: SCREEN_WIDTH, height: SCREEN_WIDTH, maxHeight: '80%' }}
+              contentFit="contain"
+            />
+          )}
+          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 16 }}>Tap anywhere to close</Text>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

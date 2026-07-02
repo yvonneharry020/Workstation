@@ -48,6 +48,9 @@ const NIGERIAN_STATES = [
 interface CompanyProfile {
   id: string
   company_name: string | null
+  business_email: string | null
+  business_phone: string | null
+  rc_number: string | null
   about: string | null
   culture_description: string | null
   industry: string | null
@@ -62,7 +65,6 @@ interface CompanyProfile {
   headquarters_state: string | null
   headquarters_city: string | null
   headquarters_address: string | null
-  business_phone: string | null
 }
 
 interface GalleryImage {
@@ -119,6 +121,9 @@ export default function EditCompanyProfileScreen() {
 
   const [form, setForm] = useState({
     company_name: '',
+    business_email: '',
+    business_phone: '',
+    rc_number: '',
     about: '',
     culture_description: '',
     industry: '',
@@ -131,8 +136,8 @@ export default function EditCompanyProfileScreen() {
     headquarters_state: '',
     headquarters_city: '',
     headquarters_address: '',
-    business_phone: '',
   })
+  const [personalPhone, setPersonalPhone] = useState('')
   const [logoUri, setLogoUri] = useState<string | null>(null)
   const [bannerUri, setBannerUri] = useState<string | null>(null)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
@@ -141,37 +146,45 @@ export default function EditCompanyProfileScreen() {
   const { isLoading, data: profileData } = useQuery({
     queryKey: ['company-profile-edit', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('company_profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .maybeSingle()
-      if (error) throw error
-      return data as unknown as CompanyProfile | null
+      const [profileRes, profilesRes] = await Promise.all([
+        supabase.from('company_profiles').select('*').eq('id', user!.id).maybeSingle(),
+        supabase.from('profiles').select('phone').eq('id', user!.id).maybeSingle(),
+      ])
+      if (profileRes.error) throw profileRes.error
+      return {
+        profile: profileRes.data as unknown as CompanyProfile | null,
+        personalPhone: (profilesRes.data as any)?.phone ?? '',
+      }
     },
     enabled: !!user?.id,
   })
 
   useEffect(() => {
     if (!profileData) return
-    setForm({
-      company_name: profileData.company_name ?? '',
-      about: profileData.about ?? '',
-      culture_description: profileData.culture_description ?? '',
-      industry: profileData.industry ?? '',
-      company_size: profileData.company_size ?? '',
-      founded_year: profileData.founded_year?.toString() ?? '',
-      website_url: profileData.website_url ?? '',
-      linkedin_url: profileData.linkedin_url ?? '',
-      twitter_url: profileData.twitter_url ?? '',
-      instagram_url: profileData.instagram_url ?? '',
-      headquarters_state: profileData.headquarters_state ?? '',
-      headquarters_city: profileData.headquarters_city ?? '',
-      headquarters_address: profileData.headquarters_address ?? '',
-      business_phone: profileData.business_phone ?? '',
-    })
-    setLogoUri(profileData.logo_url)
-    setBannerUri(profileData.cover_banner_url)
+    const p = profileData.profile
+    if (p) {
+      setForm({
+        company_name: p.company_name ?? '',
+        business_email: p.business_email ?? '',
+        business_phone: p.business_phone ?? '',
+        rc_number: p.rc_number ?? '',
+        about: p.about ?? '',
+        culture_description: p.culture_description ?? '',
+        industry: p.industry ?? '',
+        company_size: p.company_size ?? '',
+        founded_year: p.founded_year?.toString() ?? '',
+        website_url: p.website_url ?? '',
+        linkedin_url: p.linkedin_url ?? '',
+        twitter_url: p.twitter_url ?? '',
+        instagram_url: p.instagram_url ?? '',
+        headquarters_state: p.headquarters_state ?? '',
+        headquarters_city: p.headquarters_city ?? '',
+        headquarters_address: p.headquarters_address ?? '',
+      })
+      setLogoUri(p.logo_url)
+      setBannerUri(p.cover_banner_url)
+    }
+    setPersonalPhone(profileData.personalPhone)
   }, [profileData])
 
   const { data: galleryData } = useQuery({
@@ -195,28 +208,39 @@ export default function EditCompanyProfileScreen() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not authenticated')
-      const { error } = await supabase.from('company_profiles').update({
-        company_name: form.company_name || null,
-        about: form.about || null,
-        culture_description: form.culture_description || null,
-        industry: form.industry || null,
-        company_size: form.company_size || null,
-        founded_year: form.founded_year ? parseInt(form.founded_year, 10) : null,
-        website_url: form.website_url || null,
-        linkedin_url: form.linkedin_url || null,
-        twitter_url: form.twitter_url || null,
-        instagram_url: form.instagram_url || null,
-        headquarters_state: form.headquarters_state || null,
-        headquarters_city: form.headquarters_city || null,
-        headquarters_address: form.headquarters_address || null,
-        business_phone: form.business_phone || null,
-        logo_url: logoUri,
-        cover_banner_url: bannerUri,
-      }).eq('id', user.id)
-      if (error) throw error
+      const [profileErr, profilesErr] = await Promise.all([
+        supabase.from('company_profiles').upsert({
+          id: user.id,
+          company_name: form.company_name || null,
+          business_email: form.business_email || null,
+          business_phone: form.business_phone || null,
+          rc_number: form.rc_number || null,
+          about: form.about || null,
+          culture_description: form.culture_description || null,
+          industry: form.industry || null,
+          company_size: form.company_size || null,
+          founded_year: form.founded_year ? parseInt(form.founded_year, 10) : null,
+          website_url: form.website_url || null,
+          linkedin_url: form.linkedin_url || null,
+          twitter_url: form.twitter_url || null,
+          instagram_url: form.instagram_url || null,
+          headquarters_state: form.headquarters_state || null,
+          headquarters_city: form.headquarters_city || null,
+          headquarters_address: form.headquarters_address || null,
+          logo_url: logoUri,
+          cover_banner_url: bannerUri,
+        }, { onConflict: 'id' }).then((r) => r.error),
+        personalPhone
+          ? supabase.from('profiles').update({ phone: personalPhone }).eq('id', user.id).then((r) => r.error)
+          : Promise.resolve(null),
+      ])
+      if (profileErr) throw profileErr
+      if (profilesErr) throw profilesErr
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company-profile'] })
+      queryClient.invalidateQueries({ queryKey: ['company-profile-view', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['company-profile-edit', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['company-dashboard', user?.id] })
       Alert.alert('Saved', 'Your company profile has been updated.')
       router.back()
     },
@@ -368,6 +392,32 @@ export default function EditCompanyProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(100).duration(300)} className="gap-4">
+            <SectionLabel>Account details</SectionLabel>
+
+            <View>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Personal email</Text>
+              <View style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', paddingHorizontal: 14, paddingVertical: 14 }}>
+                <Text style={{ color: '#64748B', fontSize: 14 }}>{user?.email ?? '—'}</Text>
+              </View>
+              <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>Contact support to change your login email.</Text>
+            </View>
+
+            <FormInput
+              label="Personal phone"
+              placeholder="+234 801 234 5678"
+              value={personalPhone}
+              onChangeText={setPersonalPhone}
+              keyboardType="phone-pad"
+            />
+
+            <FormInput
+              label="RC Number"
+              placeholder="RC1234567"
+              value={form.rc_number}
+              onChangeText={updateField('rc_number')}
+              autoCapitalize="characters"
+            />
+
             <SectionLabel>Company information</SectionLabel>
 
             <FormInput
@@ -375,6 +425,15 @@ export default function EditCompanyProfileScreen() {
               placeholder="Acme Technology Ltd"
               value={form.company_name}
               onChangeText={updateField('company_name')}
+            />
+
+            <FormInput
+              label="Business email"
+              placeholder="hr@yourcompany.com"
+              value={form.business_email}
+              onChangeText={updateField('business_email')}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
 
             <View>
@@ -454,6 +513,7 @@ export default function EditCompanyProfileScreen() {
             <FormInput label="City" placeholder="Lagos Island" value={form.headquarters_city} onChangeText={updateField('headquarters_city')} />
             <FormInput label="Business address" placeholder="12 Victoria Island, Lagos" value={form.headquarters_address} onChangeText={updateField('headquarters_address')} />
             <FormInput label="Business phone" placeholder="+234 801 234 5678" value={form.business_phone} onChangeText={updateField('business_phone')} keyboardType="phone-pad" />
+
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(250).duration(300)} className="mt-4">

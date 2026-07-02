@@ -50,6 +50,15 @@ export default function CompanyLayout() {
         }}
       />
       <Tabs.Screen
+        name="table"
+        options={{
+          title: 'Tables',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
@@ -59,6 +68,7 @@ export default function CompanyLayout() {
         }}
       />
 
+      <Tabs.Screen name="ats-tables/[id]" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="support-chat" options={{ href: null }} />
       <Tabs.Screen name="support-ticket" options={{ href: null }} />

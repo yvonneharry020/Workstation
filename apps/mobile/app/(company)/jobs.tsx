@@ -51,11 +51,12 @@ const WORK_MODE_LABELS: Record<WorkMode, string> = {
 type FilterTab = 'all' | JobStatus
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all',    label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'draft',  label: 'Draft' },
-  { key: 'paused', label: 'Paused' },
-  { key: 'closed', label: 'Closed' },
+  { key: 'all',     label: 'All' },
+  { key: 'active',  label: 'Active' },
+  { key: 'draft',   label: 'Draft' },
+  { key: 'paused',  label: 'Paused' },
+  { key: 'closed',  label: 'Closed' },
+  { key: 'expired', label: 'Expired' },
 ]
 
 function PlusIcon() {
@@ -101,7 +102,7 @@ function EditIcon() {
   )
 }
 
-function JobCard({ job, onToggleStatus }: { job: JobPosting; onToggleStatus: (id: string, current: JobStatus) => void }) {
+function JobCard({ job, onToggleStatus, onClose }: { job: JobPosting; onToggleStatus: (id: string, current: JobStatus) => void; onClose: (id: string) => void }) {
   const config = STATUS_CONFIG[job.status]
   const daysAgo = job.published_at
     ? Math.floor((Date.now() - new Date(job.published_at).getTime()) / (1000 * 60 * 60 * 24))
@@ -177,6 +178,15 @@ function JobCard({ job, onToggleStatus }: { job: JobPosting; onToggleStatus: (id
               </Text>
             </Pressable>
           )}
+          {job.status === 'active' && (
+            <Pressable
+              onPress={() => onClose(job.id)}
+              style={{ backgroundColor: '#EF444415', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EF444425' }}
+              className="active:opacity-70"
+            >
+              <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '600' }}>Close</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </Animated.View>
@@ -211,6 +221,22 @@ export default function CompanyJobsScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-jobs', user?.id] }),
     onError: () => Alert.alert('Error', 'Could not update job status. Please try again.'),
   })
+
+  const closeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('job_postings').update({ status: 'closed' }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-jobs', user?.id] }),
+    onError: () => Alert.alert('Error', 'Could not close the job. Please try again.'),
+  })
+
+  const handleClose = (id: string) => {
+    Alert.alert('Close job?', 'Candidates will no longer be able to apply. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Close job', style: 'destructive', onPress: () => closeMutation.mutate(id) },
+    ])
+  }
 
   const filtered = activeFilter === 'all' ? jobs : jobs.filter((j) => j.status === activeFilter)
 
@@ -273,6 +299,7 @@ export default function CompanyJobsScreen() {
             <JobCard
               job={item}
               onToggleStatus={(id, current) => toggleMutation.mutate({ id, current })}
+              onClose={handleClose}
             />
           )}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 32 }}

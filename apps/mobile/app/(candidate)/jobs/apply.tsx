@@ -21,7 +21,7 @@ import { useAuthStore } from '@/stores/authStore'
 
 interface CvVersion {
   id: string
-  name: string
+  label: string
 }
 
 interface CandidateProfile {
@@ -77,7 +77,7 @@ function CvPicker({
 }) {
   const [open, setOpen] = useState(false)
   const selected = cvVersions.find((cv) => cv.id === selectedId)
-  const options = [{ id: '', name: 'No CV attached' }, ...cvVersions]
+  const options = [{ id: '', label: 'No CV attached' }, ...cvVersions]
 
   return (
     <View>
@@ -86,7 +86,7 @@ function CvPicker({
         className="bg-surface-card border border-surface-border rounded-xl px-4 py-4 flex-row items-center justify-between"
       >
         <Text className={selected ? 'text-[#1A1625] text-sm' : 'text-slate-500 text-sm'}>
-          {selected ? selected.name : 'No CV attached'}
+          {selected ? selected.label : 'No CV attached'}
         </Text>
         <ChevronIcon />
       </Pressable>
@@ -99,7 +99,7 @@ function CvPicker({
               className="px-4 py-3 border-b border-surface-border active:opacity-70"
             >
               <Text className={cv.id === selectedId ? 'text-primary-400 font-semibold text-sm' : 'text-[#1A1625] text-sm'}>
-                {cv.name}
+                {cv.label}
               </Text>
             </Pressable>
           ))}
@@ -152,7 +152,7 @@ export default function ApplyScreen() {
     queryFn: async () => {
       const { data } = await supabase
         .from('cv_versions')
-        .select('id, name')
+        .select('id, label')
         .eq('candidate_id', user!.id)
         .order('created_at', { ascending: false })
       return (data ?? []) as CvVersion[]

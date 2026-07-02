@@ -124,6 +124,14 @@ export default function AuditLogPage() {
   const criticalCount = logs.filter(l => l.severity === 'critical').length
   const warningCount  = logs.filter(l => l.severity === 'warning').length
 
+  const appBreakdown = Object.entries(
+    logs.reduce<Record<string, number>>((acc, l) => {
+      const key = l.app || 'unknown'
+      acc[key] = (acc[key] ?? 0) + 1
+      return acc
+    }, {})
+  ).sort(([, a], [, b]) => b - a)
+
   return (
     <div className="flex flex-col min-h-full">
       <TopBar
@@ -159,6 +167,28 @@ export default function AuditLogPage() {
             </div>
           ))}
         </div>
+
+        {/* App breakdown */}
+        {appBreakdown.length > 0 && (
+          <div className="bg-surface-card border border-surface-border rounded-xl px-5 py-4">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Events by Source</p>
+            <div className="flex items-end gap-4 flex-wrap">
+              {appBreakdown.map(([app, count]) => {
+                const meta = APP_LABELS[app] ?? { label: app, color: '#475569' }
+                const pct = logs.length > 0 ? Math.round((count / logs.length) * 100) : 0
+                return (
+                  <div key={app} className="flex flex-col items-center gap-1 min-w-[64px]">
+                    <span className="text-xs font-bold font-mono" style={{ color: meta.color }}>{count}</span>
+                    <div className="w-10 rounded-t overflow-hidden bg-surface-elevated" style={{ height: 32 }}>
+                      <div className="w-full rounded-t" style={{ height: `${pct}%`, backgroundColor: meta.color, opacity: 0.7, marginTop: 'auto' }} />
+                    </div>
+                    <span className="text-[10px] text-text-muted text-center leading-tight">{meta.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex items-center gap-4 flex-wrap">

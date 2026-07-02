@@ -331,28 +331,6 @@ export default function CandidateDashboard() {
           ))}
         </Animated.View>
 
-        {/* ── Quick actions ── */}
-        <Animated.View entering={FadeInDown.delay(160).duration(350)} style={{ marginHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Quick actions</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            {([
-              { label: 'Jobs', route: '/(candidate)/jobs', color: '#FF6240', emoji: '💼' },
-              { label: 'My CV', route: '/(candidate)/cv', color: '#0DD4C3', emoji: '📄' },
-              { label: 'Applied', route: '/(candidate)/applications', color: '#A78BFA', emoji: '✅' },
-              { label: 'Profile', route: '/(candidate)/profile', color: '#F59E0B', emoji: '👤' },
-            ] as const).map((a) => (
-              <Pressable
-                key={a.label}
-                onPress={() => router.push(a.route as never)}
-                style={{ flex: 1, backgroundColor: `${a.color}10`, borderRadius: 14, borderWidth: 1, borderColor: `${a.color}25`, paddingVertical: 16, alignItems: 'center', gap: 6 }}
-              >
-                <Text style={{ fontSize: 22 }}>{a.emoji}</Text>
-                <Text style={{ color: a.color, fontSize: 10, fontWeight: '700' }}>{a.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
-
         {/* ── Matched jobs ── */}
         <Animated.View entering={FadeInDown.delay(200).duration(350)} style={{ marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 14 }}>

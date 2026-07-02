@@ -97,7 +97,7 @@ function SearchIcon() {
 
 function ShieldAlertIcon() {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       <Path d="M12 8v4M12 16h.01" />
     </Svg>
@@ -156,14 +156,14 @@ function VerificationBanner({ userId }: { userId: string }) {
 
   return (
     <Animated.View entering={FadeInDown.delay(80).duration(350)} className="px-5 mb-5">
-      <View style={{ backgroundColor: '#1A1506', borderRadius: 16, borderWidth: 1, borderColor: '#F59E0B40', padding: 16 }}>
+      <View style={{ backgroundColor: '#FFF0F0', borderRadius: 16, borderWidth: 1, borderColor: '#FCA5A5', padding: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <ShieldAlertIcon />
-          <Text style={{ color: '#F59E0B', fontSize: 13, fontWeight: '700', flex: 1 }}>
+          <Text style={{ color: '#DC2626', fontSize: 13, fontWeight: '700', flex: 1 }}>
             Complete account verification ({completedCount}/{steps.length})
           </Text>
         </View>
-        <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
+        <Text style={{ color: '#6B7280', fontSize: 12, lineHeight: 18, marginBottom: 12 }}>
           Verified companies can post jobs and access full hiring features.
         </Text>
         <View style={{ gap: 8, marginBottom: 14 }}>
@@ -184,10 +184,10 @@ function VerificationBanner({ userId }: { userId: string }) {
         {nextStep && (
           <Pressable
             onPress={() => router.push(nextStep.route as never)}
-            style={{ backgroundColor: '#F59E0B', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+            style={{ backgroundColor: '#DC2626', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
             className="active:opacity-80"
           >
-            <Text style={{ color: '#000', fontWeight: '700', fontSize: 13 }}>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
               Continue: {nextStep.label}
             </Text>
           </Pressable>
@@ -363,11 +363,12 @@ export default function CompanyDashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['company-dashboard', user?.id],
     queryFn: async () => {
-      const [jobsRes, appsRes, interviewsRes, profileRes, recentRes] = await Promise.all([
+      const [jobsRes, appsRes, interviewsRes, profileRes, trustRes, recentRes] = await Promise.all([
         supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('status', 'active'),
         supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('job_postings.company_id', user!.id).gte('submitted_at', weekAgo),
         supabase.from('interview_bookings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('slot_date', today),
-        supabase.from('company_profiles').select('company_name, trust_score').eq('id', user!.id).maybeSingle(),
+        supabase.from('company_profiles').select('company_name').eq('id', user!.id).maybeSingle(),
+        supabase.from('trust_scores').select('score').eq('profile_id', user!.id).maybeSingle(),
         supabase.from('job_applications')
           .select('id, pipeline_stage, email_opened_at, submitted_at, job_postings(title), candidate_profiles(full_name, avatar_url)')
           .eq('job_postings.company_id', user!.id)
@@ -382,8 +383,8 @@ export default function CompanyDashboard() {
         newApplicationsThisWeek: appsRes.count ?? 0,
         interviewsToday: interviewsRes.count ?? 0,
         profileViews: 0,
-        trustScore: (profileRes.data as any)?.trust_score ?? 0,
-        companyName: (profileRes.data as any)?.company_name ?? 'Your Company',
+        trustScore: (trustRes.data as any)?.score ?? 0,
+        companyName: (profileRes.data as any)?.company_name ?? user?.user_metadata?.company_name ?? 'Your Company',
         recentApplications: (recentRes.data as unknown as RecentApplication[]) ?? [],
         hasJobs,
       }

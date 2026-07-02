@@ -4,29 +4,30 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import TopBar from '@/components/layout/TopBar'
 
-interface Candidate {
+interface CandidateData {
   id: string
-  user_id: string
-  full_name: string
+  first_name: string
+  last_name: string
   email: string
-  verification_status: string
+  is_active: boolean
+  is_suspended: boolean
+  nin_verified: boolean
+  phone_verified: boolean
+  liveness_verified: boolean
   trust_score: number | null
   created_at: string
-  skills: string[] | null
-  experience: string | null
-  status: string
 }
 
-interface Company {
+interface CompanyData {
   id: string
-  user_id: string
-  name: string
+  company_name: string
   email: string
-  verification_status: string
+  is_active: boolean
+  is_suspended: boolean
   industry: string | null
+  website_url: string | null
+  is_verified: boolean
   created_at: string
-  status: string
-  website: string | null
 }
 
 type Tab = 'candidates' | 'companies'
@@ -43,18 +44,28 @@ const STATUS_PILL: Record<string, { text: string; bg: string; border: string }> 
   active:    { text: '#34D399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.3)' },
   suspended: { text: '#FBBF24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
   banned:    { text: '#F87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)' },
-  pending:   { text: '#38BDF8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.3)' },
 }
 
 const VERIF_PILL: Record<string, { text: string; bg: string; border: string }> = {
   verified:     { text: '#34D399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.3)' },
   pending:      { text: '#FBBF24', bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)' },
-  rejected:     { text: '#F87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)' },
   under_review: { text: '#38BDF8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.3)' },
 }
 
+function getStatus(row: { is_active: boolean; is_suspended: boolean }): string {
+  if (!row.is_active) return 'banned'
+  if (row.is_suspended) return 'suspended'
+  return 'active'
+}
+
+function getCandVerif(row: { nin_verified: boolean; phone_verified: boolean; liveness_verified: boolean }): string {
+  if (row.nin_verified && row.phone_verified && row.liveness_verified) return 'verified'
+  if (row.nin_verified || row.phone_verified || row.liveness_verified) return 'under_review'
+  return 'pending'
+}
+
 function StatusPill({ value }: { value: string }) {
-  const s = STATUS_PILL[value] ?? STATUS_PILL['pending']
+  const s = STATUS_PILL[value] ?? STATUS_PILL['active']
   return (
     <span style={{ color: s.text, backgroundColor: s.bg, border: `1px solid ${s.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
       {value}
@@ -94,6 +105,27 @@ function Initials({ name }: { name: string }) {
   )
 }
 
+function VerifBadges({ nin, phone, liveness }: { nin: boolean; phone: boolean; liveness: boolean }) {
+  const badges = [
+    { key: 'NIN', active: nin },
+    { key: 'Phone', active: phone },
+    { key: 'Face', active: liveness },
+  ]
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {badges.map(b => (
+        <span key={b.key} style={{
+          fontSize: 10, padding: '2px 6px', borderRadius: 99,
+          backgroundColor: b.active ? 'rgba(52,211,153,0.1)' : 'var(--bg-elevated)',
+          color: b.active ? '#34D399' : 'var(--tx-3)',
+          border: `1px solid ${b.active ? 'rgba(52,211,153,0.3)' : 'var(--border)'}`,
+          fontWeight: 600,
+        }}>{b.key}</span>
+      ))}
+    </div>
+  )
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
@@ -103,7 +135,7 @@ function SkeletonRow() {
     <tr>
       {Array.from({ length: 6 }).map((_, i) => (
         <td key={i} style={{ padding: '14px 20px' }}>
-          <div style={{ height: 14, backgroundColor: 'var(--bg-elevated)', borderRadius: 6, width: i === 0 ? 140 : 80, animation: 'pulse 1.5s infinite' }} />
+          <div style={{ height: 14, backgroundColor: 'var(--bg-elevated)', borderRadius: 6, width: i === 0 ? 140 : 80 }} />
         </td>
       ))}
     </tr>
@@ -115,8 +147,8 @@ type ConfirmState = { id: string; action: 'suspend' | 'ban' | 'reactivate' } | n
 export default function UserManagementPage() {
   const supabase = createClient()
   const [tab, setTab] = useState<Tab>('candidates')
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [companies, setCompanies] = useState<Company[]>([])
+  const [candidates, setCandidates] = useState<CandidateData[]>([])
+  const [companies, setCompanies] = useState<CompanyData[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -125,36 +157,86 @@ export default function UserManagementPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [{ data: cands }, { data: comps }] = await Promise.all([
-      supabase.from('candidates').select('id,user_id,full_name,email,verification_status,trust_score,created_at,skills,experience,status').order('created_at', { ascending: false }),
-      supabase.from('companies').select('id,user_id,name,email,verification_status,industry,created_at,status,website').order('created_at', { ascending: false }),
+    const [
+      { data: candProfiles },
+      { data: compProfiles },
+      { data: candAccounts },
+      { data: compAccounts },
+      { data: trustData },
+    ] = await Promise.all([
+      supabase.from('candidate_profiles').select('id, first_name, last_name, nin_verified, phone_verified, liveness_verified'),
+      supabase.from('company_profiles').select('id, company_name, industry, website_url, is_verified'),
+      supabase.from('profiles').select('id, email, is_active, is_suspended, created_at').eq('role', 'candidate').order('created_at', { ascending: false }),
+      supabase.from('profiles').select('id, email, is_active, is_suspended, created_at').eq('role', 'company').order('created_at', { ascending: false }),
+      supabase.from('trust_scores').select('profile_id, score'),
     ])
-    setCandidates((cands ?? []) as Candidate[])
-    setCompanies((comps ?? []) as Company[])
+
+    const trustMap = new Map((trustData ?? []).map(t => [t.profile_id as string, t.score as number]))
+    const candProfileMap = new Map((candProfiles ?? []).map(p => [p.id as string, p]))
+    const compProfileMap = new Map((compProfiles ?? []).map(p => [p.id as string, p]))
+
+    const mergedCandidates = (candAccounts ?? []).flatMap(acc => {
+      const cp = candProfileMap.get(acc.id)
+      if (!cp) return []
+      return [{
+        id: acc.id,
+        first_name: cp.first_name,
+        last_name: cp.last_name,
+        email: acc.email,
+        is_active: acc.is_active,
+        is_suspended: acc.is_suspended,
+        nin_verified: cp.nin_verified,
+        phone_verified: cp.phone_verified,
+        liveness_verified: cp.liveness_verified,
+        trust_score: trustMap.get(acc.id) ?? null,
+        created_at: acc.created_at,
+      } as CandidateData]
+    })
+
+    const mergedCompanies = (compAccounts ?? []).flatMap(acc => {
+      const cp = compProfileMap.get(acc.id)
+      if (!cp) return []
+      return [{
+        id: acc.id,
+        company_name: cp.company_name,
+        email: acc.email,
+        is_active: acc.is_active,
+        is_suspended: acc.is_suspended,
+        industry: cp.industry,
+        website_url: cp.website_url,
+        is_verified: cp.is_verified,
+        created_at: acc.created_at,
+      } as CompanyData]
+    })
+
+    setCandidates(mergedCandidates)
+    setCompanies(mergedCompanies)
     setLoading(false)
   }, [supabase])
 
   useEffect(() => { void load() }, [load])
 
-  async function updateStatus(table: 'candidates' | 'companies', id: string, action: 'suspend' | 'ban' | 'reactivate') {
+  async function updateStatus(id: string, action: 'suspend' | 'ban' | 'reactivate') {
     setActing(id)
-    const newStatus = action === 'suspend' ? 'suspended' : action === 'ban' ? 'banned' : 'active'
+    const updates = action === 'suspend' ? { is_suspended: true } :
+                    action === 'ban'     ? { is_active: false }   :
+                                          { is_active: true, is_suspended: false }
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from(table).update({ status: newStatus }).eq('id', id)
+    await supabase.from('profiles').update(updates).eq('id', id)
     await supabase.from('audit_logs').insert({
       event: `admin.user_${action}`,
       actor_email: user?.email ?? null,
       actor_id: user?.id ?? null,
       actor_type: 'admin',
       target_id: id,
-      target_type: table === 'candidates' ? 'candidate' : 'company',
+      target_type: tab === 'candidates' ? 'candidate' : 'company',
       severity: action === 'ban' ? 'warning' : 'info',
       app: 'admin_panel',
     })
-    if (table === 'candidates') {
-      setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
+    if (tab === 'candidates') {
+      setCandidates(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
     } else {
-      setCompanies(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c))
+      setCompanies(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
     }
     setConfirm(null)
     setActing(null)
@@ -162,8 +244,8 @@ export default function UserManagementPage() {
 
   function exportCSV() {
     const rows = tab === 'candidates'
-      ? filteredCandidates.map(c => `${c.full_name},${c.email},${c.verification_status},${c.trust_score ?? ''},${c.status},${formatDate(c.created_at)}`)
-      : filteredCompanies.map(c => `${c.name},${c.email},${c.industry ?? ''},${c.status},${formatDate(c.created_at)}`)
+      ? filteredCandidates.map(c => `${c.first_name} ${c.last_name},${c.email},${getCandVerif(c)},${c.trust_score ?? ''},${getStatus(c)},${formatDate(c.created_at)}`)
+      : filteredCompanies.map(c => `${c.company_name},${c.email},${c.industry ?? ''},${getStatus(c)},${formatDate(c.created_at)}`)
     const header = tab === 'candidates'
       ? 'Name,Email,Verification,Trust Score,Status,Joined'
       : 'Company,Email,Industry,Status,Joined'
@@ -178,18 +260,19 @@ export default function UserManagementPage() {
   }
 
   const filteredCandidates = candidates.filter(c => {
-    const matchSearch = !search || c.full_name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'all' || c.status === statusFilter
-    return matchSearch && matchStatus
-  })
-  const filteredCompanies = companies.filter(c => {
-    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'all' || c.status === statusFilter
+    const status = getStatus(c)
+    const fullName = `${c.first_name} ${c.last_name}`
+    const matchSearch = !search || fullName.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = statusFilter === 'all' || status === statusFilter
     return matchSearch && matchStatus
   })
 
-  const pendingCands = candidates.filter(c => c.status === 'active').length
-  const pendingComps = companies.filter(c => c.status === 'active').length
+  const filteredCompanies = companies.filter(c => {
+    const status = getStatus(c)
+    const matchSearch = !search || c.company_name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = statusFilter === 'all' || status === statusFilter
+    return matchSearch && matchStatus
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -215,7 +298,6 @@ export default function UserManagementPage() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Search */}
           <div style={{ position: 'relative' }}>
             <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--tx-3)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -227,7 +309,6 @@ export default function UserManagementPage() {
             />
           </div>
 
-          {/* Status filter */}
           {(['all', 'active', 'suspended', 'banned'] as StatusFilter[]).map(s => (
             <button key={s} onClick={() => setStatusFilter(s)} style={{
               padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
@@ -245,14 +326,13 @@ export default function UserManagementPage() {
           </button>
         </div>
 
-        {/* Table */}
         <div style={{ ...CARD_STYLE, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
                 {(tab === 'candidates'
-                  ? ['User', 'Verification', 'Trust Score', 'Skills', 'Joined', 'Status', 'Actions']
-                  : ['Company', 'Industry', 'Website', 'Verification', 'Joined', 'Status', 'Actions']
+                  ? ['User', 'Verification', 'Trust Score', 'Verified Checks', 'Joined', 'Status', 'Actions']
+                  : ['Company', 'Industry', 'Website', 'Verified', 'Joined', 'Status', 'Actions']
                 ).map(h => (
                   <th key={h} style={{ textAlign: 'left', padding: '11px 20px', fontSize: 10, fontWeight: 600, color: 'var(--tx-3)', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
@@ -260,48 +340,47 @@ export default function UserManagementPage() {
             </thead>
             <tbody>
               {loading && Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+
               {!loading && tab === 'candidates' && filteredCandidates.map(c => {
+                const status = getStatus(c)
+                const verifStatus = getCandVerif(c)
                 const isConfirming = confirm?.id === c.id
+                const fullName = `${c.first_name} ${c.last_name}`
                 return (
                   <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Initials name={c.full_name} />
+                        <Initials name={fullName} />
                         <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.full_name}</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{fullName}</p>
                           <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0 }}>{c.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '14px 20px' }}><VerifPill value={c.verification_status} /></td>
+                    <td style={{ padding: '14px 20px' }}><VerifPill value={verifStatus} /></td>
                     <td style={{ padding: '14px 20px' }}><TrustBar score={c.trust_score} /></td>
                     <td style={{ padding: '14px 20px' }}>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 180 }}>
-                        {(c.skills ?? []).slice(0, 3).map(s => (
-                          <span key={s} style={{ fontSize: 10, backgroundColor: 'var(--bg-elevated)', color: 'var(--tx-2)', padding: '2px 8px', borderRadius: 99, border: '1px solid var(--border)' }}>{s}</span>
-                        ))}
-                        {(c.skills ?? []).length > 3 && <span style={{ fontSize: 10, color: 'var(--tx-3)' }}>+{(c.skills ?? []).length - 3}</span>}
-                      </div>
+                      <VerifBadges nin={c.nin_verified} phone={c.phone_verified} liveness={c.liveness_verified} />
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-3)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(c.created_at)}</td>
-                    <td style={{ padding: '14px 20px' }}><StatusPill value={c.status || 'active'} /></td>
+                    <td style={{ padding: '14px 20px' }}><StatusPill value={status} /></td>
                     <td style={{ padding: '14px 20px' }}>
                       {isConfirming ? (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => updateStatus('candidates', c.id, confirm!.action)} disabled={acting === c.id} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: confirm!.action === 'ban' ? '#EF4444' : confirm!.action === 'suspend' ? '#FBBF24' : '#34D399', color: '#fff', opacity: acting === c.id ? 0.6 : 1 }}>Confirm</button>
+                          <button onClick={() => updateStatus(c.id, confirm!.action)} disabled={acting === c.id} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: confirm!.action === 'ban' ? '#EF4444' : confirm!.action === 'suspend' ? '#FBBF24' : '#34D399', color: '#fff', opacity: acting === c.id ? 0.6 : 1 }}>Confirm</button>
                           <button onClick={() => setConfirm(null)} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-3)' }}>Cancel</button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 12 }}>
-                          {c.status !== 'suspended' && c.status !== 'banned' && (
+                          {status === 'active' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'suspend' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#FBBF24', padding: 0 }}>Suspend</button>
                           )}
-                          {(c.status === 'suspended') && (
+                          {status === 'suspended' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'reactivate' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#34D399', padding: 0 }}>Reactivate</button>
                           )}
-                          {c.status !== 'banned' && (
+                          {status !== 'banned' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'ban' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#F87171', padding: 0 }}>Ban</button>
                           )}
                         </div>
@@ -310,7 +389,9 @@ export default function UserManagementPage() {
                   </tr>
                 )
               })}
+
               {!loading && tab === 'companies' && filteredCompanies.map(c => {
+                const status = getStatus(c)
                 const isConfirming = confirm?.id === c.id
                 return (
                   <tr key={c.id} style={{ borderBottom: '1px solid var(--border)' }}
@@ -319,36 +400,38 @@ export default function UserManagementPage() {
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.name.slice(0, 2).toUpperCase()}</span>
+                          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.company_name.slice(0, 2).toUpperCase()}</span>
                         </div>
                         <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.name}</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.company_name}</p>
                           <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0 }}>{c.email}</p>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-2)' }}>{c.industry ?? '—'}</td>
-                    <td style={{ padding: '14px 20px', fontSize: 12, color: '#38BDF8' }}>
-                      {c.website ? <a href={c.website} target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'none' }}>{c.website.replace(/^https?:\/\//, '')}</a> : '—'}
+                    <td style={{ padding: '14px 20px', fontSize: 12 }}>
+                      {c.website_url
+                        ? <a href={c.website_url} target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'none' }}>{c.website_url.replace(/^https?:\/\//, '')}</a>
+                        : <span style={{ color: 'var(--tx-3)' }}>—</span>}
                     </td>
-                    <td style={{ padding: '14px 20px' }}><VerifPill value={c.verification_status} /></td>
+                    <td style={{ padding: '14px 20px' }}><VerifPill value={c.is_verified ? 'verified' : 'pending'} /></td>
                     <td style={{ padding: '14px 20px', fontSize: 12, color: 'var(--tx-3)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(c.created_at)}</td>
-                    <td style={{ padding: '14px 20px' }}><StatusPill value={c.status || 'active'} /></td>
+                    <td style={{ padding: '14px 20px' }}><StatusPill value={status} /></td>
                     <td style={{ padding: '14px 20px' }}>
                       {isConfirming ? (
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => updateStatus('companies', c.id, confirm!.action)} disabled={acting === c.id} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: confirm!.action === 'ban' ? '#EF4444' : confirm!.action === 'suspend' ? '#FBBF24' : '#34D399', color: '#fff', opacity: acting === c.id ? 0.6 : 1 }}>Confirm</button>
+                          <button onClick={() => updateStatus(c.id, confirm!.action)} disabled={acting === c.id} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: confirm!.action === 'ban' ? '#EF4444' : confirm!.action === 'suspend' ? '#FBBF24' : '#34D399', color: '#fff', opacity: acting === c.id ? 0.6 : 1 }}>Confirm</button>
                           <button onClick={() => setConfirm(null)} style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-3)' }}>Cancel</button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 12 }}>
-                          {c.status !== 'suspended' && c.status !== 'banned' && (
+                          {status === 'active' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'suspend' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#FBBF24', padding: 0 }}>Suspend</button>
                           )}
-                          {c.status === 'suspended' && (
+                          {status === 'suspended' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'reactivate' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#34D399', padding: 0 }}>Reactivate</button>
                           )}
-                          {c.status !== 'banned' && (
+                          {status !== 'banned' && (
                             <button onClick={() => setConfirm({ id: c.id, action: 'ban' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#F87171', padding: 0 }}>Ban</button>
                           )}
                         </div>
@@ -357,6 +440,7 @@ export default function UserManagementPage() {
                   </tr>
                 )
               })}
+
               {!loading && ((tab === 'candidates' && filteredCandidates.length === 0) || (tab === 'companies' && filteredCompanies.length === 0)) && (
                 <tr>
                   <td colSpan={7} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--tx-3)', fontSize: 13 }}>

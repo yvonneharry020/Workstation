@@ -59,7 +59,9 @@ export default function AdminInboxPage() {
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all')
   const [internalNote, setInternalNote] = useState('')
   const [resolutionNote, setResolutionNote] = useState('')
+  const [replyText, setReplyText] = useState('')
   const [savingNote, setSavingNote] = useState(false)
+  const [sendingReply, setSendingReply] = useState(false)
   const [resolving, setResolving] = useState(false)
   const [rerouting, setRerouting] = useState(false)
 
@@ -101,6 +103,7 @@ export default function AdminInboxPage() {
     setSelectedId(id)
     setInternalNote('')
     setResolutionNote('')
+    setReplyText('')
     const t = tickets.find(x => x.id === id)
     if (!t || t.status !== 'sent') return
     await supabase.from('support_tickets').update({ status: 'in_progress' }).eq('id', id)
@@ -137,6 +140,28 @@ export default function AdminInboxPage() {
     setTickets(prev => prev.map(x => x.id === selectedId
       ? { ...x, status: 'resolved', resolved_at: new Date().toISOString(), resolution_note: resolutionNote.trim() || null } : x))
     setResolving(false)
+  }
+
+  async function handleSendReply() {
+    if (!selectedId || !replyText.trim() || !selected) return
+    setSendingReply(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    const timestamp = new Date().toLocaleDateString('en-NG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+    const replyEntry = `[Reply to ${selected.submitter_name} — ${timestamp}]\n${replyText.trim()}`
+    await supabase.from('support_tickets').update({
+      resolution_note: replyEntry,
+      status: selected.status === 'sent' ? 'in_progress' : selected.status,
+    }).eq('id', selectedId)
+    await supabase.from('audit_logs').insert({
+      event: 'admin.inbox_reply_sent', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
+      actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',
+      target_name: selected.subject, severity: 'info', app: 'admin_panel',
+      metadata: { ticket_number: selected.ticket_number },
+    })
+    setTickets(prev => prev.map(x => x.id === selectedId
+      ? { ...x, resolution_note: replyEntry, status: x.status === 'sent' ? 'in_progress' : x.status } : x))
+    setReplyText('')
+    setSendingReply(false)
   }
 
   async function handleReroute(targetDept: string) {
@@ -279,6 +304,26 @@ export default function AdminInboxPage() {
                   <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Resolution</p>
                   <p className="text-sm text-text-primary">{selected.resolution_note ?? 'No resolution note.'}</p>
                   {selected.resolved_at && <p className="text-xs text-text-muted mt-1">Resolved {fmtTime(selected.resolved_at)}</p>}
+                </div>
+              )}
+
+              {/* Reply to submitter */}
+              {selected.status !== 'resolved' && selected.status !== 'closed' && (
+                <div className="bg-surface-card rounded-xl border border-surface-border p-4">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Reply to Submitter</p>
+                  {selected.resolution_note && (
+                    <div className="bg-admin-900/20 border border-admin-500/20 rounded-lg px-3 py-2 mb-3">
+                      <p className="text-[10px] text-admin-400 font-semibold mb-1">Last reply sent</p>
+                      <pre className="text-[11px] text-text-secondary whitespace-pre-wrap font-mono leading-relaxed">{selected.resolution_note}</pre>
+                    </div>
+                  )}
+                  <textarea value={replyText} onChange={e => setReplyText(e.target.value)}
+                    placeholder="Write a reply visible to the submitter…" rows={3}
+                    className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none resize-none mb-2" />
+                  <button onClick={handleSendReply} disabled={sendingReply || !replyText.trim()}
+                    className="px-4 py-1.5 rounded-lg bg-admin-500 text-white text-xs font-semibold hover:bg-admin-600 disabled:opacity-40 transition-colors">
+                    {sendingReply ? 'Sending…' : 'Send Reply'}
+                  </button>
                 </div>
               )}
 

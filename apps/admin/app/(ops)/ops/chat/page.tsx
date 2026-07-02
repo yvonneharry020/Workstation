@@ -72,6 +72,7 @@ export default function OpsLiveChatPage() {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -115,8 +116,14 @@ export default function OpsLiveChatPage() {
     if (!selectedId) return
     const ch = supabase.channel(`ops-chat-msgs-${selectedId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${selectedId}` }, (payload) => {
-        setMessages(prev => [...prev, payload.new as Message])
-        void supabase.from('chat_messages').update({ is_read: true }).eq('id', (payload.new as Message).id).eq('sender_type', 'user')
+        const incoming = payload.new as Message
+        setMessages(prev => {
+          const withoutOptimistic = prev.filter(m => !m.id.startsWith('optimistic-') || m.sender_type !== 'admin')
+          return [...withoutOptimistic, incoming]
+        })
+        if (incoming.sender_type === 'user') {
+          void supabase.from('chat_messages').update({ is_read: true }).eq('id', incoming.id)
+        }
       })
       .subscribe()
     return () => { void supabase.removeChannel(ch) }
@@ -131,11 +138,24 @@ export default function OpsLiveChatPage() {
     const { data: { user } } = await supabase.auth.getUser()
     const staffName = user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'Staff'
     const staffEmail = user?.email ?? null
+    const optimisticMsg: Message = {
+      id: `optimistic-${Date.now()}`,
+      created_at: now,
+      thread_id: selectedId,
+      sender_id: user?.id ?? null,
+      sender_type: 'admin',
+      sender_name: staffName,
+      content,
+      is_read: false,
+      attachment_url: null,
+      attachment_type: null,
+      attachment_name: null,
+    }
+    setMessages(prev => [...prev, optimisticMsg])
     const { error } = await supabase.from('chat_messages').insert({
       thread_id: selectedId,
       sender_type: 'admin',
       sender_name: staffName,
-      sender_email: staffEmail,
       content,
       is_read: false,
     })
@@ -196,6 +216,7 @@ export default function OpsLiveChatPage() {
   const totalUnread = threads.reduce((sum, t) => sum + t.unread_admin, 0)
 
   return (
+    <>
     <div className="flex flex-col min-h-full">
       <TopBar
         title="Live Chat"
@@ -313,11 +334,11 @@ export default function OpsLiveChatPage() {
                       <div className={`max-w-[70%] ${isAdmin ? 'items-end' : 'items-start'} flex flex-col`}>
                         {msg.attachment_type === 'image' && msg.attachment_url ? (
                           <div className="flex flex-col gap-1.5">
-                            <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                            <button onClick={() => setLightboxUrl(msg.attachment_url)} className="block text-left">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={msg.attachment_url} alt={msg.attachment_name ?? 'Attachment'} className={`rounded-xl max-w-[260px] max-h-[200px] object-cover border ${isAdmin ? 'border-ops-400/30' : 'border-surface-border'}`} />
-                              <span className={`text-[10px] mt-0.5 block ${isAdmin ? 'text-white/50' : 'text-text-muted'}`}>Click to open</span>
-                            </a>
+                              <span className={`text-[10px] mt-0.5 block ${isAdmin ? 'text-white/50' : 'text-text-muted'}`}>Click to expand</span>
+                            </button>
                           </div>
                         ) : msg.attachment_type === 'file' && msg.attachment_url ? (
                           <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer"
@@ -373,5 +394,29 @@ export default function OpsLiveChatPage() {
         </div>
       </div>
     </div>
+
+    {lightboxUrl && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        onClick={() => setLightboxUrl(null)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={lightboxUrl}
+          alt="Attachment"
+          className="max-w-[90vw] max-h-[90vh] rounded-2xl object-contain"
+          onClick={e => e.stopPropagation()}
+        />
+        <button
+          onClick={() => setLightboxUrl(null)}
+          className="absolute top-4 right-4 text-white/70 hover:text-white"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    )}
+    </>
   )
 }

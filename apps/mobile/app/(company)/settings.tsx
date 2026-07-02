@@ -3,33 +3,30 @@ import {
   Text,
   Pressable,
   ScrollView,
-  Switch,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Circle } from 'react-native-svg'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { logEvent } from '@/lib/audit'
 
 interface CompanyProfile {
   company_name: string | null
-  trust_score: number | null
   gmail_connected: boolean
   gmail_account: string | null
   outlook_connected: boolean
   outlook_account: string | null
 }
 
-interface NotificationPrefs {
-  push_enabled: boolean
-  email_new_application: boolean
-  email_status_change: boolean
-  email_interview_reminder: boolean
-}
+const DELETE_CONFIRM_WORD = 'DELETE'
 
 function ChevronRightIcon() {
   return (
@@ -111,14 +108,17 @@ function Divider() {
 export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user)
   const reset = useAuthStore((s) => s.reset)
-  const queryClient = useQueryClient()
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const { data: profile } = useQuery({
     queryKey: ['company-profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_profiles')
-        .select('company_name, trust_score, gmail_connected, gmail_account, outlook_connected, outlook_account')
+        .select('company_name, gmail_connected, gmail_account, outlook_connected, outlook_account')
         .eq('id', user!.id)
         .maybeSingle()
       if (error) throw error
@@ -127,21 +127,15 @@ export default function SettingsScreen() {
     enabled: !!user?.id,
   })
 
-  const { data: prefs } = useQuery({
-    queryKey: ['notification-prefs', user?.id],
+  const { data: trustData } = useQuery({
+    queryKey: ['trust-score', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('notification_preferences')
-        .select('push_enabled, email_new_application, email_status_change, email_interview_reminder')
-        .eq('user_id', user!.id)
+      const { data } = await supabase
+        .from('trust_scores')
+        .select('score')
+        .eq('profile_id', user!.id)
         .maybeSingle()
-      if (error) throw error
-      return (data ?? {
-        push_enabled: true,
-        email_new_application: true,
-        email_status_change: true,
-        email_interview_reminder: true,
-      }) as NotificationPrefs
+      return (data as any)?.score ?? 0 as number
     },
     enabled: !!user?.id,
   })
@@ -149,28 +143,17 @@ export default function SettingsScreen() {
   const { data: teamCount } = useQuery({
     queryKey: ['team-count', user?.id],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from('company_team_members')
         .select('*', { count: 'exact', head: true })
         .eq('company_id', user!.id)
         .eq('is_active', true)
-      if (error) throw error
       return count ?? 0
     },
     enabled: !!user?.id,
   })
 
-  const updatePrefMutation = useMutation({
-    mutationFn: async (update: Partial<NotificationPrefs>) => {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .upsert({ user_id: user!.id, ...prefs, ...update }, { onConflict: 'user_id' })
-      if (error) throw error
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notification-prefs'] }),
-  })
-
-  const trustScore = profile?.trust_score ?? 0
+  const trustScore = trustData ?? 0
   const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
 
   const handleSignOut = () => {
@@ -189,16 +172,20 @@ export default function SettingsScreen() {
     ])
   }
 
-  const handleDeactivate = () => {
-    Alert.alert(
-      'Deactivate account',
-      'Deactivating hides your company from candidates. Contact support to fully delete your data.',
-      [{ text: 'Cancel', style: 'cancel' }, { text: 'Contact support', onPress: () => {} }],
-    )
-  }
-
-  const toggleSwitch = (key: keyof NotificationPrefs) => (value: boolean) => {
-    updatePrefMutation.mutate({ [key]: value })
+  const handleDeleteAccount = async () => {
+    if (deleteText !== DELETE_CONFIRM_WORD) return
+    setIsDeleting(true)
+    try {
+      logEvent({ event: 'user.account_deleted', app: 'company_app' })
+      await supabase.rpc('delete_company_account')
+      await supabase.auth.signOut()
+      reset()
+      setShowDeleteModal(false)
+      router.replace('/(auth)/welcome' as never)
+    } catch {
+      Alert.alert('Error', 'Could not delete your account. Please contact support.')
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -225,17 +212,6 @@ export default function SettingsScreen() {
                 </Svg>
               }
               onPress={() => router.push('/(company)/profile/' as never)}
-            />
-            <Divider />
-            <SettingRow
-              label="Edit profile"
-              sub="Company info, branding, locations"
-              icon={
-                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                  <Path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </Svg>
-              }
-              onPress={() => router.push('/(company)/profile/edit')}
             />
             <Divider />
             <SettingRow
@@ -284,52 +260,15 @@ export default function SettingsScreen() {
           <SectionHeader label="Notifications" />
           <SectionCard>
             <SettingRow
-              label="Push notifications"
-              sub="Alerts on this device"
-              right={
-                <Switch
-                  value={prefs?.push_enabled ?? true}
-                  onValueChange={toggleSwitch('push_enabled')}
-                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
-                  thumbColor="#fff"
-                />
+              label="Notification Settings"
+              sub="Manage push and email alerts"
+              icon={
+                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <Path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </Svg>
               }
-            />
-            <Divider />
-            <SettingRow
-              label="New application emails"
-              right={
-                <Switch
-                  value={prefs?.email_new_application ?? true}
-                  onValueChange={toggleSwitch('email_new_application')}
-                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
-                  thumbColor="#fff"
-                />
-              }
-            />
-            <Divider />
-            <SettingRow
-              label="Status update emails"
-              right={
-                <Switch
-                  value={prefs?.email_status_change ?? true}
-                  onValueChange={toggleSwitch('email_status_change')}
-                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
-                  thumbColor="#fff"
-                />
-              }
-            />
-            <Divider />
-            <SettingRow
-              label="Interview reminder emails"
-              right={
-                <Switch
-                  value={prefs?.email_interview_reminder ?? true}
-                  onValueChange={toggleSwitch('email_interview_reminder')}
-                  trackColor={{ false: '#DDD6C9', true: '#FF6240' }}
-                  thumbColor="#fff"
-                />
-              }
+              onPress={() => router.push('/(company)/notification-settings' as never)}
             />
           </SectionCard>
         </Animated.View>
@@ -366,7 +305,7 @@ export default function SettingsScreen() {
           </SectionCard>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+        <Animated.View entering={FadeInDown.delay(220).duration(300)}>
           <SectionHeader label="Help & Support" />
           <SectionCard>
             <SettingRow
@@ -385,6 +324,16 @@ export default function SettingsScreen() {
           <SectionHeader label="Account" />
           <SectionCard>
             <SettingRow
+              label="Change Password"
+              icon={
+                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                </Svg>
+              }
+              onPress={() => router.push('/(company)/change-password' as never)}
+            />
+            <Divider />
+            <SettingRow
               label="Sign out"
               danger
               icon={
@@ -396,12 +345,80 @@ export default function SettingsScreen() {
               onPress={handleSignOut}
             />
             <Divider />
-            <SettingRow label="Deactivate account" danger onPress={handleDeactivate} />
+            <SettingRow
+              label="Delete Account"
+              danger
+              onPress={() => { setDeleteText(''); setShowDeleteModal(true) }}
+            />
           </SectionCard>
         </Animated.View>
 
         <Text style={{ color: '#DDD6C9', fontSize: 11, textAlign: 'center', marginTop: 28 }}>Workstation v1.0 · Lagos, Nigeria</Text>
       </ScrollView>
+
+      <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: '#00000070', justifyContent: 'center', padding: 24 }} onPress={() => !isDeleting && setShowDeleteModal(false)}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: '#F5F0E8', borderRadius: 20, padding: 24 }}>
+            <Text style={{ color: '#DC2626', fontSize: 18, fontWeight: '800', marginBottom: 8 }}>Delete Account</Text>
+            <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 20, marginBottom: 4 }}>
+              This will permanently delete your company account, all job postings, applicant data, and team members.
+            </Text>
+            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600', marginBottom: 20 }}>
+              This action cannot be undone.
+            </Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
+              Type DELETE to confirm
+            </Text>
+            <TextInput
+              value={deleteText}
+              onChangeText={setDeleteText}
+              placeholder="DELETE"
+              placeholderTextColor="#C8BFB0"
+              autoCapitalize="characters"
+              style={{
+                backgroundColor: '#EDE7DB',
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: deleteText === DELETE_CONFIRM_WORD ? '#DC2626' : '#DDD6C9',
+                color: '#1A1625',
+                fontSize: 16,
+                fontWeight: '700',
+                letterSpacing: 2,
+                padding: 14,
+                marginBottom: 20,
+              }}
+            />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                onPress={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}
+                className="active:opacity-70"
+              >
+                <Text style={{ color: '#1A1625', fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleDeleteAccount}
+                disabled={deleteText !== DELETE_CONFIRM_WORD || isDeleting}
+                style={{
+                  flex: 1,
+                  backgroundColor: deleteText === DELETE_CONFIRM_WORD ? '#DC2626' : '#DDD6C9',
+                  borderRadius: 12,
+                  paddingVertical: 13,
+                  alignItems: 'center',
+                  opacity: (deleteText !== DELETE_CONFIRM_WORD || isDeleting) ? 0.5 : 1,
+                }}
+                className="active:opacity-80"
+              >
+                {isDeleting
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Delete forever</Text>
+                }
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

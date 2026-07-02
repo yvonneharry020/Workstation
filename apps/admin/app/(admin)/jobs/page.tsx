@@ -8,17 +8,18 @@ interface JobPosting {
   id: string
   title: string
   company_id: string
+  company_name: string | null
   description: string | null
   status: string
   location: string | null
-  type: string | null
+  employment_type: string | null
   created_at: string
   salary_min: number | null
   salary_max: number | null
   requirements: string | null
 }
 
-type TabFilter = 'pending' | 'active' | 'all' | 'rejected'
+type TabFilter = 'draft' | 'active' | 'all' | 'closed'
 
 const CARD_STYLE = {
   backgroundColor: 'var(--bg-card)',
@@ -60,7 +61,7 @@ export default function JobsModerationPage() {
   const supabase = createClient()
   const [jobs, setJobs] = useState<JobPosting[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<TabFilter>('pending')
+  const [tab, setTab] = useState<TabFilter>('draft')
   const [search, setSearch] = useState('')
   const [acting, setActing] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -69,15 +70,19 @@ export default function JobsModerationPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('job_postings')
-      .select('id,title,company_id,description,status,location,type,created_at,salary_min,salary_max,requirements')
+      .select('id,title,company_id,description,status,location,employment_type,created_at,salary_min,salary_max,requirements,company_profiles(company_name)')
       .order('created_at', { ascending: false })
-    if (!error) setJobs((data ?? []) as JobPosting[])
+    if (!error) setJobs((data ?? []).map((j: Record<string, unknown>) => ({
+      ...j,
+      employment_type: j.employment_type as string | null,
+      company_name: (j.company_profiles as { company_name: string } | null)?.company_name ?? null,
+    })) as unknown as JobPosting[])
     setLoading(false)
   }, [supabase])
 
   useEffect(() => { void load() }, [load])
 
-  async function updateJobStatus(id: string, status: 'active' | 'rejected' | 'closed') {
+  async function updateJobStatus(id: string, status: 'active' | 'closed') {
     setActing(id)
     setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j))
     const { data: { user } } = await supabase.auth.getUser()
@@ -89,7 +94,7 @@ export default function JobsModerationPage() {
       actor_type: 'admin',
       target_id: id,
       target_type: 'job_posting',
-      severity: status === 'rejected' ? 'warning' : 'info',
+      severity: status === 'closed' ? 'warning' : 'info',
       app: 'admin_panel',
     })
     setActing(null)
@@ -97,33 +102,35 @@ export default function JobsModerationPage() {
 
   const filtered = jobs.filter(j => {
     const matchTab = tab === 'all' || j.status === tab
-    const matchSearch = !search || j.title.toLowerCase().includes(search.toLowerCase()) || j.company_id.toLowerCase().includes(search.toLowerCase())
+    const matchSearch = !search ||
+      j.title.toLowerCase().includes(search.toLowerCase()) ||
+      (j.company_name ?? '').toLowerCase().includes(search.toLowerCase())
     return matchTab && matchSearch
   })
 
-  const pendingCount = jobs.filter(j => j.status === 'pending').length
+  const draftCount = jobs.filter(j => j.status === 'draft').length
   const activeCount = jobs.filter(j => j.status === 'active').length
-  const rejectedCount = jobs.filter(j => j.status === 'rejected').length
+  const closedCount = jobs.filter(j => j.status === 'closed' || j.status === 'paused').length
   const total = jobs.length
 
   const TABS: { key: TabFilter; label: string; count: number }[] = [
-    { key: 'pending', label: 'Pending', count: pendingCount },
+    { key: 'draft', label: 'Pending Review', count: draftCount },
     { key: 'active', label: 'Active', count: activeCount },
     { key: 'all', label: 'All', count: total },
-    { key: 'rejected', label: 'Rejected', count: rejectedCount },
+    { key: 'closed', label: 'Suspended', count: closedCount },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <TopBar title="Job Moderation" subtitle={`${pendingCount} pending approval · ${activeCount} live jobs`} />
+      <TopBar title="Job Moderation" subtitle={`${draftCount} pending review · ${activeCount} live jobs`} />
 
       <div style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
-            { label: 'Pending Approval', value: pendingCount, color: '#FBBF24' },
+            { label: 'Pending Review', value: draftCount, color: '#FBBF24' },
             { label: 'Active / Live', value: activeCount, color: '#34D399' },
-            { label: 'Rejected', value: rejectedCount, color: '#F87171' },
+            { label: 'Suspended', value: closedCount, color: '#F87171' },
             { label: 'Total', value: total, color: 'var(--tx-1)' },
           ].map(stat => (
             <div key={stat.label} style={{ ...CARD_STYLE, padding: '20px 24px' }}>
@@ -182,12 +189,12 @@ export default function JobsModerationPage() {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                     <td style={{ padding: '14px 20px' }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{job.title}</p>
-                      <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0, fontFamily: 'monospace' }}>{job.company_id.slice(0, 12)}…</p>
+                      <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0 }}>{job.company_name ?? job.company_id.slice(0, 12) + '…'}</p>
                     </td>
                     <td style={{ padding: '14px 20px' }}>
-                      {job.type && (
+                      {job.employment_type && (
                         <span style={{ fontSize: 11, backgroundColor: 'rgba(99,102,241,0.12)', color: '#818CF8', padding: '3px 8px', borderRadius: 6, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                          {TYPE_LABELS[job.type] ?? job.type}
+                          {TYPE_LABELS[job.employment_type] ?? job.employment_type}
                         </span>
                       )}
                     </td>
@@ -201,14 +208,11 @@ export default function JobsModerationPage() {
                     <td style={{ padding: '14px 20px' }}><StatusPill value={job.status} /></td>
                     <td style={{ padding: '14px 20px' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {job.status === 'pending' && (
+                        {(job.status === 'draft' || job.status === 'closed') && (
                           <button onClick={() => updateJobStatus(job.id, 'active')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(52,211,153,0.15)', color: '#34D399', opacity: acting === job.id ? 0.6 : 1 }}>Approve</button>
                         )}
-                        {job.status !== 'rejected' && (
-                          <button onClick={() => updateJobStatus(job.id, 'rejected')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(239,68,68,0.15)', color: '#F87171', opacity: acting === job.id ? 0.6 : 1 }}>Reject</button>
-                        )}
                         {job.status === 'active' && (
-                          <button onClick={() => updateJobStatus(job.id, 'closed')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-3)', opacity: acting === job.id ? 0.6 : 1 }}>Suspend</button>
+                          <button onClick={() => updateJobStatus(job.id, 'closed')} disabled={acting === job.id} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none', backgroundColor: 'rgba(239,68,68,0.15)', color: '#F87171', opacity: acting === job.id ? 0.6 : 1 }}>Suspend</button>
                         )}
                       </div>
                     </td>
