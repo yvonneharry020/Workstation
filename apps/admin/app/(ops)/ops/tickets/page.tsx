@@ -132,6 +132,7 @@ export default function OpsTicketsPage() {
       .from('support_tickets')
       .select('*')
       .is('parent_ticket_id', null)
+      .neq('submitter_type', 'admin')
       .order('created_at', { ascending: false })
     if (data) setTickets(data as Ticket[])
     setLoading(false)
@@ -143,7 +144,7 @@ export default function OpsTicketsPage() {
     const ch = supabase.channel('ops-tickets')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_tickets' }, (payload) => {
         const t = payload.new as Ticket
-        if (t.parent_ticket_id === null) setTickets(prev => [t, ...prev])
+        if (t.parent_ticket_id === null && t.submitter_type !== 'admin') setTickets(prev => [t, ...prev])
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_tickets' }, (payload) => {
         const t = payload.new as Ticket
