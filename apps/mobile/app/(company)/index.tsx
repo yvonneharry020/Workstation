@@ -259,6 +259,23 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
 
+  const { data: broadcasts = [] } = useQuery({
+    queryKey: ['admin-broadcasts-company-modal'],
+    queryFn: async () => {
+      const now = new Date().toISOString()
+      const { data } = await supabase
+        .from('admin_broadcasts')
+        .select('id, title, body, type, created_at, expires_at')
+        .eq('is_active', true)
+        .in('target', ['all', 'companies'])
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .order('created_at', { ascending: false })
+      return (data ?? []) as Array<{ id: string; title: string; body: string; type: string; created_at: string; expires_at: string | null }>
+    },
+    enabled: visible,
+    staleTime: 1000 * 60,
+  })
+
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['company-notifications-modal', userId],
     queryFn: async () => {
@@ -281,7 +298,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-notifications-modal'] }),
   })
 
-  const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length
+  const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length + broadcasts.length
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime()
@@ -320,7 +337,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
             <View style={{ paddingVertical: 40, alignItems: 'center' }}>
               <ActivityIndicator color="#FF6240" />
             </View>
-          ) : !notifications?.length ? (
+          ) : !notifications?.length && broadcasts.length === 0 ? (
             <View style={{ paddingVertical: 40, alignItems: 'center' }}>
               <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <BellIcon />
@@ -329,10 +346,28 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
             </View>
           ) : (
             <FlatList
-              data={notifications}
+              data={notifications ?? []}
               keyExtractor={(item) => item.id}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingVertical: 8 }}
+              ListHeaderComponent={
+                broadcasts.length > 0 ? (
+                  <View style={{ paddingHorizontal: 16, paddingTop: 4 }}>
+                    {broadcasts.map(b => (
+                      <View key={b.id} style={{ backgroundColor: '#FEF2F2', borderRadius: 12, borderWidth: 1.5, borderColor: '#FECACA', borderLeftWidth: 4, borderLeftColor: '#EF4444', padding: 12, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                          <View style={{ backgroundColor: '#EF4444', borderRadius: 3, paddingHorizontal: 5, paddingVertical: 1 }}>
+                            <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>📌 PINNED</Text>
+                          </View>
+                        </View>
+                        <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700', marginBottom: 2 }}>{b.title}</Text>
+                        <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 17 }}>{b.body}</Text>
+                        <Text style={{ color: '#94A3B8', fontSize: 10, marginTop: 4 }}>{timeAgo(b.created_at)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null
+              }
               renderItem={({ item }) => (
                 <Pressable
                   style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F0EBE1', backgroundColor: item.read_at ? 'transparent' : '#FF624008' }}
@@ -359,6 +394,20 @@ export default function CompanyDashboard() {
   const [showNotifications, setShowNotifications] = useState(false)
   const today = new Date().toISOString().slice(0, 10)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data: bellCount = 0 } = useQuery<number>({
+    queryKey: ['company-bell-count', user?.id],
+    queryFn: async () => {
+      const now = new Date().toISOString()
+      const [notifRes, broadcastRes] = await Promise.all([
+        supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).is('read_at', null),
+        supabase.from('admin_broadcasts').select('id', { count: 'exact', head: true }).eq('is_active', true).in('target', ['all', 'companies']).or(`expires_at.is.null,expires_at.gt.${now}`),
+      ])
+      return (notifRes.count ?? 0) + (broadcastRes.count ?? 0)
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60,
+  })
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['company-dashboard', user?.id],
@@ -428,6 +477,11 @@ export default function CompanyDashboard() {
             className="active:opacity-70"
           >
             <BellIcon />
+            {bellCount > 0 && (
+              <View style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: 8, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#F5F0E8' }}>
+                <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>{bellCount > 9 ? '9+' : bellCount}</Text>
+              </View>
+            )}
           </Pressable>
         </View>
 

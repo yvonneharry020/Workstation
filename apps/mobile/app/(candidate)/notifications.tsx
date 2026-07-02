@@ -33,6 +33,15 @@ interface NotificationItem {
   created_at: string
 }
 
+interface Broadcast {
+  id: string
+  title: string
+  body: string
+  type: string
+  created_at: string
+  expires_at: string | null
+}
+
 const NOTIF_CONFIGS: Record<NotificationType, { color: string; emoji: string }> = {
   profile_viewed:      { color: '#0DD4C3', emoji: '👁' },
   application_update:  { color: '#FF6240', emoji: '📋' },
@@ -119,8 +128,52 @@ function NotifCard({ item, onPress }: { item: NotificationItem; onPress: () => v
   )
 }
 
+function StickyBroadcast({ item }: { item: Broadcast }) {
+  return (
+    <View style={{
+      backgroundColor: '#FEF2F2',
+      borderRadius: 14,
+      borderWidth: 1.5,
+      borderColor: '#FECACA',
+      borderLeftWidth: 4,
+      borderLeftColor: '#EF4444',
+      padding: 14,
+      marginBottom: 8,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <View style={{ backgroundColor: '#EF4444', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>📌 PINNED</Text>
+        </View>
+        <Text style={{ color: '#EF4444', fontSize: 10, fontWeight: '600', textTransform: 'capitalize' }}>{item.type}</Text>
+      </View>
+      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', marginBottom: 4, lineHeight: 20 }}>
+        {item.title}
+      </Text>
+      <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18 }}>{item.body}</Text>
+      <Text style={{ color: '#94A3B8', fontSize: 10, marginTop: 6 }}>{timeAgo(item.created_at)}</Text>
+    </View>
+  )
+}
+
 export default function NotificationsScreen() {
   const user = useAuthStore((s) => s.user)
+
+  const { data: broadcasts = [] } = useQuery<Broadcast[]>({
+    queryKey: ['admin-broadcasts-candidate'],
+    queryFn: async () => {
+      const now = new Date().toISOString()
+      const { data } = await supabase
+        .from('admin_broadcasts')
+        .select('id, title, body, type, created_at, expires_at')
+        .eq('is_active', true)
+        .in('target', ['all', 'candidates'])
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .order('created_at', { ascending: false })
+      return (data ?? []) as Broadcast[]
+    },
+    staleTime: 1000 * 60,
+  })
+
   const { data: notifications = [], isLoading, refetch, isRefetching } = useQuery<NotificationItem[]>({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
@@ -137,7 +190,7 @@ export default function NotificationsScreen() {
     staleTime: 1000 * 30,
   })
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length
+  const unreadCount = notifications.filter((n) => !n.is_read).length + broadcasts.length
 
   const markRead = async (notif: NotificationItem) => {
     if (!notif.is_read) {
@@ -209,19 +262,28 @@ export default function NotificationsScreen() {
               tintColor="#FF6240"
             />
           }
+          ListHeaderComponent={
+            broadcasts.length > 0 ? (
+              <View>
+                {broadcasts.map(b => <StickyBroadcast key={b.id} item={b} />)}
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <NotifCard item={item} onPress={() => markRead(item)} />
           )}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-              <Text style={{ fontSize: 36, marginBottom: 12 }}>🔔</Text>
-              <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '600', marginBottom: 6 }}>
-                No notifications yet
-              </Text>
-              <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
-                You'll be notified when companies view your profile, open your emails, and more.
-              </Text>
-            </View>
+            broadcasts.length > 0 ? null : (
+              <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+                <Text style={{ fontSize: 36, marginBottom: 12 }}>🔔</Text>
+                <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '600', marginBottom: 6 }}>
+                  No notifications yet
+                </Text>
+                <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
+                  You'll be notified when companies view your profile, open your emails, and more.
+                </Text>
+              </View>
+            )
           }
         />
       )}

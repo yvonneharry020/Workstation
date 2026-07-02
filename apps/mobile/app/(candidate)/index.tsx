@@ -188,6 +188,20 @@ export default function CandidateDashboard() {
     enabled: !!user?.id,
   })
 
+  const { data: bellCount = 0 } = useQuery<number>({
+    queryKey: ['candidate-bell-count', user?.id],
+    queryFn: async () => {
+      const now = new Date().toISOString()
+      const [notifRes, broadcastRes] = await Promise.all([
+        supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user!.id).eq('is_read', false),
+        supabase.from('admin_broadcasts').select('id', { count: 'exact', head: true }).eq('is_active', true).in('target', ['all', 'candidates']).or(`expires_at.is.null,expires_at.gt.${now}`),
+      ])
+      return (notifRes.count ?? 0) + (broadcastRes.count ?? 0)
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60,
+  })
+
   const toggleMutation = useMutation({
     mutationFn: async (val: boolean) => {
       const { error } = await supabase.from('candidate_profiles').update({ is_open_to_work: val }).eq('id', user!.id)
@@ -240,6 +254,11 @@ export default function CandidateDashboard() {
             hitSlop={12}
           >
             <BellIcon />
+            {bellCount > 0 && (
+              <View style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: 8, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#F5F0E8' }}>
+                <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>{bellCount > 9 ? '9+' : bellCount}</Text>
+              </View>
+            )}
           </Pressable>
         </Animated.View>
 
