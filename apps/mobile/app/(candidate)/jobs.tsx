@@ -94,20 +94,6 @@ const FILTERS = [
   { label: 'Internship', value: 'internship' },
 ]
 
-function WorkModePill({ mode }: { mode: string }) {
-  const colors: Record<string, { bg: string; text: string }> = {
-    remote: { bg: '#0DD4C320', text: '#0DD4C3' },
-    hybrid: { bg: '#F59E0B20', text: '#F59E0B' },
-    on_site: { bg: '#6366F120', text: '#818CF8' },
-  }
-  const color = colors[mode] ?? { bg: '#DDD6C9', text: '#5A4F6E' }
-  return (
-    <View style={{ backgroundColor: color.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-      <Text style={{ color: color.text, fontSize: 11, fontWeight: '600' }}>{formatLabel(mode)}</Text>
-    </View>
-  )
-}
-
 function JobCard({
   job,
   isSaved,
