@@ -59,7 +59,6 @@ const QUESTION_TYPE_OPTIONS = [
 ]
 
 type QuestionType = 'short_text' | 'long_text' | 'multiple_choice' | 'checkbox' | 'dropdown'
-type ScreeningType = 'normal' | 'timed_quiz'
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const DAYS_OF_WEEK = ['Su','Mo','Tu','We','Th','Fr','Sa']
