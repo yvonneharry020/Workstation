@@ -5,15 +5,13 @@ import {
   ScrollView,
   TextInput,
   Alert,
-  Platform,
   StatusBar,
 } from 'react-native'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   FadeIn,
-  FadeOut,
   SlideInRight,
   SlideOutRight,
   useSharedValue,
