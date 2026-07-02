@@ -10,7 +10,6 @@ import Animated, {
   withDelay,
   withTiming,
   withSequence,
-  withRepeat,
   Easing,
 } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
