@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createTabClient } from '@/lib/supabase/tab-client'
 
-type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired'
+type JobStatus = 'draft' | 'active' | 'paused' | 'closed'
 
 interface Job {
   id: string
@@ -22,7 +22,6 @@ const STATUS_CONFIG: Record<JobStatus, { label: string; classes: string }> = {
   active:  { label: 'Live',    classes: 'bg-green-900/20 text-green-400 border-green-800/30' },
   paused:  { label: 'Paused',  classes: 'bg-amber-900/20 text-amber-400 border-amber-800/30' },
   closed:  { label: 'Closed',  classes: 'bg-red-900/20 text-red-400 border-red-800/30' },
-  expired: { label: 'Expired', classes: 'bg-purple-900/20 text-purple-400 border-purple-800/30' },
 }
 
 const FILTER_TABS = [
@@ -31,7 +30,6 @@ const FILTER_TABS = [
   { key: 'active',  label: 'Live' },
   { key: 'paused',  label: 'Paused' },
   { key: 'closed',  label: 'Closed' },
-  { key: 'expired', label: 'Expired' },
 ]
 
 function formatDateTime(iso: string) {
@@ -226,7 +224,7 @@ export default function JobQueuePage() {
               const statusCfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
               const isClosed = job.status === 'closed'
               const isToggling = toggling === job.id
-              const canToggle = job.status !== 'draft' && job.status !== 'expired'
+              const canToggle = job.status !== 'draft'
 
               return (
                 <tr
