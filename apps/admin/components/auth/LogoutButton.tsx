@@ -15,6 +15,7 @@ export default function LogoutButton({ showLabel = true, children, ...rest }: Lo
 
   function handleLogout() {
     startTransition(async () => {
+      sessionStorage.removeItem('_wk_session')
       const supabase = createClient()
       await supabase.auth.signOut()
       router.replace('/login')

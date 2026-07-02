@@ -28,10 +28,20 @@ const loginSchema = z.object({
   honeypot: z.literal(''),
 })
 
+export type TabSession = {
+  id: string
+  name: string
+  email: string
+  role: string
+  department: string | null
+  permissions: { admin: boolean; management: boolean; technical: boolean; finance: boolean }
+}
+
 export type LoginState = {
   error?: string
   fieldErrors?: { email?: string[]; password?: string[] }
   redirectTo?: string
+  tabSession?: TabSession
 }
 
 export async function loginAction(
@@ -79,10 +89,10 @@ export async function loginAction(
     return { error: 'Invalid credentials. Check your email and password.' }
   }
 
-  // Check if the staff account has been deactivated
+  // Check if the staff account has been deactivated — also grab name + department for tab session
   const { data: staffRecord } = await supabase
     .from('staff_members')
-    .select('is_active, role, permissions')
+    .select('is_active, role, permissions, full_name, department')
     .eq('email', parsed.data.email)
     .maybeSingle()
 
@@ -106,6 +116,29 @@ export async function loginAction(
     metadata: { ip },
   })
 
+  // Get authenticated user ID for the tab session
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  const isSuperAdmin = parsed.data.email === 'yvonne2okis@gmail.com'
+  const superAdminName =
+    (authUser?.user_metadata?.full_name as string | undefined) ??
+    (authUser?.user_metadata?.name as string | undefined) ??
+    'Yvonne Harry'
+
+  const tabSession: TabSession = {
+    id:          authUser?.id ?? '',
+    name:        isSuperAdmin
+                   ? superAdminName
+                   : ((staffRecord as Record<string, unknown> | null)?.full_name as string | null)
+                     ?? parsed.data.email.split('@')[0],
+    email:       parsed.data.email,
+    role:        isSuperAdmin ? 'superadmin' : ((staffRecord?.role as string | null) ?? 'staff'),
+    department:  isSuperAdmin ? 'admin' : ((staffRecord as Record<string, unknown> | null)?.department as string | null) ?? null,
+    permissions: isSuperAdmin
+                   ? { admin: true, management: true, technical: true, finance: true }
+                   : (staffRecord?.permissions as TabSession['permissions']) ?? { admin: false, management: false, technical: false, finance: false },
+  }
+
   // Route to the correct room dashboard based on permissions
   let destination = '/dashboard'
   if (staffRecord && staffRecord.role !== 'admin') {
@@ -115,7 +148,7 @@ export async function loginAction(
     else if (perms.finance) destination = '/finance/dashboard'
   }
 
-  return { redirectTo: destination }
+  return { redirectTo: destination, tabSession }
 }
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────

@@ -70,6 +70,9 @@ function LoginForm() {
     startTransition(async () => {
       const result = await loginAction(state, formData)
       if (result?.redirectTo) {
+        if (result.tabSession) {
+          sessionStorage.setItem('_wk_session', JSON.stringify(result.tabSession))
+        }
         router.replace(result.redirectTo)
       } else {
         setState(result)

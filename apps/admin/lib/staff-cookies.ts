@@ -46,12 +46,31 @@ function parseCookies(): StaffInfo {
   return SUPER_ADMIN_DEFAULTS
 }
 
+// sessionStorage is tab-specific — read it before shared cookies to preserve
+// each tab's identity when multiple accounts are open in the same browser.
+function parseSessionOrCookies(): StaffInfo {
+  if (typeof window !== 'undefined') {
+    const stored = sessionStorage.getItem('_wk_session')
+    if (stored) {
+      try {
+        const s = JSON.parse(stored) as { name: string; role: string; permissions: StaffInfo['permissions'] }
+        if (s.role && s.name !== undefined) {
+          return { name: s.name, role: s.role, permissions: s.permissions }
+        }
+      } catch {
+        // malformed — fall through
+      }
+    }
+  }
+  return parseCookies()
+}
+
 export function useStaffInfo(): StaffInfo {
   const pathname = usePathname()
   const [info, setInfo] = useState<StaffInfo>(SUPER_ADMIN_DEFAULTS)
 
   useIsomorphicLayoutEffect(() => {
-    setInfo(parseCookies())
+    setInfo(parseSessionOrCookies())
   }, [pathname])
 
   return info

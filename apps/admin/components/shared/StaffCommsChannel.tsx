@@ -104,25 +104,46 @@ export default function StaffCommsChannel() {
   // Identify current user + build mentions list
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      // sessionStorage is tab-specific — use it first to preserve per-tab identity
+      // when multiple accounts are open in the same browser.
+      const stored = typeof window !== 'undefined' ? sessionStorage.getItem('_wk_session') : null
+      let resolvedUser: CurrentUser | null = null
 
-      const { data: me } = await supabase
-        .from('staff_members')
-        .select('*')
-        .eq('email', user.email!)
-        .maybeSingle()
+      if (stored) {
+        try {
+          const session = JSON.parse(stored) as { id: string; name: string; email: string; department: string | null }
+          if (session.id && session.name && session.email) {
+            resolvedUser = { id: session.id, name: session.name, email: session.email, department: session.department }
+          }
+        } catch {
+          // malformed — fall through
+        }
+      }
 
-      const myName = me
-        ? extractName(me as Record<string, unknown>, user.email?.split('@')[0] ?? 'Staff')
-        : (user.user_metadata?.full_name as string | null)
-          ?? user.email?.split('@')[0]
-          ?? 'Staff'
+      if (!resolvedUser) {
+        // Fall back to Supabase auth (works correctly in single-account sessions)
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
 
-      const myDept = (me as Record<string, unknown> | null)?.department as string | null
-        ?? (user.email === 'yvonne2okis@gmail.com' ? 'admin' : null)
+        const { data: me } = await supabase
+          .from('staff_members')
+          .select('*')
+          .eq('email', user.email!)
+          .maybeSingle()
 
-      setCurrentUser({ id: user.id, name: myName, email: user.email ?? '', department: myDept })
+        const myName = me
+          ? extractName(me as Record<string, unknown>, user.email?.split('@')[0] ?? 'Staff')
+          : (user.user_metadata?.full_name as string | null)
+            ?? user.email?.split('@')[0]
+            ?? 'Staff'
+
+        const myDept = (me as Record<string, unknown> | null)?.department as string | null
+          ?? (user.email === 'yvonne2okis@gmail.com' ? 'admin' : null)
+
+        resolvedUser = { id: user.id, name: myName, email: user.email ?? '', department: myDept }
+      }
+
+      setCurrentUser(resolvedUser)
 
       const { data: staffList } = await supabase
         .from('staff_members')
