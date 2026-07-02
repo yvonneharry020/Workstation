@@ -3,7 +3,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path, Circle, Rect } from 'react-native-svg'
+import Svg, { Path, Circle } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -270,7 +270,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
         .in('target', ['all', 'companies'])
         .or(`expires_at.is.null,expires_at.gt.${now}`)
         .order('created_at', { ascending: false })
-      return (data ?? []) as Array<{ id: string; title: string; body: string; type: string; created_at: string; expires_at: string | null }>
+      return (data ?? []) as { id: string; title: string; body: string; type: string; created_at: string; expires_at: string | null }[]
     },
     enabled: visible,
     staleTime: 1000 * 60,
@@ -286,7 +286,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
         .order('created_at', { ascending: false })
         .limit(20)
       if (error) throw error
-      return data as Array<{ id: string; type: string; title: string; body: string; read_at: string | null; created_at: string }>
+      return data as { id: string; type: string; title: string; body: string; read_at: string | null; created_at: string }[]
     },
     enabled: visible && !!userId,
   })
