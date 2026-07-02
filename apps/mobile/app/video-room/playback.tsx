@@ -4,7 +4,6 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  FlatList,
 } from 'react-native'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -12,11 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, {
   FadeInDown,
   FadeInUp,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
 } from 'react-native-reanimated'
-import Svg, { Path, Circle, Polygon, Rect, Polyline } from 'react-native-svg'
+import Svg, { Path, Polygon, Rect } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -183,9 +179,9 @@ function Timeline({ currentSecs, totalSecs, annotations, onSeek, onAnnotationPre
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function InterviewRecordingPlaybackScreen() {
-  const { bookingId, recordingId } = useLocalSearchParams<{
+  const { bookingId, _recordingId } = useLocalSearchParams<{
     bookingId: string
-    recordingId: string
+    _recordingId: string
   }>()
 
   const role = useAuthStore((s) => s.role)
@@ -195,7 +191,7 @@ export default function InterviewRecordingPlaybackScreen() {
   const [currentSecs, setCurrentSecs] = useState(0)
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1)
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null)
-  const [showSpeedPicker, setShowSpeedPicker] = useState(false)
+  const [_showSpeedPicker, _setShowSpeedPicker] = useState(false)
 
   // Access guard — recording is company-only
   const isAuthorised = role === 'company'
