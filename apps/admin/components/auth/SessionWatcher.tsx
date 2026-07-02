@@ -1,12 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SessionWatcher() {
-  const router = useRouter()
-
   useEffect(() => {
     const supabase = createClient()
 
@@ -28,17 +25,19 @@ export default function SessionWatcher() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        // Session expired entirely
+        // Session expired entirely — sign out to clear cookie, then go to login
         sessionStorage.removeItem('_wk_session')
-        router.replace('/login')
+        await supabase.auth.signOut()
+        window.location.replace('/login')
         return
       }
 
       if (user.email !== expectedEmail) {
         // Another account took over the shared auth cookie for this tab.
-        // Force this tab back to login so the correct user re-authenticates.
+        // Do NOT call router.replace here — that can crash React mid-render.
+        // Use window.location to do a hard navigation instead.
         sessionStorage.removeItem('_wk_session')
-        router.replace('/login?error=session_changed')
+        window.location.replace('/login?error=session_changed')
       }
     }
 
@@ -59,13 +58,13 @@ export default function SessionWatcher() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         sessionStorage.removeItem('_wk_session')
-        router.replace('/login')
+        window.location.replace('/login')
         return
       }
       const expectedEmail = getExpectedEmail()
       if (expectedEmail && session?.user?.email && session.user.email !== expectedEmail) {
         sessionStorage.removeItem('_wk_session')
-        router.replace('/login?error=session_changed')
+        window.location.replace('/login?error=session_changed')
       }
     })
 
@@ -78,10 +77,10 @@ export default function SessionWatcher() {
           const reason = (msg.payload as Record<string, string>)?.reason ?? 'session_expired'
           sessionStorage.removeItem('_wk_session')
           await supabase.auth.signOut()
-          router.replace(`/login?error=${reason}`)
+          window.location.replace(`/login?error=${reason}`)
         })
         .on('broadcast', { event: 'permissions_updated' }, () => {
-          router.refresh()
+          window.location.reload()
         })
         .subscribe()
     })
@@ -90,7 +89,7 @@ export default function SessionWatcher() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [])
 
   return null
 }
