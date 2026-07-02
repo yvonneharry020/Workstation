@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  FlatList,
   Modal,
 } from 'react-native'
 import { router } from 'expo-router'
