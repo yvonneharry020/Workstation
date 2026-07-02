@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, Alert } from 'react-native'
+import { View, Text, Pressable, ScrollView } from 'react-native'
 import { useState, useRef, useEffect } from 'react'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
