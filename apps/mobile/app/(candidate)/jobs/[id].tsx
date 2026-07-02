@@ -30,7 +30,7 @@ interface JobDetail {
   salary_max: number | null
   salary_is_confidential: boolean
   application_deadline: string | null
-  screening_questions: Array<{ question: string; required: boolean }> | null
+  screening_questions: { question: string; required: boolean }[] | null
   applications_count: number
   published_at: string
   company_id: string
