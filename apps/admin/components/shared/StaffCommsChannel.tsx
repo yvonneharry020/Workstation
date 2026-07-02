@@ -159,11 +159,15 @@ export default function StaffCommsChannel() {
 
   useEffect(() => { void loadMessages() }, [loadMessages])
 
-  // Real-time subscription
+  // Real-time subscription — deduplicate against messages already added optimistically
   useEffect(() => {
     const ch = supabase.channel('staff-general-channel')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_messages' }, (p) => {
-        setMessages(prev => [...prev, p.new as Message])
+        setMessages(prev => {
+          const incoming = p.new as Message
+          if (prev.some(m => m.id === incoming.id)) return prev
+          return [...prev, incoming]
+        })
       })
       .subscribe()
     return () => { void supabase.removeChannel(ch) }
@@ -223,14 +227,20 @@ export default function StaffCommsChannel() {
     if (!body.trim() || !currentUser || sending) return
     setSending(true)
     const mentions = (body.match(/@(\w+)/g) ?? []).map(m => m.slice(1))
-    await supabase.from('staff_messages').insert({
+    const { data: newMsg } = await supabase.from('staff_messages').insert({
       sender_id:         currentUser.id,
       sender_name:       currentUser.name,
       sender_email:      currentUser.email,
       sender_department: currentUser.department,
       body:              body.trim(),
       mentions,
-    })
+    }).select().single()
+
+    // Immediately add to local state so the sender sees it without waiting for real-time
+    if (newMsg) {
+      setMessages(prev => [...prev, newMsg as Message])
+    }
+
     setBody('')
     setMentionTrigger(null)
     setSending(false)
