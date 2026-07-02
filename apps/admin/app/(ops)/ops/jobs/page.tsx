@@ -1,153 +1,146 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient } from '@/lib/supabase/tab-client'
+
+type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired'
 
 interface Job {
   id: string
   title: string
-  company_id: string
-  description: string | null
-  status: string
-  location: string | null
-  type: string | null
+  status: JobStatus
+  screening_type: 'normal' | 'timed_quiz'
   created_at: string
-  company_name: string | null
+  company_profiles: { company_name: string | null } | null
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
-  active: 'bg-green-900/20 text-green-400 border-green-800/30',
-  rejected: 'bg-red-900/20 text-red-400 border-red-800/30',
-  closed: 'bg-gray-900/20 text-gray-400 border-gray-800/30',
+const STATUS_CONFIG: Record<JobStatus, { label: string; classes: string }> = {
+  draft:   { label: 'Draft',   classes: 'bg-gray-900/30 text-gray-400 border-gray-700/30' },
+  active:  { label: 'Live',    classes: 'bg-green-900/20 text-green-400 border-green-800/30' },
+  paused:  { label: 'Paused',  classes: 'bg-amber-900/20 text-amber-400 border-amber-800/30' },
+  closed:  { label: 'Closed',  classes: 'bg-red-900/20 text-red-400 border-red-800/30' },
+  expired: { label: 'Expired', classes: 'bg-purple-900/20 text-purple-400 border-purple-800/30' },
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' })
+const FILTER_TABS = [
+  { key: 'all',     label: 'All' },
+  { key: 'draft',   label: 'Draft' },
+  { key: 'active',  label: 'Live' },
+  { key: 'paused',  label: 'Paused' },
+  { key: 'closed',  label: 'Closed' },
+  { key: 'expired', label: 'Expired' },
+]
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('en-NG', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  })
 }
 
-export default function JobsPage() {
-  const supabase = createClient()
+export default function JobQueuePage() {
+  const supabase = createTabClient()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<Job | null>(null)
-  const [acting, setActing] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState('pending')
-  const [editNote, setEditNote] = useState('')
+  const [filter, setFilter] = useState('all')
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+
+    const channel = supabase
+      .channel('job-queue-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_postings' }, () => {
+        void load()
+      })
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [])
 
   async function load() {
     const { data } = await supabase
-      .from('jobs')
-      .select('id,title,company_id,description,status,location,type,created_at,company_name')
+      .from('job_postings')
+      .select('id, title, status, screening_type, created_at, company_profiles!company_id(company_name)')
       .order('created_at', { ascending: false })
     setJobs((data ?? []) as Job[])
     setLoading(false)
   }
 
-  async function updateJobStatus(id: string, status: string) {
-    setActing(id)
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('job_postings').update({ status }).eq('id', id)
-    await supabase.from('audit_logs').insert({
-      event: `admin.job_${status}`,
-      actor_email: user?.email ?? null,
-      actor_id: user?.id ?? null,
-      actor_type: 'admin',
-      target_id: id,
-      target_type: 'job',
-      severity: 'info',
-      app: 'admin_panel',
-    })
-    setJobs(prev => prev.map(j => j.id === id ? { ...j, status } : j))
-    setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
-    setActing(null)
-  }
-
-  const filtered = statusFilter === 'all' ? jobs : jobs.filter(j => j.status === statusFilter)
-  const pendingCount = jobs.filter(j => j.status === 'pending').length
+  const filtered = filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
 
   return (
-    <div className="flex h-screen">
-      <div className="w-80 flex-shrink-0 border-r border-surface-border flex flex-col">
-        <div className="px-4 py-4 border-b border-surface-border flex items-center justify-between">
-          <p className="text-sm font-semibold text-text-primary">Job Review Queue</p>
-          {pendingCount > 0 && <span className="text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-full px-2 py-0.5">{pendingCount}</span>}
-        </div>
-        <div className="px-3 py-2 border-b border-surface-border flex gap-1 flex-wrap">
-          {['all','pending','active','rejected','closed'].map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)} className={`px-2 py-0.5 rounded text-[10px] font-semibold capitalize transition-colors ${statusFilter === s ? 'bg-ops-900/50 text-ops-300' : 'text-text-muted hover:text-text-primary'}`}>{s}</button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto py-2 px-2">
-          {loading ? <div className="text-text-muted text-xs px-2 py-3">Loading…</div> :
-            filtered.length === 0 ? (
-              <p className="text-xs text-text-muted px-2 py-4">No jobs with status: {statusFilter}.</p>
-            ) :
-            filtered.map(j => (
-              <button key={j.id} onClick={() => setSelected(j)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg mb-0.5 transition-colors ${selected?.id === j.id ? 'bg-ops-900/40 border border-ops-800/30' : 'hover:bg-surface-elevated'}`}>
-                <p className="text-xs font-semibold text-text-primary line-clamp-1">{j.title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-[10px] font-bold px-1.5 py-0 rounded border capitalize ${STATUS_COLORS[j.status] ?? ''}`}>{j.status}</span>
-                  <span className="text-[10px] text-text-muted">{formatDate(j.created_at)}</span>
-                </div>
-              </button>
-            ))
-          }
-        </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold font-display text-text-primary">Job Queue</h1>
+        <p className="text-sm text-text-muted mt-1">All job postings across every company on Workstation. Status updates in real time.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {selected ? (
-          <div className="px-8 py-6 max-w-2xl">
-            <div className="flex items-start justify-between mb-5">
-              <div>
-                <h1 className="text-lg font-semibold font-display text-text-primary">{selected.title}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border capitalize ${STATUS_COLORS[selected.status] ?? ''}`}>{selected.status}</span>
-                  {selected.type && <span className="text-xs text-text-muted capitalize">{selected.type}</span>}
-                  {selected.location && <span className="text-xs text-text-muted">{selected.location}</span>}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-surface-card border border-surface-border rounded-xl p-4 mb-4">
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Job Details</p>
-              <p className="text-sm text-text-secondary">{selected.description ?? 'No description provided.'}</p>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {selected.company_name && (
-                  <div>
-                    <p className="text-[10px] text-text-muted uppercase tracking-wider">Company</p>
-                    <p className="text-sm text-text-primary mt-0.5">{selected.company_name}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Posted</p>
-                  <p className="text-sm text-text-primary mt-0.5">{formatDate(selected.created_at)}</p>
-                </div>
-              </div>
-            </div>
-
-            {selected.status === 'pending' && (
-              <div className="bg-surface-card border border-surface-border rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Take Action</p>
-                <div className="flex gap-2">
-                  <button onClick={() => void updateJobStatus(selected.id, 'active')} disabled={acting === selected.id} className="px-4 py-2 bg-green-900/20 border border-green-800/30 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-900/30 transition-colors disabled:opacity-40">Approve & Publish</button>
-                  <button onClick={() => void updateJobStatus(selected.id, 'rejected')} disabled={acting === selected.id} className="px-4 py-2 bg-red-900/20 border border-red-800/30 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/30 transition-colors disabled:opacity-40">Reject</button>
-                </div>
-                <div>
-                  <textarea value={editNote} onChange={e => setEditNote(e.target.value)} rows={2} placeholder="Request edit note (optional)…" className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-ops-500 resize-none" />
-                </div>
-              </div>
+      <div className="flex gap-1 mb-4 border-b border-surface-border pb-2">
+        {FILTER_TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+              filter === tab.key
+                ? 'bg-ops-900/50 text-ops-300'
+                : 'text-text-muted hover:text-text-primary'
+            }`}
+          >
+            {tab.label}
+            {tab.key === 'all' && !loading && (
+              <span className="ml-1.5 text-text-muted font-normal">({jobs.length})</span>
             )}
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full text-text-muted text-sm">
-            Select a job posting to review
-          </div>
-        )}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-surface-card border border-surface-border rounded-xl overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-surface-border">
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Company</th>
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Role</th>
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Status</th>
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Screening Mode</th>
+              <th className="text-left px-4 py-3 text-[10px] font-semibold text-text-muted uppercase tracking-wider">Date & Time Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-text-muted text-xs">Loading jobs…</td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center text-text-muted text-xs">
+                  {filter === 'all' ? 'No jobs posted yet.' : `No ${filter === 'active' ? 'live' : filter} jobs.`}
+                </td>
+              </tr>
+            ) : filtered.map((job, i) => {
+              const statusCfg = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.draft
+              return (
+                <tr
+                  key={job.id}
+                  className={`border-b border-surface-border/50 transition-colors hover:bg-surface-elevated/60 ${i % 2 !== 0 ? 'bg-surface-elevated/20' : ''}`}
+                >
+                  <td className="px-4 py-3 font-medium text-text-primary">
+                    {job.company_profiles?.company_name ?? <span className="text-text-muted italic">Unknown</span>}
+                  </td>
+                  <td className="px-4 py-3 text-text-secondary">{job.title}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold ${statusCfg.classes}`}>
+                      {statusCfg.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-text-secondary">
+                    {job.screening_type === 'timed_quiz' ? 'Timed Quiz' : 'Normal Form'}
+                  </td>
+                  <td className="px-4 py-3 text-text-muted text-xs">{formatDateTime(job.created_at)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )

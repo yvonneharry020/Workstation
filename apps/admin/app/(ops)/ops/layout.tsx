@@ -154,7 +154,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       label: 'Verification',
       items: [
         { href: '/ops/verifications', label: 'Verification Queue', icon: <CandidateIcon />, badge: counts.candidateQueue + counts.companyQueue },
-        { href: '/ops/jobs',          label: 'Job Moderation',  icon: <BriefcaseIcon />, badge: counts.jobModeration },
+        { href: '/ops/jobs',          label: 'Job Queue',       icon: <BriefcaseIcon /> },
       ],
     },
     {
