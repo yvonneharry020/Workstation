@@ -101,8 +101,9 @@ export default function StaffCommsChannel() {
   const [allMentions, setAllMentions] = useState<MentionOption[]>(DEPT_OPTIONS)
   const [mentionTrigger, setMentionTrigger] = useState<{ query: string; start: number } | null>(null)
   const [mentionIdx, setMentionIdx]   = useState(0)
-  const bottomRef   = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const bottomRef    = useRef<HTMLDivElement>(null)
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
+  const channelRef   = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   // Identify current user + build mentions list
   useEffect(() => {
@@ -183,18 +184,24 @@ export default function StaffCommsChannel() {
 
   useEffect(() => { void loadMessages() }, [loadMessages])
 
-  // Real-time subscription — deduplicate against messages already added optimistically
+  // Real-time subscription — Broadcast for instant delivery + postgres_changes as fallback.
+  // Deduplication by id prevents doubles when both fire for the same message.
   useEffect(() => {
     const ch = supabase.channel('staff-general-channel')
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+        const incoming = payload as Message
+        setMessages(prev => prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming])
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_messages' }, (p) => {
-        setMessages(prev => {
-          const incoming = p.new as Message
-          if (prev.some(m => m.id === incoming.id)) return prev
-          return [...prev, incoming]
-        })
+        const incoming = p.new as Message
+        setMessages(prev => prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming])
       })
       .subscribe()
-    return () => { void supabase.removeChannel(ch) }
+    channelRef.current = ch
+    return () => {
+      channelRef.current = null
+      void supabase.removeChannel(ch)
+    }
   }, [supabase])
 
   // Auto-scroll to bottom on new messages
@@ -260,9 +267,15 @@ export default function StaffCommsChannel() {
       mentions,
     }).select().single()
 
-    // Immediately add to local state so the sender sees it without waiting for real-time
     if (newMsg) {
+      // Sender sees their message immediately (optimistic)
       setMessages(prev => [...prev, newMsg as Message])
+      // Broadcast to all other connected users so they see it instantly
+      void channelRef.current?.send({
+        type: 'broadcast',
+        event: 'new_message',
+        payload: newMsg,
+      })
     }
 
     setBody('')
