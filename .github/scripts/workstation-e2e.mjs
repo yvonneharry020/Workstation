@@ -131,6 +131,8 @@ async function testAccount(browser, account, index) {
     }
 
     // ── Clock widget ───────────────────────────────────────────────────────
+    // Detects the widget container via its status text, which always renders
+    // regardless of clock session state (idle, active, on break, or completed).
     if (account.hasClock) {
       await page.goto(account.clockUrl, { waitUntil: 'networkidle', timeout: 20000 })
       await page.waitForTimeout(2000)
@@ -138,12 +140,13 @@ async function testAccount(browser, account, index) {
       if (page.url().includes('unauthorized') || page.url().includes('access-restricted')) {
         issues.push(`CLOCK DASHBOARD ACCESS DENIED: ${page.url()}`)
       } else {
-        const clockBtn = page.locator('button').filter({ hasText: /clock in|resume|break|stop/i }).first()
-        const found    = await clockBtn.isVisible({ timeout: 5000 }).catch(() => false)
+        const clockStatus = page.locator('span').filter({ hasText: /^(Online|On Break|Offline|Auto Logged Out)$/i }).first()
+        const found       = await clockStatus.isVisible({ timeout: 5000 }).catch(() => false)
         if (!found) {
           issues.push('CLOCK WIDGET: Not found on dashboard')
         } else {
-          log(`Clock widget active (button: "${await clockBtn.textContent()}") ✓`)
+          const statusText = (await clockStatus.textContent() ?? '').trim()
+          log(`Clock widget present (status: "${statusText}") ✓`)
         }
       }
     }
