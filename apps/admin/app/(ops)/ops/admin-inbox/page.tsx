@@ -32,7 +32,13 @@ const STATUS_LABELS: Record<TicketStatus, string> = {
 const PRIORITY_DOT: Record<TicketPriority, string> = {
   low: 'bg-text-muted', normal: 'bg-blue-400', high: 'bg-yellow-400', urgent: 'bg-red-400',
 }
-const CATEGORIES = ['General Query', 'Access Issue', 'Technical Problem', 'Policy Clarification', 'Other'] as const
+const CATEGORIES = [
+  { value: 'general',  label: 'General Query' },
+  { value: 'account',  label: 'Access Issue' },
+  { value: 'technical',label: 'Technical Problem' },
+  { value: 'other',    label: 'Policy / Other' },
+] as const
+type TicketCategory = typeof CATEGORIES[number]['value']
 
 function relTime(iso: string) {
   const d = Date.now() - new Date(iso).getTime()
@@ -54,7 +60,7 @@ export default function OpsAdminInboxPage() {
   const [showCompose, setShowCompose] = useState(false)
   const [sending, setSending]       = useState(false)
   const [form, setForm] = useState({
-    subject: '', description: '', category: 'General Query', priority: 'normal' as TicketPriority,
+    subject: '', description: '', category: 'general' as TicketCategory, priority: 'normal' as TicketPriority,
   })
 
   const fetchMyTickets = useCallback(async () => {
@@ -94,14 +100,16 @@ export default function OpsAdminInboxPage() {
       priority:        form.priority,
       department:      'Admin',
       status:          'sent',
+      submitter_type:  'admin',
       submitter_name:  user.email?.split('@')[0] ?? 'Staff',
       submitter_email: user.email,
-      source:          'ops_room',
+      submitted_by:    user.id,
+      source:          'admin_created',
     }).select().single()
 
     if (data) {
       setMyTickets(prev => [data as Ticket, ...prev])
-      setForm({ subject: '', description: '', category: 'General Query', priority: 'normal' })
+      setForm({ subject: '', description: '', category: 'general', priority: 'normal' })
       setShowCompose(false)
       setSelectedId((data as Ticket).id)
     }
@@ -221,9 +229,9 @@ export default function OpsAdminInboxPage() {
                 <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Category</label>
                 <div className="flex flex-wrap gap-2">
                   {CATEGORIES.map(c => (
-                    <button key={c} onClick={() => setForm(f => ({ ...f, category: c }))}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${form.category === c ? 'bg-ops-500 text-white border-ops-500' : 'bg-surface-elevated border-surface-border text-text-secondary'}`}>
-                      {c}
+                    <button key={c.value} onClick={() => setForm(f => ({ ...f, category: c.value }))}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${form.category === c.value ? 'bg-ops-500 text-white border-ops-500' : 'bg-surface-elevated border-surface-border text-text-secondary'}`}>
+                      {c.label}
                     </button>
                   ))}
                 </div>
