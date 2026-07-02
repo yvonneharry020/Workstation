@@ -8,7 +8,7 @@ import {
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path, Circle, Rect } from 'react-native-svg'
+import Svg, { Path, Rect } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
