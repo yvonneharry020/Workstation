@@ -104,7 +104,7 @@ export default function SearchPage() {
         {/* Results */}
         {hasQuery && !loading && total === 0 && (
           <div style={{ ...CARD, padding: '48px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--tx-3)', fontSize: 14 }}>No results found for "{query}"</p>
+            <p style={{ color: 'var(--tx-3)', fontSize: 14 }}>No results found for &quot;{query}&quot;</p>
             <p style={{ color: 'var(--tx-3)', fontSize: 12, marginTop: 4 }}>Try a different search term</p>
           </div>
         )}
