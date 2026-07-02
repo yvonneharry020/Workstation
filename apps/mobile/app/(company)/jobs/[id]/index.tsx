@@ -93,7 +93,6 @@ function FunnelBar({ bucket, max }: { bucket: StageBucket; max: number }) {
 
 export default function JobApplicantsOverview() {
   const { id: jobId } = useLocalSearchParams<{ id: string }>()
-  const _user = useAuthStore((s) => s.user)
 
   const { data: job, isLoading: jobLoading } = useQuery<JobDetail | null>({
     queryKey: ['job-detail', jobId],
