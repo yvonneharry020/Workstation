@@ -371,6 +371,20 @@ export default function OpsLiveChatPage() {
                         <div className={`flex items-center gap-1.5 mt-1 ${isAdmin ? 'flex-row-reverse' : ''}`}>
                           <span className="text-[10px] text-text-muted font-semibold">{msg.sender_name}</span>
                           <span className="text-[10px] text-text-muted font-mono">{formatMsgTime(msg.created_at)}</span>
+                          {msg.id.startsWith('optimistic-') ? (
+                            <svg width="12" height="9" viewBox="0 0 12 9" fill="none" className={isAdmin ? 'text-white/25' : 'text-text-muted/40'}>
+                              <path d="M1 4.5l2.5 2.5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : msg.is_read ? (
+                            <svg width="18" height="9" viewBox="0 0 18 9" fill="none">
+                              <path d="M1 4.5l2.5 2.5L9 1" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M6 4.5l2.5 2.5L14 1" stroke="#60A5FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="12" height="9" viewBox="0 0 12 9" fill="none" className={isAdmin ? 'text-white/50' : 'text-text-muted/60'}>
+                              <path d="M1 4.5l2.5 2.5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
                         </div>
                       </div>
                     </div>
