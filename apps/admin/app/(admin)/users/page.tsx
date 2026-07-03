@@ -16,6 +16,7 @@ interface CandidateData {
   liveness_verified: boolean
   trust_score: number | null
   created_at: string
+  avatar_url: string | null
 }
 
 interface CompanyData {
@@ -28,6 +29,7 @@ interface CompanyData {
   website_url: string | null
   is_verified: boolean
   created_at: string
+  logo_url: string | null
 }
 
 type Tab = 'candidates' | 'companies'
@@ -95,12 +97,17 @@ function TrustBar({ score }: { score: number | null }) {
   )
 }
 
-function Initials({ name }: { name: string }) {
+function UserAvatar({ name, avatarUrl, shape = 'circle' }: { name: string; avatarUrl?: string | null; shape?: 'circle' | 'rounded' }) {
   const parts = name.trim().split(' ')
-  const ini = (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
+  const ini = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase()
+  const radius = shape === 'circle' ? '50%' : '10px'
+  const bg = shape === 'circle' ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : 'linear-gradient(135deg, #10B981, #059669)'
   return (
-    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{ini.toUpperCase()}</span>
+    <div style={{ width: 36, height: 36, borderRadius: radius, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+      {avatarUrl
+        ? <img src={avatarUrl} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{ini}</span>
+      }
     </div>
   )
 }
@@ -164,8 +171,8 @@ export default function UserManagementPage() {
       { data: compAccounts },
       { data: trustData },
     ] = await Promise.all([
-      supabase.from('candidate_profiles').select('id, first_name, last_name, nin_verified, phone_verified, liveness_verified'),
-      supabase.from('company_profiles').select('id, company_name, industry, website_url, is_verified'),
+      supabase.from('candidate_profiles').select('id, first_name, last_name, nin_verified, phone_verified, liveness_verified, avatar_url'),
+      supabase.from('company_profiles').select('id, company_name, industry, website_url, is_verified, logo_url'),
       supabase.from('profiles').select('id, email, is_active, is_suspended, created_at').eq('role', 'candidate').order('created_at', { ascending: false }),
       supabase.from('profiles').select('id, email, is_active, is_suspended, created_at').eq('role', 'company').order('created_at', { ascending: false }),
       supabase.from('trust_scores').select('profile_id, score'),
@@ -190,6 +197,7 @@ export default function UserManagementPage() {
         liveness_verified: cp.liveness_verified,
         trust_score: trustMap.get(acc.id) ?? null,
         created_at: acc.created_at,
+        avatar_url: (cp as { avatar_url?: string | null }).avatar_url ?? null,
       } as CandidateData]
     })
 
@@ -206,6 +214,7 @@ export default function UserManagementPage() {
         website_url: cp.website_url,
         is_verified: cp.is_verified,
         created_at: acc.created_at,
+        logo_url: (cp as { logo_url?: string | null }).logo_url ?? null,
       } as CompanyData]
     })
 
@@ -352,7 +361,7 @@ export default function UserManagementPage() {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Initials name={fullName} />
+                        <UserAvatar name={fullName} avatarUrl={c.avatar_url} shape="circle" />
                         <div>
                           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{fullName}</p>
                           <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0 }}>{c.email}</p>
@@ -399,9 +408,7 @@ export default function UserManagementPage() {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.company_name.slice(0, 2).toUpperCase()}</span>
-                        </div>
+                        <UserAvatar name={c.company_name} avatarUrl={c.logo_url} shape="rounded" />
                         <div>
                           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.company_name}</p>
                           <p style={{ fontSize: 11, color: 'var(--tx-3)', margin: 0 }}>{c.email}</p>

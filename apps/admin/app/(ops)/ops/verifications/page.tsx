@@ -13,6 +13,7 @@ interface Candidate {
   created_at: string
   skills: string[] | null
   experience: string | null
+  avatar_url: string | null
 }
 
 interface Company {
@@ -23,6 +24,7 @@ interface Company {
   verification_status: string
   industry: string | null
   created_at: string
+  logo_url: string | null
 }
 
 interface VerificationDoc {
@@ -93,12 +95,16 @@ export default function VerificationsPage() {
   useEffect(() => { void load() }, [])
 
   async function load() {
-    const [{ data: candData }, { data: compData }] = await Promise.all([
+    const [{ data: candData }, { data: compData }, { data: avatarData }, { data: logoData }] = await Promise.all([
       supabase.from('candidates').select('id,user_id,full_name,email,verification_status,trust_score,created_at,skills,experience').order('created_at', { ascending: false }),
       supabase.from('companies').select('id,user_id,name,email,verification_status,industry,created_at').order('created_at', { ascending: false }),
+      supabase.from('candidate_profiles').select('id,avatar_url'),
+      supabase.from('company_profiles').select('id,logo_url'),
     ])
-    setCandidates((candData ?? []) as Candidate[])
-    setCompanies((compData ?? []) as Company[])
+    const avatarMap = new Map((avatarData ?? []).map((r: { id: string; avatar_url: string | null }) => [r.id, r.avatar_url]))
+    const logoMap = new Map((logoData ?? []).map((r: { id: string; logo_url: string | null }) => [r.id, r.logo_url]))
+    setCandidates((candData ?? []).map(c => ({ ...c, avatar_url: avatarMap.get(c.id) ?? null })) as Candidate[])
+    setCompanies((compData ?? []).map(c => ({ ...c, logo_url: logoMap.get(c.id) ?? null })) as Company[])
     setLoading(false)
   }
 
@@ -230,8 +236,11 @@ export default function VerificationsPage() {
             {filteredCandidates.map(c => (
               <div key={c.id} className="bg-surface-card border border-surface-border rounded-xl p-4 flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-ops-900/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-ops-400 text-sm font-bold">{c.full_name?.[0]?.toUpperCase() ?? '?'}</span>
+                  <div className="w-9 h-9 rounded-full bg-ops-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {c.avatar_url
+                      ? <img src={c.avatar_url} alt={c.full_name} className="w-full h-full object-cover" />
+                      : <span className="text-ops-400 text-sm font-bold">{c.full_name?.[0]?.toUpperCase() ?? '?'}</span>
+                    }
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -264,8 +273,11 @@ export default function VerificationsPage() {
             {filteredCompanies.map(c => (
               <div key={c.id} className="bg-surface-card border border-surface-border rounded-xl p-4 flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-ops-900/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-ops-400 text-sm font-bold">{c.name?.[0]?.toUpperCase() ?? '?'}</span>
+                  <div className="w-9 h-9 rounded-lg bg-ops-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {c.logo_url
+                      ? <img src={c.logo_url} alt={c.name} className="w-full h-full object-cover" />
+                      : <span className="text-ops-400 text-sm font-bold">{c.name?.[0]?.toUpperCase() ?? '?'}</span>
+                    }
                   </div>
                   <div>
                     <div className="flex items-center gap-2">

@@ -23,6 +23,7 @@ interface CompanyVerif {
   website_url: string | null
   is_verified: boolean
   created_at: string
+  logo_url: string | null
 }
 
 type MainTab = 'candidates' | 'companies'
@@ -99,7 +100,7 @@ export default function VerificationsPage() {
       { data: compAccounts },
     ] = await Promise.all([
       supabase.from('candidate_profiles').select('id, first_name, last_name, nin_verified, phone_verified, liveness_verified, created_at'),
-      supabase.from('company_profiles').select('id, company_name, industry, website_url, is_verified, created_at'),
+      supabase.from('company_profiles').select('id, company_name, industry, website_url, is_verified, created_at, logo_url'),
       supabase.from('profiles').select('id, email').eq('role', 'candidate'),
       supabase.from('profiles').select('id, email').eq('role', 'company'),
     ])
@@ -126,6 +127,7 @@ export default function VerificationsPage() {
       website_url: cp.website_url,
       is_verified: cp.is_verified,
       created_at: cp.created_at,
+      logo_url: (cp as { logo_url?: string | null }).logo_url ?? null,
     })))
 
     setLoading(false)
@@ -331,8 +333,11 @@ export default function VerificationsPage() {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.company_name.slice(0, 2).toUpperCase()}</span>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                          {c.logo_url
+                            ? <img src={c.logo_url} alt={c.company_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{c.company_name.slice(0, 2).toUpperCase()}</span>
+                          }
                         </div>
                         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--tx-1)', margin: 0 }}>{c.company_name}</p>
                       </div>
