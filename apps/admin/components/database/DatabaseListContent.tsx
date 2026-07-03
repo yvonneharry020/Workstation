@@ -52,6 +52,16 @@ export default function DatabaseListContent({ baseRoute }: Props) {
   const loadUsers = useCallback(async () => {
     const supabase = createTabClient()
 
+    // Fetch staff emails first so we can exclude them from the user lists.
+    // Staff members may have registered in the mobile app as candidates, so
+    // their profiles.role can be 'candidate' even though they're staff.
+    const { data: staffRows } = await supabase
+      .from('staff_members')
+      .select('email')
+    const staffEmails = new Set(
+      (staffRows ?? []).map((s: { email: string }) => s.email.toLowerCase())
+    )
+
     const [candidatesRes, companiesRes] = await Promise.all([
       supabase
         .from('profiles')
@@ -77,7 +87,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
 
     const records: UserRecord[] = []
 
-    for (const row of candidatesRes.data ?? []) {
+    for (const row of (candidatesRes.data ?? []).filter(r => !staffEmails.has((r.email ?? '').toLowerCase()))) {
       const cp = Array.isArray(row.candidate_profiles)
         ? row.candidate_profiles[0]
         : (row.candidate_profiles as { first_name?: string; last_name?: string; nin_number?: string } | null)
@@ -100,7 +110,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
       })
     }
 
-    for (const row of companiesRes.data ?? []) {
+    for (const row of (companiesRes.data ?? []).filter(r => !staffEmails.has((r.email ?? '').toLowerCase()))) {
       const cp = Array.isArray(row.company_profiles)
         ? row.company_profiles[0]
         : (row.company_profiles as { company_name?: string; rc_number?: string } | null)
