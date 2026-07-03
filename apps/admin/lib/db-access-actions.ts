@@ -21,11 +21,23 @@ export async function logDbAccess(params: {
   const ip = await getClientIp()
   const supabase = createAdminClient()
 
-  await supabase.from('db_access_log').insert({
-    staff_email: params.staffEmail,
-    staff_id: params.staffId ?? null,
-    room: params.room,
-    session_id: params.sessionId,
-    ip_address: ip,
-  })
+  await Promise.all([
+    supabase.from('db_access_log').insert({
+      staff_email: params.staffEmail,
+      staff_id: params.staffId ?? null,
+      room: params.room,
+      session_id: params.sessionId,
+      ip_address: ip,
+    }),
+    supabase.from('audit_logs').insert({
+      event: 'database.access',
+      actor_email: params.staffEmail,
+      actor_id: params.staffId ?? null,
+      actor_type: 'admin',
+      severity: 'info',
+      app: 'admin_panel',
+      ip_address: ip,
+      metadata: { room: params.room, session_id: params.sessionId },
+    }),
+  ])
 }
