@@ -38,7 +38,6 @@ const STATUS_LABELS: Record<TicketStatus, string> = {
 const PRIORITY_DOT: Record<TicketPriority, string> = {
   low: 'bg-text-muted', normal: 'bg-blue-400', high: 'bg-yellow-400', urgent: 'bg-red-400',
 }
-const REROUTE_DEPTS = ['Technical', 'Finance', 'Management'] as const
 
 function relTime(iso: string) {
   const d = Date.now() - new Date(iso).getTime()
@@ -57,13 +56,9 @@ export default function AdminInboxPage() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all')
-  const [internalNote, setInternalNote] = useState('')
-  const [resolutionNote, setResolutionNote] = useState('')
   const [replyText, setReplyText] = useState('')
-  const [savingNote, setSavingNote] = useState(false)
   const [sendingReply, setSendingReply] = useState(false)
   const [resolving, setResolving] = useState(false)
-  const [rerouting, setRerouting] = useState(false)
 
   const fetchTickets = useCallback(async () => {
     const { data } = await supabase
@@ -101,25 +96,11 @@ export default function AdminInboxPage() {
 
   async function handleSelect(id: string) {
     setSelectedId(id)
-    setInternalNote('')
-    setResolutionNote('')
     setReplyText('')
     const t = tickets.find(x => x.id === id)
     if (!t || t.status !== 'sent') return
     await supabase.from('support_tickets').update({ status: 'in_progress' }).eq('id', id)
     setTickets(prev => prev.map(x => x.id === id ? { ...x, status: 'in_progress' } : x))
-  }
-
-  async function handleSaveNote() {
-    if (!selectedId || !internalNote.trim() || !selected) return
-    setSavingNote(true)
-    const merged = selected.internal_notes
-      ? `${selected.internal_notes}\n[Admin] ${internalNote.trim()}`
-      : `[Admin] ${internalNote.trim()}`
-    await supabase.from('support_tickets').update({ internal_notes: merged }).eq('id', selectedId)
-    setTickets(prev => prev.map(x => x.id === selectedId ? { ...x, internal_notes: merged } : x))
-    setInternalNote('')
-    setSavingNote(false)
   }
 
   async function handleResolve() {
@@ -129,7 +110,6 @@ export default function AdminInboxPage() {
     await supabase.from('support_tickets').update({
       status: 'resolved',
       resolved_at: new Date().toISOString(),
-      resolution_note: resolutionNote.trim() || null,
     }).eq('id', selectedId)
     await supabase.from('audit_logs').insert({
       event: 'admin.inbox_ticket_resolved', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
@@ -138,7 +118,7 @@ export default function AdminInboxPage() {
       metadata: { ticket_number: selected.ticket_number },
     })
     setTickets(prev => prev.map(x => x.id === selectedId
-      ? { ...x, status: 'resolved', resolved_at: new Date().toISOString(), resolution_note: resolutionNote.trim() || null } : x))
+      ? { ...x, status: 'resolved', resolved_at: new Date().toISOString() } : x))
     setResolving(false)
   }
 
@@ -162,27 +142,6 @@ export default function AdminInboxPage() {
       ? { ...x, resolution_note: replyEntry, status: x.status === 'sent' ? 'in_progress' : x.status } : x))
     setReplyText('')
     setSendingReply(false)
-  }
-
-  async function handleReroute(targetDept: string) {
-    if (!selectedId || !selected) return
-    setRerouting(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    const note = `[Admin → ${targetDept}] Rerouted from Admin inbox on ${new Date().toLocaleDateString('en-NG')}`
-    const merged = selected.internal_notes ? `${selected.internal_notes}\n${note}` : note
-    await supabase.from('support_tickets').update({
-      department: targetDept,
-      internal_notes: merged,
-    }).eq('id', selectedId)
-    await supabase.from('audit_logs').insert({
-      event: 'admin.ticket_rerouted', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
-      actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',
-      target_name: selected.subject, severity: 'info', app: 'admin_panel',
-      metadata: { ticket_number: selected.ticket_number, rerouted_to: targetDept },
-    })
-    setTickets(prev => prev.filter(x => x.id !== selectedId))
-    setSelectedId(null)
-    setRerouting(false)
   }
 
   return (
@@ -273,36 +232,12 @@ export default function AdminInboxPage() {
                 <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{selected.description}</p>
               </div>
 
-              {/* Re-route to another dept */}
-              {selected.status !== 'resolved' && selected.status !== 'closed' && (
-                <div className="bg-surface-card rounded-xl border border-surface-border p-4">
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Re-route to Another Department</p>
-                  <div className="flex gap-2">
-                    {REROUTE_DEPTS.map(dept => (
-                      <button key={dept} onClick={() => handleReroute(dept)} disabled={rerouting}
-                        className="flex-1 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors disabled:opacity-40
-                          border-surface-border bg-surface-elevated text-text-secondary hover:border-admin-500/50 hover:text-admin-300">
-                        {dept === 'Management' ? '← Management' : dept === 'Technical' ? 'Technical Room' : 'Finance Room'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Resolution note */}
-              {selected.status !== 'resolved' && selected.status !== 'closed' && (
-                <div className="bg-surface-card rounded-xl border border-surface-border p-4">
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Resolution Note <span className="font-normal normal-case text-text-muted">(optional)</span></p>
-                  <textarea value={resolutionNote} onChange={e => setResolutionNote(e.target.value)}
-                    placeholder="How was this handled?…" rows={3}
-                    className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none resize-none" />
-                </div>
-              )}
-
               {selected.status === 'resolved' && (
                 <div className="bg-green-900/10 border border-green-800/30 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Resolution</p>
-                  <p className="text-sm text-text-primary">{selected.resolution_note ?? 'No resolution note.'}</p>
+                  <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Resolved</p>
+                  {selected.resolution_note && (
+                    <p className="text-sm text-text-primary whitespace-pre-wrap">{selected.resolution_note}</p>
+                  )}
                   {selected.resolved_at && <p className="text-xs text-text-muted mt-1">Resolved {fmtTime(selected.resolved_at)}</p>}
                 </div>
               )}
@@ -327,20 +262,6 @@ export default function AdminInboxPage() {
                 </div>
               )}
 
-              {/* Internal notes */}
-              <div className="bg-surface-card rounded-xl border border-surface-border p-4">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Admin Notes <span className="font-normal normal-case text-text-muted">(private)</span></p>
-                {selected.internal_notes && (
-                  <pre className="text-[11px] text-text-secondary bg-surface-elevated rounded-lg px-3 py-2 mb-3 whitespace-pre-wrap font-mono leading-relaxed border border-surface-border">{selected.internal_notes}</pre>
-                )}
-                <textarea value={internalNote} onChange={e => setInternalNote(e.target.value)}
-                  placeholder="Add a private admin note…" rows={2}
-                  className="w-full bg-surface-elevated border border-surface-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:border-admin-500 focus:outline-none resize-none mb-2" />
-                <button onClick={handleSaveNote} disabled={savingNote || !internalNote.trim()}
-                  className="px-3 py-1.5 rounded-lg bg-admin-500/20 text-admin-400 border border-admin-500/30 text-xs font-semibold hover:bg-admin-500/30 disabled:opacity-40 transition-colors">
-                  {savingNote ? 'Saving…' : 'Save note'}
-                </button>
-              </div>
             </div>
           )}
         </div>

@@ -152,6 +152,15 @@ export async function loginAction(
     metadata: { ip },
   })
 
+  // Update last_login_at so the staff badge switches from Pending → Active
+  if (staffRecord) {
+    const admin = createAdminClient()
+    void admin
+      .from('staff_members')
+      .update({ last_login_at: new Date().toISOString() })
+      .eq('email', parsed.data.email)
+  }
+
   // Get authenticated user + session tokens
   const [{ data: { user: authUser } }, { data: { session } }] = await Promise.all([
     supabase.auth.getUser(),
@@ -568,6 +577,7 @@ export async function logoutAction(): Promise<void> {
  * Other tabs remain unaffected — each uses its own localStorage token.
  */
 export async function logoutSingleAction(email: string): Promise<{ wasLast: boolean }> {
+  const ip = await getClientIp()
   const sessions = await readSessionsCookie()
   delete sessions[email]
   const remaining = Object.keys(sessions).length
@@ -581,6 +591,14 @@ export async function logoutSingleAction(email: string): Promise<{ wasLast: bool
   } else {
     await writeSessionsCookie(sessions)
   }
+
+  void logAdminEvent({
+    event: 'admin.logout',
+    actorEmail: email,
+    actorType: 'admin',
+    severity: 'info',
+    metadata: { ip },
+  })
 
   return { wasLast: remaining === 0 }
 }

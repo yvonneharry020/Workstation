@@ -140,6 +140,7 @@ export default function SLAMonitorPage() {
         .from('support_tickets')
         .select('id,ticket_number,subject,priority,status,department,created_at,created_by_email,first_responded_at')
         .not('status', 'in', '("resolved","closed")')
+        .or('department.neq.Admin,department.is.null')
         .order('created_at', { ascending: true }),
 
       supabase
@@ -147,6 +148,7 @@ export default function SLAMonitorPage() {
         .select('id,ticket_number,subject,priority,department,created_at,resolved_at,created_by_email,resolved_by_email')
         .eq('status', 'resolved')
         .not('resolved_at', 'is', null)
+        .or('department.neq.Admin,department.is.null')
         .order('resolved_at', { ascending: false })
         .limit(60),
 
