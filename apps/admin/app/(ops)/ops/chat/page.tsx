@@ -73,6 +73,8 @@ export default function OpsLiveChatPage() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [fileModal, setFileModal] = useState<{ url: string; name: string } | null>(null)
+  const [imgErrors, setImgErrors] = useState<Set<string>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
   const supabase = useMemo(() => createClient(), [])
 
@@ -334,19 +336,33 @@ export default function OpsLiveChatPage() {
                       <div className={`max-w-[70%] ${isAdmin ? 'items-end' : 'items-start'} flex flex-col`}>
                         {msg.attachment_type === 'image' && msg.attachment_url ? (
                           <div className="flex flex-col gap-1.5">
-                            <button onClick={() => setLightboxUrl(msg.attachment_url)} className="block text-left">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={msg.attachment_url} alt={msg.attachment_name ?? 'Attachment'} className={`rounded-xl max-w-[260px] max-h-[200px] object-cover border ${isAdmin ? 'border-ops-400/30' : 'border-surface-border'}`} />
-                              <span className={`text-[10px] mt-0.5 block ${isAdmin ? 'text-white/50' : 'text-text-muted'}`}>Click to expand</span>
-                            </button>
+                            {imgErrors.has(msg.id) ? (
+                              <div className={`flex flex-col items-center justify-center gap-2 rounded-xl px-6 py-5 border ${isAdmin ? 'bg-ops-800/40 border-ops-400/20' : 'bg-surface-elevated border-surface-border'}`}>
+                                <svg className="w-8 h-8 text-text-muted opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                <span className="text-[11px] text-text-muted">Image unavailable</span>
+                              </div>
+                            ) : (
+                              <button onClick={() => setLightboxUrl(msg.attachment_url)} className="block text-left">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={msg.attachment_url}
+                                  alt={msg.attachment_name ?? 'Attachment'}
+                                  className={`rounded-xl max-w-[260px] max-h-[200px] object-cover border ${isAdmin ? 'border-ops-400/30' : 'border-surface-border'}`}
+                                  onError={() => setImgErrors(prev => new Set(prev).add(msg.id))}
+                                  onLoad={e => { if ((e.currentTarget as HTMLImageElement).naturalWidth === 0) setImgErrors(prev => new Set(prev).add(msg.id)) }}
+                                />
+                                <span className={`text-[10px] mt-0.5 block ${isAdmin ? 'text-white/50' : 'text-text-muted'}`}>Click to expand</span>
+                              </button>
+                            )}
                           </div>
                         ) : msg.attachment_type === 'file' && msg.attachment_url ? (
-                          <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer"
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-opacity hover:opacity-80 ${isAdmin ? 'bg-ops-600 border-ops-400/30' : 'bg-surface-elevated border-surface-border'}`}>
+                          <button
+                            onClick={() => setFileModal({ url: msg.attachment_url!, name: msg.attachment_name ?? 'File' })}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-opacity hover:opacity-80 text-left ${isAdmin ? 'bg-ops-600 border-ops-400/30' : 'bg-surface-elevated border-surface-border'}`}>
                             <svg className={`w-5 h-5 flex-shrink-0 ${isAdmin ? 'text-white/70' : 'text-text-muted'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                             <span className={`text-sm font-medium truncate max-w-[160px] ${isAdmin ? 'text-white' : 'text-text-primary'}`}>{msg.attachment_name ?? 'File'}</span>
-                            <svg className={`w-4 h-4 flex-shrink-0 ${isAdmin ? 'text-white/60' : 'text-ops-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                          </a>
+                            <svg className={`w-4 h-4 flex-shrink-0 ${isAdmin ? 'text-white/60' : 'text-ops-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
                         ) : (
                           <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isAdmin ? 'bg-ops-500 text-white rounded-br-sm' : 'bg-surface-elevated border border-surface-border text-text-primary rounded-bl-sm'}`}>
                             {msg.content}
@@ -415,6 +431,54 @@ export default function OpsLiveChatPage() {
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
+      </div>
+    )}
+
+    {fileModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+        onClick={() => setFileModal(null)}
+      >
+        <div
+          className="bg-[#0F1117] border border-surface-border rounded-2xl flex flex-col overflow-hidden w-full max-w-3xl max-h-[90vh]"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-border flex-shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <svg className="w-5 h-5 text-ops-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+              <p className="text-sm font-semibold text-text-primary truncate">{fileModal.name}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+              <a
+                href={fileModal.url}
+                download={fileModal.name}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ops-500 hover:bg-ops-600 text-white text-xs font-semibold transition-colors"
+                onClick={e => e.stopPropagation()}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Download
+              </a>
+              <button onClick={() => setFileModal(null)} className="text-text-muted hover:text-text-primary p-1 rounded-lg transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+          {fileModal.name.toLowerCase().endsWith('.pdf') ? (
+            <iframe
+              src={fileModal.url}
+              title={fileModal.name}
+              className="flex-1 w-full min-h-[70vh] border-0"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-4 py-16">
+              <svg className="w-16 h-16 text-text-muted opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <p className="text-text-secondary text-sm">{fileModal.name}</p>
+              <p className="text-text-muted text-xs">Preview not available for this file type</p>
+            </div>
+          )}
+        </div>
       </div>
     )}
     </>
