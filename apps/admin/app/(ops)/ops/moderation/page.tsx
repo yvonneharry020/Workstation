@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createTabClient } from '@/lib/supabase/tab-client'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 type FlagStatus = 'pending' | 'reviewed' | 'dismissed' | 'actioned'
 
-interface MockJob {
+interface JobData {
   title: string
   employmentType: string
   workMode: string
@@ -27,141 +27,57 @@ interface FlagReport {
   companyName: string
   reportedAt: string
   status: FlagStatus
-  job: MockJob
+  actionNote?: string
+  job: JobData
 }
 
-// ── MOCK DATA (design preview only — will be removed after approval) ──────────
-const MOCK_REPORTS: FlagReport[] = [
-  {
-    id: '1',
-    reason: 'Suspected scam',
-    candidateName: 'Chukwuemeka Obi',
-    companyName: 'TechHub Nigeria Ltd',
-    reportedAt: '2026-07-01T14:32:00Z',
-    status: 'pending',
-    job: {
-      title: 'Senior React Developer',
-      employmentType: 'Full-time',
-      workMode: 'Remote',
-      experienceLevel: 'Senior',
-      city: 'Lagos',
-      description:
-        'We are looking for a Senior React Developer to join our rapidly growing team. You will be responsible for building and maintaining high-quality web applications for our clients across Africa.',
-      requirements:
-        '• 5+ years of experience with React\n• Strong understanding of TypeScript\n• Experience with Next.js and REST APIs\n• Send ₦5,000 registration fee to begin the application process\n• Provide personal bank account details upon application',
-      benefits: 'Health insurance, Remote work allowance, Flexible hours, 13th month salary',
-      salaryMin: 800000,
-      salaryMax: 1200000,
-      salaryConfidential: false,
-      deadline: '2026-07-31',
-    },
-  },
-  {
-    id: '2',
-    reason: 'Job post seems sketchy',
-    candidateName: 'Amara Nwosu',
-    companyName: 'Zenith Finance Group',
-    reportedAt: '2026-07-02T09:15:00Z',
-    status: 'pending',
-    job: {
-      title: 'Financial Analyst',
-      employmentType: 'Full-time',
-      workMode: 'On-site',
-      experienceLevel: 'Mid-level',
-      city: 'Abuja',
-      description:
-        'Join our financial team and help analyze market trends. No prior experience necessary. Training is fully self-funded. Must have your own laptop and internet from day one.',
-      requirements:
-        '• BSc in Finance or any related field\n• Must provide 3 months advance payment guarantee before onboarding\n• Must purchase company equipment kit at ₦15,000 before resumption\n• No criminal record certificate required at your own expense',
-      benefits: 'Salary paid after 3-month probation period, Possible renewal',
-      salaryMin: null,
-      salaryMax: null,
-      salaryConfidential: true,
-      deadline: '2026-07-20',
-    },
-  },
-  {
-    id: '3',
-    reason: 'Company asking ridiculous questions',
-    candidateName: 'Tunde Adeyemi',
-    companyName: 'Lagos Logistics Co.',
-    reportedAt: '2026-07-02T11:47:00Z',
-    status: 'pending',
-    job: {
-      title: 'Operations Manager',
-      employmentType: 'Full-time',
-      workMode: 'On-site',
-      experienceLevel: 'Senior',
-      city: 'Lagos',
-      description:
-        'We are hiring an experienced Operations Manager to oversee our logistics chain across Nigeria and West Africa.',
-      requirements:
-        '• 7+ years in logistics or supply chain management\n• Must share all social media account passwords for background verification\n• Must provide bank statements for the last 12 months before interview\n• Must disclose current and previous salary slips from all employers',
-      benefits: 'Competitive salary, Company car, Travel allowance',
-      salaryMin: 500000,
-      salaryMax: 700000,
-      salaryConfidential: false,
-      deadline: '2026-08-01',
-    },
-  },
-  {
-    id: '4',
-    reason: 'Misleading job description',
-    candidateName: 'Ngozi Eze',
-    companyName: 'Afri-Tech Solutions',
-    reportedAt: '2026-06-29T16:00:00Z',
-    status: 'reviewed',
-    job: {
-      title: 'Data Analyst (Entry Level)',
-      employmentType: 'Contract',
-      workMode: 'Hybrid',
-      experienceLevel: 'Entry-level',
-      city: 'Port Harcourt',
-      description:
-        'Entry-level data analyst role. Light Excel work only. Perfect for fresh graduates.',
-      requirements:
-        '• Must have expert knowledge of Python, R, SQL, Tableau, Power BI, SAS, and Machine Learning frameworks\n• PhD preferred, Masters minimum\n• Minimum 5 years hands-on industry experience required\n• Must complete unpaid 6-month trial before receiving any compensation',
-      benefits: 'Monthly stipend (amount TBD after trial)',
-      salaryMin: 80000,
-      salaryMax: 80000,
-      salaryConfidential: false,
-      deadline: '2026-07-15',
-    },
-  },
-  {
-    id: '5',
-    reason: 'Inappropriate content',
-    candidateName: 'Fatima Bello',
-    companyName: 'Prime Staffing Hub',
-    reportedAt: '2026-07-03T08:05:00Z',
-    status: 'pending',
-    job: {
-      title: 'Customer Service Representative',
-      employmentType: 'Part-time',
-      workMode: 'Remote',
-      experienceLevel: 'Entry-level',
-      city: 'Kano',
-      description:
-        'We need young attractive ladies only for our front-facing customer service roles. Age 18–25. Must attach full body photo with application. Married women need not apply.',
-      requirements:
-        '• Female only\n• Must be single\n• Height minimum 5\'5"\n• Attach recent full-body photograph\n• Must be available to work evenings and weekends with no extra pay',
-      benefits: 'Weekly cash payout',
-      salaryMin: 40000,
-      salaryMax: 40000,
-      salaryConfidential: false,
-      deadline: '2026-07-10',
-    },
-  },
-]
+// ── DB row shapes ─────────────────────────────────────────────────────────────
+interface DbFlag {
+  id: string
+  flag_reason: string
+  status: string
+  action_taken: string | null
+  created_at: string
+  flagged_by: string | null
+  content_id: string
+}
+
+interface DbJob {
+  id: string
+  title: string | null
+  employment_type: string | null
+  work_mode: string | null
+  experience_level: string | null
+  city: string | null
+  description: string | null
+  requirements: string | null
+  benefits: string | null
+  salary_min: number | null
+  salary_max: number | null
+  salary_is_confidential: boolean
+  application_deadline: string | null
+  company_id: string
+}
+
+interface DbCandidate {
+  id: string
+  first_name: string | null
+  last_name: string | null
+}
+
+interface DbCompany {
+  id: string
+  company_name: string | null
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const REASON_COLORS: Record<string, string> = {
-  'Suspected scam':                    'bg-red-900/20 text-red-400 border-red-800/30',
-  'Job post seems sketchy':            'bg-orange-900/20 text-orange-400 border-orange-800/30',
-  'Company asking ridiculous questions':'bg-amber-900/20 text-amber-400 border-amber-800/30',
-  'Misleading job description':        'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
-  'Inappropriate content':             'bg-purple-900/20 text-purple-400 border-purple-800/30',
-  'Duplicate or spam posting':         'bg-blue-900/20 text-blue-400 border-blue-800/30',
+  'Suspected scam':                     'bg-red-900/20 text-red-400 border-red-800/30',
+  'Job post seems sketchy':             'bg-orange-900/20 text-orange-400 border-orange-800/30',
+  'Company asking ridiculous questions': 'bg-amber-900/20 text-amber-400 border-amber-800/30',
+  'Misleading job description':         'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
+  'Inappropriate content':              'bg-purple-900/20 text-purple-400 border-purple-800/30',
+  'Duplicate or spam posting':          'bg-blue-900/20 text-blue-400 border-blue-800/30',
 }
 
 const STATUS_PILL: Record<FlagStatus, string> = {
@@ -194,7 +110,100 @@ function formatSalary(min: number | null, max: number | null, confidential: bool
   return `${fmt(min ?? max!)} / month`
 }
 
-// ── Job Post Modal ────────────────────────────────────────────────────────────
+function mergeReports(
+  flags: DbFlag[],
+  jobs: DbJob[],
+  candidates: DbCandidate[],
+  companies: DbCompany[],
+): FlagReport[] {
+  const jobMap      = new Map(jobs.map(j => [j.id, j]))
+  const candidateMap = new Map(candidates.map(c => [c.id, c]))
+  const companyMap  = new Map(companies.map(c => [c.id, c]))
+
+  return flags.map(flag => {
+    const job      = jobMap.get(flag.content_id)
+    const candidate = candidateMap.get(flag.flagged_by ?? '')
+    const company  = job ? companyMap.get(job.company_id) : undefined
+
+    const fullName = candidate
+      ? `${candidate.first_name ?? ''} ${candidate.last_name ?? ''}`.trim()
+      : ''
+
+    return {
+      id:            flag.id,
+      reason:        flag.flag_reason,
+      candidateName: fullName || 'Unknown',
+      companyName:   company?.company_name ?? 'Unknown Company',
+      reportedAt:    flag.created_at,
+      status:        flag.status as FlagStatus,
+      actionNote:    flag.action_taken ?? undefined,
+      job: {
+        title:              job?.title             ?? 'Unknown Job',
+        employmentType:     job?.employment_type   ?? '',
+        workMode:           job?.work_mode         ?? '',
+        experienceLevel:    job?.experience_level  ?? '',
+        city:               job?.city              ?? '',
+        description:        job?.description       ?? '',
+        requirements:       job?.requirements      ?? '',
+        benefits:           job?.benefits          ?? '',
+        salaryMin:          job?.salary_min        ?? null,
+        salaryMax:          job?.salary_max        ?? null,
+        salaryConfidential: job?.salary_is_confidential ?? false,
+        deadline:           job?.application_deadline   ?? null,
+      },
+    }
+  })
+}
+
+// ── Action note modal ─────────────────────────────────────────────────────────
+function ActionNoteModal({
+  report,
+  onConfirm,
+  onCancel,
+}: {
+  report: FlagReport
+  onConfirm: (note: string) => void
+  onCancel: () => void
+}) {
+  const [note, setNote] = useState('')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      <div className="bg-surface-card border border-surface-border rounded-2xl w-full max-w-md shadow-2xl p-6">
+        <h2 className="text-base font-semibold font-display text-text-primary mb-1">Record Action Taken</h2>
+        <p className="text-xs text-text-muted mb-4">
+          Describe the action taken against{' '}
+          <span className="text-text-primary font-medium">{report.companyName}</span>{' '}
+          for the {'"'}{report.reason}{'"'} report. This note will be visible to all staff members.
+        </p>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="e.g. We closed the job posting immediately and sent a formal warning to the company. The account has been flagged for monitoring."
+          autoFocus
+          className="w-full h-32 px-3 py-2.5 text-sm bg-surface-elevated border border-surface-border rounded-xl text-text-primary placeholder:text-text-muted focus:outline-none focus:border-ops-500 resize-none transition-colors"
+        />
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 text-xs font-semibold bg-surface-elevated border border-surface-border text-text-muted rounded-lg hover:text-text-primary transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => { if (note.trim()) onConfirm(note.trim()) }}
+            disabled={!note.trim()}
+            className="flex-1 px-4 py-2 text-xs font-semibold bg-green-900/30 border border-green-800/40 text-green-400 rounded-lg hover:bg-green-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save &amp; Mark Actioned
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Job post modal ────────────────────────────────────────────────────────────
 function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void }) {
   const { job } = report
   return (
@@ -203,7 +212,6 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className="bg-surface-card border border-surface-border rounded-2xl w-full max-w-2xl max-h-[88vh] flex flex-col shadow-2xl">
-        {/* Modal header */}
         <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-surface-border">
           <div>
             <h2 className="text-base font-semibold font-display text-text-primary">{job.title}</h2>
@@ -226,9 +234,7 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
           </button>
         </div>
 
-        {/* Modal body — scrollable */}
         <div className="overflow-y-auto px-6 py-4 space-y-5">
-          {/* Salary + deadline row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-surface-elevated border border-surface-border rounded-xl p-3">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Salary</p>
@@ -237,24 +243,27 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
             <div className="bg-surface-elevated border border-surface-border rounded-xl p-3">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Application Deadline</p>
               <p className="text-sm text-text-primary">
-                {job.deadline ? new Date(job.deadline).toLocaleDateString('en-NG', { day: '2-digit', month: 'long', year: 'numeric' }) : 'No deadline set'}
+                {job.deadline
+                  ? new Date(job.deadline).toLocaleDateString('en-NG', { day: '2-digit', month: 'long', year: 'numeric' })
+                  : 'No deadline set'}
               </p>
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">Job Description</p>
-            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{job.description}</p>
-          </div>
+          {job.description && (
+            <div>
+              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">Job Description</p>
+              <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{job.description}</p>
+            </div>
+          )}
 
-          {/* Requirements */}
-          <div>
-            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">Requirements</p>
-            <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{job.requirements}</p>
-          </div>
+          {job.requirements && (
+            <div>
+              <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">Requirements</p>
+              <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{job.requirements}</p>
+            </div>
+          )}
 
-          {/* Benefits */}
           {job.benefits && (
             <div>
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2">Benefits</p>
@@ -262,7 +271,6 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
             </div>
           )}
 
-          {/* Report context */}
           <div className="bg-red-900/10 border border-red-800/20 rounded-xl p-3">
             <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">Report Details</p>
             <p className="text-xs text-text-secondary">
@@ -271,6 +279,13 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
             </p>
             <p className="text-xs text-text-muted mt-0.5">Reported on {formatDateTime(report.reportedAt)}</p>
           </div>
+
+          {report.actionNote && (
+            <div className="bg-green-900/10 border border-green-800/20 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-1">Action Taken</p>
+              <p className="text-xs text-text-secondary leading-relaxed">{report.actionNote}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -289,14 +304,113 @@ function FlagIcon() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ModerationPage() {
-  const [filter, setFilter] = useState('pending')
-  const [viewing, setViewing] = useState<FlagReport | null>(null)
+  const [reports, setReports]     = useState<FlagReport[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [filter, setFilter]       = useState('pending')
+  const [search, setSearch]       = useState('')
+  const [viewing, setViewing]     = useState<string | null>(null)
+  const [actioning, setActioning] = useState<FlagReport | null>(null)
 
-  const filtered = filter === 'all'
-    ? MOCK_REPORTS
-    : MOCK_REPORTS.filter(r => r.status === filter)
+  const fetchReports = useCallback(async () => {
+    const supabase = createTabClient()
 
-  const pendingCount = MOCK_REPORTS.filter(r => r.status === 'pending').length
+    const { data: flags, error } = await supabase
+      .from('flagged_content')
+      .select('id, flag_reason, status, action_taken, created_at, flagged_by, content_id')
+      .eq('content_type', 'job_posting')
+      .order('created_at', { ascending: false })
+
+    if (error || !flags?.length) {
+      setReports([])
+      setLoading(false)
+      return
+    }
+
+    const jobIds       = [...new Set(flags.map(f => f.content_id as string))]
+    const candidateIds = [...new Set(flags.map(f => f.flagged_by as string | null).filter((id): id is string => id !== null))]
+
+    const [{ data: jobs }, { data: candidates }] = await Promise.all([
+      supabase
+        .from('job_postings')
+        .select('id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, company_id')
+        .in('id', jobIds),
+      supabase
+        .from('candidate_profiles')
+        .select('id, first_name, last_name')
+        .in('id', candidateIds),
+    ])
+
+    const companyIds = [...new Set((jobs ?? []).map((j: { company_id: string }) => j.company_id).filter(Boolean))]
+    const { data: companies } = await supabase
+      .from('company_profiles')
+      .select('id, company_name')
+      .in('id', companyIds)
+
+    setReports(mergeReports(
+      flags as DbFlag[],
+      (jobs ?? []) as DbJob[],
+      (candidates ?? []) as DbCandidate[],
+      (companies ?? []) as DbCompany[],
+    ))
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    void fetchReports()
+
+    const supabase = createTabClient()
+    const channel = supabase
+      .channel('flagged-content-page')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'flagged_content' }, () => void fetchReports())
+      .subscribe()
+
+    return () => { void supabase.removeChannel(channel) }
+  }, [fetchReports])
+
+  async function markReviewed(id: string) {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'reviewed' as FlagStatus } : r))
+    const supabase = createTabClient()
+    await supabase.from('flagged_content').update({ status: 'reviewed' }).eq('id', id)
+  }
+
+  async function markDismissed(id: string) {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'dismissed' as FlagStatus } : r))
+    const supabase = createTabClient()
+    await supabase.from('flagged_content').update({ status: 'dismissed' }).eq('id', id)
+  }
+
+  async function markActioned(id: string, note: string) {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'actioned' as FlagStatus, actionNote: note } : r))
+    setActioning(null)
+    const supabase = createTabClient()
+    await supabase.from('flagged_content').update({ status: 'actioned', action_taken: note }).eq('id', id)
+  }
+
+  const pendingCount = reports.filter(r => r.status === 'pending').length
+
+  const byFilter = filter === 'all' ? reports : reports.filter(r => r.status === filter)
+
+  const filtered = search.trim()
+    ? byFilter.filter(r => r.candidateName.toLowerCase().includes(search.trim().toLowerCase()))
+    : byFilter
+
+  const viewingReport = viewing ? (reports.find(r => r.id === viewing) ?? null) : null
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold font-display text-text-primary">Flagged Content</h1>
+          <p className="text-sm text-text-muted mt-1">Job reports submitted by candidates. Review the post and take action.</p>
+        </div>
+        <div className="space-y-3 max-w-3xl">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-32 bg-surface-card border border-surface-border rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -315,30 +429,61 @@ export default function ModerationPage() {
         )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 mb-5 border-b border-surface-border pb-2">
-        {FILTER_TABS.map(tab => (
+      {/* Search */}
+      <div className="relative max-w-sm mb-4">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by candidate name..."
+          className="w-full pl-8 pr-3 py-2 text-sm bg-surface-card border border-surface-border rounded-xl text-text-primary placeholder:text-text-muted focus:outline-none focus:border-ops-500 transition-colors"
+        />
+        {search && (
           <button
-            key={tab.key}
-            onClick={() => setFilter(tab.key)}
-            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
-              filter === tab.key
-                ? 'bg-ops-900/50 text-ops-300'
-                : 'text-text-muted hover:text-text-primary'
-            }`}
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
           >
-            {tab.label}
-            {tab.key === 'pending' && (
-              <span className="ml-1.5 text-[10px] font-bold text-red-400">({pendingCount})</span>
-            )}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </button>
-        ))}
+        )}
       </div>
 
-      {/* Cards grid */}
+      {/* Filter tabs */}
+      <div className="flex gap-1 mb-5 border-b border-surface-border pb-2">
+        {FILTER_TABS.map(tab => {
+          const count = tab.key === 'all' ? reports.length : reports.filter(r => r.status === tab.key).length
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+                filter === tab.key
+                  ? 'bg-ops-900/50 text-ops-300'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              {tab.label}
+              <span className={`ml-1.5 text-[10px] font-bold ${tab.key === 'pending' && count > 0 ? 'text-red-400' : 'text-text-muted font-normal'}`}>
+                ({count})
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Cards */}
       {filtered.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-text-muted text-sm">No {filter} reports.</p>
+          <p className="text-text-muted text-sm">
+            {search.trim()
+              ? `No results for "${search}".`
+              : `No ${filter === 'all' ? '' : filter} reports.`}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 max-w-3xl">
@@ -350,9 +495,7 @@ export default function ModerationPage() {
                 className="bg-surface-card border border-surface-border rounded-xl p-5 hover:border-ops-800/40 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
-                  {/* Left — report info */}
                   <div className="flex-1 min-w-0">
-                    {/* Reason badge */}
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold ${reasonColor}`}>
                         <FlagIcon />
@@ -363,7 +506,6 @@ export default function ModerationPage() {
                       </span>
                     </div>
 
-                    {/* Details */}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider w-24">Reported by</span>
@@ -374,7 +516,7 @@ export default function ModerationPage() {
                         <span className="text-sm text-text-secondary">{report.companyName}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider w-24">Date & Time</span>
+                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider w-24">Date &amp; Time</span>
                         <span className="text-xs text-text-muted">{formatDateTime(report.reportedAt)}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -382,12 +524,18 @@ export default function ModerationPage() {
                         <span className="text-sm text-text-secondary italic">{'"'}{report.job.title}{'"'}</span>
                       </div>
                     </div>
+
+                    {report.status === 'actioned' && report.actionNote && (
+                      <div className="mt-3 bg-green-900/10 border border-green-800/20 rounded-lg p-3">
+                        <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-1">Action Taken</p>
+                        <p className="text-xs text-text-secondary leading-relaxed">{report.actionNote}</p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Right — View button */}
-                  <div className="flex-shrink-0">
+                  <div className="flex flex-col gap-2 flex-shrink-0">
                     <button
-                      onClick={() => setViewing(report)}
+                      onClick={() => setViewing(report.id)}
                       className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-ops-900/30 border border-ops-800/40 text-ops-300 rounded-lg hover:bg-ops-900/50 transition-colors"
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -395,6 +543,41 @@ export default function ModerationPage() {
                       </svg>
                       View Job Post
                     </button>
+
+                    {report.status === 'pending' && (
+                      <button
+                        onClick={() => markReviewed(report.id)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-900/20 border border-amber-800/30 text-amber-400 rounded-lg hover:bg-amber-900/40 transition-colors"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Review
+                      </button>
+                    )}
+
+                    {report.status === 'reviewed' && (
+                      <>
+                        <button
+                          onClick={() => markDismissed(report.id)}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold bg-surface-elevated border border-surface-border text-text-muted rounded-lg hover:text-text-primary hover:border-surface-card transition-colors"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                          </svg>
+                          Dismiss
+                        </button>
+                        <button
+                          onClick={() => setActioning(report)}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold bg-green-900/20 border border-green-800/30 text-green-400 rounded-lg hover:bg-green-900/40 transition-colors"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          Action
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -403,8 +586,20 @@ export default function ModerationPage() {
         </div>
       )}
 
-      {/* Job post modal */}
-      {viewing && <JobModal report={viewing} onClose={() => setViewing(null)} />}
+      {viewingReport && (
+        <JobModal
+          report={viewingReport}
+          onClose={() => setViewing(null)}
+        />
+      )}
+
+      {actioning && (
+        <ActionNoteModal
+          report={actioning}
+          onConfirm={note => markActioned(actioning.id, note)}
+          onCancel={() => setActioning(null)}
+        />
+      )}
     </div>
   )
 }
