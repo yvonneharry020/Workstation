@@ -261,7 +261,8 @@ export default function EditProfileScreen() {
       const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
       const ext = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
       const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
-      const path = `${user!.id}/avatar.${ext}`
+      // Unique path per upload so the public URL changes and cache busting works
+      const path = `${user!.id}/avatar_${Date.now()}.${ext}`
       const publicUrl = await uploadImageToStorage(asset.uri, 'avatars', path, contentType)
       setAvatarUrl(publicUrl)
     } catch (err) {
@@ -298,6 +299,10 @@ export default function EditProfileScreen() {
 
       queryClient.invalidateQueries({ queryKey: ['candidate-profile', user?.id] })
       queryClient.invalidateQueries({ queryKey: ['profile-contact', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidate-skills', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidate-work', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidate-education', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidate-gallery', user?.id] })
       router.back()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not save profile.'
@@ -421,6 +426,7 @@ export default function EditProfileScreen() {
         .single()
       if (error) throw error
       setGallery((prev) => [...prev, inserted as GalleryImage])
+      queryClient.invalidateQueries({ queryKey: ['candidate-gallery', user?.id] })
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not upload image.'
       Alert.alert('Upload failed', msg)
@@ -432,6 +438,7 @@ export default function EditProfileScreen() {
   const removeGalleryImage = async (id: string) => {
     await supabase.from('candidate_gallery').delete().eq('id', id)
     setGallery((prev) => prev.filter((g) => g.id !== id))
+    queryClient.invalidateQueries({ queryKey: ['candidate-gallery', user?.id] })
   }
 
   const selectedStateName = locationId ? (NIGERIAN_STATES.find((s) => s.id === locationId)?.name ?? '') : ''

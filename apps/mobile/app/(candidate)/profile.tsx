@@ -9,13 +9,24 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
-import { useState } from 'react'
-import { router } from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useCallback } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+
+const NIGERIAN_STATES: Record<number, string> = {
+  1: 'Abia', 2: 'Adamawa', 3: 'Akwa Ibom', 4: 'Anambra', 5: 'Bauchi',
+  6: 'Bayelsa', 7: 'Benue', 8: 'Borno', 9: 'Cross River', 10: 'Delta',
+  11: 'Ebonyi', 12: 'Edo', 13: 'Ekiti', 14: 'Enugu', 15: 'Federal Capital Territory',
+  16: 'Gombe', 17: 'Imo', 18: 'Jigawa', 19: 'Kaduna', 20: 'Kano',
+  21: 'Katsina', 22: 'Kebbi', 23: 'Kogi', 24: 'Kwara', 25: 'Lagos',
+  26: 'Nasarawa', 27: 'Niger', 28: 'Ogun', 29: 'Ondo', 30: 'Osun',
+  31: 'Oyo', 32: 'Plateau', 33: 'Rivers', 34: 'Sokoto', 35: 'Taraba',
+  36: 'Yobe', 37: 'Zamfara',
+}
 
 interface CandidateData {
   id: string
@@ -33,7 +44,9 @@ interface CandidateData {
   phone_verified: boolean
   liveness_verified: boolean
   preferred_work_mode: string | null
-  trust_scores: { score: number; level: string } | null
+  date_of_birth: string | null
+  state_of_origin_id: number | null
+  updated_at: string
 }
 
 interface WorkHistory {
@@ -88,13 +101,9 @@ function SmallTrustRing({ score }: { score: number }) {
       <Svg width={80} height={80} viewBox="0 0 80 80">
         <Circle cx="40" cy="40" r="36" stroke="#1E1B2E" strokeWidth={6} fill="none" />
         <Circle
-          cx="40" cy="40" r="36"
-          stroke={color}
-          strokeWidth={6}
-          fill="none"
+          cx="40" cy="40" r="36" stroke={color} strokeWidth={6} fill="none"
           strokeDasharray={`${(score / 100) * circ} ${circ}`}
-          strokeLinecap="round"
-          transform="rotate(-90 40 40)"
+          strokeLinecap="round" transform="rotate(-90 40 40)"
         />
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center' }}>
@@ -107,46 +116,45 @@ function SmallTrustRing({ score }: { score: number }) {
 function VerifPill({ label, verified }: { label: string; verified: boolean }) {
   const color = verified ? '#22C55E' : '#64748B'
   return (
-    <View style={{
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 10,
-      backgroundColor: color + '15',
-      borderWidth: 1,
-      borderColor: color + '40',
-      marginRight: 6,
-    }}>
-      <Text style={{ color, fontSize: 11, fontWeight: '600' }}>
-        {verified ? `${label} ✓` : `${label} ○`}
-      </Text>
+    <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: color + '15', borderWidth: 1, borderColor: color + '40', marginRight: 6 }}>
+      <Text style={{ color, fontSize: 11, fontWeight: '600' }}>{verified ? `${label} ✓` : `${label} ○`}</Text>
     </View>
   )
 }
 
 function SectionLabel({ title }: { title: string }) {
   return (
-    <Text style={{
-      color: '#5A4F6E',
-      fontSize: 11,
-      fontWeight: '700',
-      letterSpacing: 1,
-      textTransform: 'uppercase',
-      marginBottom: 12,
-    }}>
+    <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
       {title}
     </Text>
   )
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#EDE9E0' }}>
+      <Text style={{ color: '#94A3B8', fontSize: 12, width: 90, flexShrink: 0 }}>{label}</Text>
+      <Text style={{ color: '#1A1625', fontSize: 13, flex: 1, fontWeight: '500' }}>{value}</Text>
+    </View>
+  )
+}
+
 function formatPeriod(start: string, end: string | null, isCurrent: boolean): string {
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
-  const endLabel = isCurrent ? 'Present' : (end ? fmt(end) : '')
-  return `${fmt(start)} – ${endLabel}`
+  const fmt = (d: string) => new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
+  return `${fmt(start)} – ${isCurrent ? 'Present' : (end ? fmt(end) : '')}`
+}
+
+function formatDob(dob: string): string {
+  try {
+    return new Date(dob).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return dob
+  }
 }
 
 export default function CandidateProfileScreen() {
   const user = useAuthStore((s) => s.user)
+  const queryClient = useQueryClient()
 
   const { data: candidate, isLoading } = useQuery<CandidateData>({
     queryKey: ['candidate-profile', user?.id],
@@ -160,30 +168,31 @@ export default function CandidateProfileScreen() {
       return (data ?? {}) as unknown as CandidateData
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 2,
+  })
+
+  const { data: contactRow } = useQuery<{ email: string | null; phone: string | null }>({
+    queryKey: ['profile-contact', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('email,phone').eq('id', user!.id).maybeSingle()
+      return (data ?? {}) as { email: string | null; phone: string | null }
+    },
+    enabled: !!user?.id,
   })
 
   const { data: trustScoreData } = useQuery<{ score: number; level: string } | null>({
     queryKey: ['candidate-trust-score', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('trust_scores')
-        .select('score, level')
-        .eq('candidate_id', user!.id)
-        .maybeSingle()
+      const { data } = await supabase.from('trust_scores').select('score, level').eq('candidate_id', user!.id).maybeSingle()
       return data ?? null
     },
     enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
   })
 
   const { data: workHistory = [] } = useQuery<WorkHistory[]>({
     queryKey: ['candidate-work', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('candidate_work_history')
-        .select('*')
-        .eq('candidate_id', user!.id)
+        .from('candidate_work_history').select('*').eq('candidate_id', user!.id)
         .order('start_date', { ascending: false })
       if (error) throw new Error(error.message)
       return (data ?? []) as WorkHistory[]
@@ -194,10 +203,7 @@ export default function CandidateProfileScreen() {
   const { data: education = [] } = useQuery<Education[]>({
     queryKey: ['candidate-education', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('candidate_education')
-        .select('*')
-        .eq('candidate_id', user!.id)
+      const { data, error } = await supabase.from('candidate_education').select('*').eq('candidate_id', user!.id)
       if (error) throw new Error(error.message)
       return (data ?? []) as Education[]
     },
@@ -208,9 +214,7 @@ export default function CandidateProfileScreen() {
     queryKey: ['candidate-skills', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('candidate_skills')
-        .select('id, skills(name, category)')
-        .eq('candidate_id', user!.id)
+        .from('candidate_skills').select('id, skills(name, category)').eq('candidate_id', user!.id)
       if (error) throw new Error(error.message)
       return (data ?? []) as unknown as Skill[]
     },
@@ -223,9 +227,7 @@ export default function CandidateProfileScreen() {
       const { data, error } = await supabase
         .from('badges')
         .select('id, role_held, issued_at, company_profiles(company_name, logo_url, is_verified)')
-        .eq('recipient_id', user!.id)
-        .eq('status', 'active')
-        .limit(3)
+        .eq('recipient_id', user!.id).eq('status', 'active').limit(3)
       if (error) throw new Error(error.message)
       return (data ?? []) as unknown as BadgeSummary[]
     },
@@ -236,14 +238,24 @@ export default function CandidateProfileScreen() {
     queryKey: ['candidate-gallery', user?.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from('candidate_gallery')
-        .select('id, image_url, sort_order')
-        .eq('candidate_id', user!.id)
-        .order('sort_order')
+        .from('candidate_gallery').select('id, image_url, sort_order')
+        .eq('candidate_id', user!.id).order('sort_order')
       return (data ?? []) as GalleryImage[]
     },
     enabled: !!user?.id,
   })
+
+  // Refresh all data every time this screen comes into focus (e.g. returning from edit)
+  useFocusEffect(
+    useCallback(() => {
+      void queryClient.invalidateQueries({ queryKey: ['candidate-profile', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['profile-contact', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-skills', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-work', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-education', user?.id] })
+      void queryClient.invalidateQueries({ queryKey: ['candidate-gallery', user?.id] })
+    }, [queryClient, user?.id])
+  )
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
@@ -261,12 +273,22 @@ export default function CandidateProfileScreen() {
   const fullName = candidate ? `${candidate.first_name} ${candidate.last_name}` : 'Your Profile'
   const initials = `${(candidate?.first_name ?? 'U')[0]}${(candidate?.last_name ?? '')[0] ?? ''}`.toUpperCase()
 
+  // Build Basic Info rows — only show filled ones
+  const basicInfoRows: { label: string; value: string }[] = []
+  if (contactRow?.email) basicInfoRows.push({ label: 'Email', value: contactRow.email })
+  if (contactRow?.phone) basicInfoRows.push({ label: 'Phone', value: contactRow.phone })
+  if (candidate?.date_of_birth) basicInfoRows.push({ label: 'Date of Birth', value: formatDob(candidate.date_of_birth) })
+  if (candidate?.state_of_origin_id) basicInfoRows.push({ label: 'Location', value: NIGERIAN_STATES[candidate.state_of_origin_id] ?? '' })
+
+  // Cache-bust avatar URL using updated_at so expo-image always re-fetches after a new upload
+  const avatarUri = candidate?.avatar_url
+    ? `${candidate.avatar_url}?v=${encodeURIComponent(candidate.updated_at ?? '')}`
+    : null
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(350)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 24 }}>
           <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Profile</Text>
@@ -281,12 +303,17 @@ export default function CandidateProfileScreen() {
 
         {/* Hero identity card */}
         <Animated.View entering={FadeInDown.delay(60).duration(350)} style={{ backgroundColor: '#F0EBE1', borderRadius: 24, borderWidth: 1, borderColor: '#DDD6C9', padding: 20, marginBottom: 16, alignItems: 'center' }}>
-          {/* Avatar */}
-          {candidate?.avatar_url ? (
-            <Image source={{ uri: candidate.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 14, borderWidth: 3, borderColor: '#FF624040' }} contentFit="cover" />
+          {/* Avatar — cachePolicy reload ensures the new photo appears immediately */}
+          {avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              style={{ width: 88, height: 88, borderRadius: 44, marginBottom: 14, borderWidth: 3, borderColor: '#FF624040' }}
+              contentFit="cover"
+              cachePolicy="reload"
+            />
           ) : (
-            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#FF624020', borderWidth: 3, borderColor: '#FF624040', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-              <Text style={{ color: '#FF6240', fontSize: 26, fontWeight: '800' }}>{initials}</Text>
+            <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: '#FF624020', borderWidth: 3, borderColor: '#FF624040', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+              <Text style={{ color: '#FF6240', fontSize: 28, fontWeight: '800' }}>{initials}</Text>
             </View>
           )}
 
@@ -307,7 +334,7 @@ export default function CandidateProfileScreen() {
             )}
           </View>
 
-          {/* Trust score row */}
+          {/* Trust score */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, width: '100%', backgroundColor: '#EDE7DB', borderRadius: 14, padding: 14 }}>
             <SmallTrustRing score={trustScore} />
             <View style={{ flex: 1 }}>
@@ -322,19 +349,40 @@ export default function CandidateProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* About */}
-        <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ marginBottom: 16 }}>
-          <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
-            <SectionLabel title="About" />
-            {candidate?.bio ? (
-              <Text style={{ color: '#2D2640', fontSize: 14, lineHeight: 22 }}>{candidate.bio}</Text>
-            ) : (
-              <Text style={{ color: '#334155', fontSize: 14, fontStyle: 'italic' }}>No bio added yet.</Text>
-            )}
-          </View>
-        </Animated.View>
+        {/* ── Basic Info ── */}
+        {basicInfoRows.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(90).duration(350)} style={{ marginBottom: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
+              <SectionLabel title="Basic Info" />
+              {basicInfoRows.map((row, i) => (
+                <View
+                  key={row.label}
+                  style={{
+                    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+                    paddingVertical: 10,
+                    borderBottomWidth: i < basicInfoRows.length - 1 ? 1 : 0,
+                    borderBottomColor: '#EDE9E0',
+                  }}
+                >
+                  <Text style={{ color: '#94A3B8', fontSize: 12, width: 90, flexShrink: 0, marginTop: 1 }}>{row.label}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, flex: 1, fontWeight: '500' }}>{row.value}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
-        {/* Skills */}
+        {/* ── About ── */}
+        {candidate?.bio ? (
+          <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ marginBottom: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
+              <SectionLabel title="About" />
+              <Text style={{ color: '#2D2640', fontSize: 14, lineHeight: 22 }}>{candidate.bio}</Text>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* ── Skills ── */}
         {skills.length > 0 && (
           <Animated.View entering={FadeInDown.delay(160).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -350,7 +398,7 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
-        {/* Work history */}
+        {/* ── Work Experience ── */}
         {workHistory.length > 0 && (
           <Animated.View entering={FadeInDown.delay(200).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -386,7 +434,7 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
-        {/* Education */}
+        {/* ── Education ── */}
         {education.length > 0 && (
           <Animated.View entering={FadeInDown.delay(240).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -410,7 +458,7 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
-        {/* Badges preview */}
+        {/* ── Badges ── */}
         {badges.length > 0 && (
           <Animated.View entering={FadeInDown.delay(280).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -442,7 +490,7 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
-        {/* Gallery */}
+        {/* ── Gallery ── */}
         {gallery.length > 0 && (
           <Animated.View entering={FadeInDown.delay(310).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -454,6 +502,7 @@ export default function CandidateProfileScreen() {
                       source={{ uri: img.image_url }}
                       style={{ width: 100, height: 100, borderRadius: 12 }}
                       contentFit="cover"
+                      cachePolicy="reload"
                     />
                   </Pressable>
                 ))}
@@ -462,7 +511,7 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
-        {/* Links */}
+        {/* ── Links ── */}
         {(candidate?.github_url || candidate?.linkedin_url || candidate?.portfolio_url) && (
           <Animated.View entering={FadeInDown.delay(320).duration(350)} style={{ marginBottom: 16 }}>
             <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
@@ -471,7 +520,7 @@ export default function CandidateProfileScreen() {
                 { url: candidate?.github_url, emoji: '🐙', label: 'GitHub' },
                 { url: candidate?.linkedin_url, emoji: '💼', label: 'LinkedIn' },
                 { url: candidate?.portfolio_url, emoji: '🌐', label: 'Portfolio' },
-              ].filter((l) => l.url).map((link, idx, arr) => (
+              ].filter((l) => l.url).map((link, idx) => (
                 <View key={link.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#DDD6C9' }}>
                   <Text style={{ fontSize: 16 }}>{link.emoji}</Text>
                   <View>
@@ -492,9 +541,10 @@ export default function CandidateProfileScreen() {
             </Text>
           </View>
         </Animated.View>
+
       </ScrollView>
 
-      {/* Lightbox */}
+      {/* Gallery lightbox */}
       <Modal visible={!!lightboxUrl} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLightboxUrl(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setLightboxUrl(null)}>
           {lightboxUrl && (
