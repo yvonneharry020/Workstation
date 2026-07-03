@@ -14,7 +14,7 @@ interface Job {
   applications_count: number
   application_deadline: string | null
   posted_by: string
-  company_profiles: { company_name: string | null } | null
+  company_profiles: { company_name: string | null }[] | null
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; classes: string }> = {
@@ -136,7 +136,7 @@ export default function JobQueuePage() {
         const q = search.toLowerCase()
         return (
           j.title.toLowerCase().includes(q) ||
-          (j.company_profiles?.company_name ?? '').toLowerCase().includes(q)
+          (j.company_profiles?.[0]?.company_name ?? '').toLowerCase().includes(q)
         )
       })
 
@@ -232,7 +232,7 @@ export default function JobQueuePage() {
                   className={`border-b border-surface-border/50 transition-colors hover:bg-surface-elevated/60 ${i % 2 !== 0 ? 'bg-surface-elevated/20' : ''}`}
                 >
                   <td className="px-4 py-3 font-medium text-text-primary whitespace-nowrap">
-                    {job.company_profiles?.company_name ?? <span className="text-text-muted italic">Unknown</span>}
+                    {job.company_profiles?.[0]?.company_name ?? <span className="text-text-muted italic">Unknown</span>}
                   </td>
                   <td className="px-4 py-3 text-text-secondary max-w-[180px] truncate">{job.title}</td>
                   <td className="px-4 py-3">
