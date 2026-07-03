@@ -155,7 +155,7 @@ export async function loginAction(
   // Update last_login_at so the staff badge switches from Pending → Active
   if (staffRecord) {
     const admin = createAdminClient()
-    void admin
+    await admin
       .from('staff_members')
       .update({ last_login_at: new Date().toISOString() })
       .eq('email', parsed.data.email)

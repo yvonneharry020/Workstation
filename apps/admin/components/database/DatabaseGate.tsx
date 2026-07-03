@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { createTabClient } from '@/lib/supabase/tab-client'
+import { logDbAccess } from '@/lib/db-access-actions'
 
 const SESSION_DURATION_MS = 60 * 60 * 1000  // 60 minutes hard limit
 const WARN_BEFORE_MS      = 5 * 60 * 1000   // warn 5 min before expiry
@@ -179,12 +180,7 @@ export default function DatabaseGate({ room, children }: Props) {
       const { data: authData } = await supabase.auth.getUser()
       const staffId = authData?.user?.id ?? null
 
-      await supabase.from('db_access_log').insert({
-        staff_email: staffEmail,
-        staff_id: staffId,
-        room,
-        session_id: tabId,
-      })
+      await logDbAccess({ staffEmail, staffId, room, sessionId: tabId })
 
       await supabase
         .from('db_passcodes')
