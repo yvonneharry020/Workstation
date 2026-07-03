@@ -286,7 +286,7 @@ export default function OpsLiveChatPage() {
 
   return (
     <>
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col h-full">
       <TopBar
         title="Live Chat"
         subtitle={`${threads.filter(t => t.status !== 'resolved').length} active · ${totalUnread > 0 ? `${totalUnread} unread` : 'all read'}${!realtimeOk ? ' · ⚡ reconnecting…' : ''}`}
