@@ -109,14 +109,14 @@ export default function AnalyticsPage() {
       ] = await Promise.all([
         supabase.from('candidates').select('*', { count: 'exact', head: true }),
         supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
-        supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+        supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'approved'),
         supabase.from('companies').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+        supabase.from('companies').select('*', { count: 'exact', head: true }).eq('verification_status', 'approved'),
         supabase.from('job_postings').select('*', { count: 'exact', head: true }),
         supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'filled'),
+        supabase.from('job_postings').select('*', { count: 'exact', head: true }).eq('status', 'closed'),
         supabase.from('job_applications').select('*', { count: 'exact', head: true }),
-        supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('status', 'hired'),
+        supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('status', 'offer_made'),
         supabase.from('job_applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
         supabase.from('invoices').select('amount').eq('status', 'paid'),
         supabase.from('platform_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
     ? Math.round((stats.candidatesVerified / stats.candidatesTotal) * 100)
     : 0
 
-  const hireRate = stats && stats.applicationsTotal > 0
+  const offerRate = stats && stats.applicationsTotal > 0
     ? Math.round((stats.applicationsHired / stats.applicationsTotal) * 100)
     : 0
 
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
             <KpiCard label="Job Postings"       value={stats.jobsTotal.toLocaleString()}           sub={`${stats.jobsActive} active`}                color="#8B5CF6" Icon={Briefcase}    />
-            <KpiCard label="Applications"       value={stats.applicationsTotal.toLocaleString()}   sub={`${hireRate}% hire rate`}                    color="#EC4899" Icon={FileText}      />
+            <KpiCard label="Applications"       value={stats.applicationsTotal.toLocaleString()}   sub={`${offerRate}% offer rate`}                   color="#EC4899" Icon={FileText}      />
             <KpiCard label="Flagged Content"    value={stats.flaggedPending.toLocaleString()}      sub="pending review"                              color="#EF4444" Icon={AlertTriangle} />
             <KpiCard label="7-Day Activity"     value={stats.activityLast7d.toLocaleString()}      sub="audit log events"                            color="#06B6D4" Icon={Shield}        />
           </div>
@@ -220,16 +220,16 @@ export default function AnalyticsPage() {
             </SectionCard>
 
             <SectionCard title="Application Pipeline" sub="Status distribution across all applications">
-              <StatBar label="Hired"    value={stats.applicationsHired}    max={stats.applicationsTotal} color="#34D399" />
-              <StatBar label="Rejected" value={stats.applicationsRejected} max={stats.applicationsTotal} color="#F87171" />
-              <StatBar label="In Progress" value={stats.applicationsTotal - stats.applicationsHired - stats.applicationsRejected} max={stats.applicationsTotal} color="#6366F1" />
+              <StatBar label="Offer Made" value={stats.applicationsHired}    max={stats.applicationsTotal} color="#34D399" />
+              <StatBar label="Rejected"   value={stats.applicationsRejected} max={stats.applicationsTotal} color="#F87171" />
+              <StatBar label="In Progress" value={Math.max(0, stats.applicationsTotal - stats.applicationsHired - stats.applicationsRejected)} max={stats.applicationsTotal} color="#6366F1" />
               <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div style={{ padding: '12px 16px', borderRadius: 10, backgroundColor: 'var(--bg-surface)' }}>
                   <p style={{ fontSize: 11, color: 'var(--tx-3)', marginBottom: 4 }}>Jobs Active</p>
                   <p style={{ fontSize: 22, fontWeight: 800, color: '#6366F1', fontFamily: 'var(--font-mono)' }}>{stats.jobsActive}</p>
                 </div>
                 <div style={{ padding: '12px 16px', borderRadius: 10, backgroundColor: 'var(--bg-surface)' }}>
-                  <p style={{ fontSize: 11, color: 'var(--tx-3)', marginBottom: 4 }}>Jobs Filled</p>
+                  <p style={{ fontSize: 11, color: 'var(--tx-3)', marginBottom: 4 }}>Jobs Closed</p>
                   <p style={{ fontSize: 22, fontWeight: 800, color: '#34D399', fontFamily: 'var(--font-mono)' }}>{stats.jobsFilled}</p>
                 </div>
               </div>

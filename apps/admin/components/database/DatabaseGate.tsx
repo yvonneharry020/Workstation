@@ -1,7 +1,10 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { createTabClient } from '@/lib/supabase/tab-client'
+
+const SESSION_DURATION_MS = 60 * 60 * 1000  // 60 minutes hard limit
+const WARN_BEFORE_MS      = 5 * 60 * 1000   // warn 5 min before expiry
 
 interface Props {
   room: string
@@ -37,18 +40,98 @@ function storageKey(room: string) {
   return `db_access_${room}`
 }
 
+function parseStoredSession(room: string): { email: string; ts: number } | null {
+  try {
+    const raw = sessionStorage.getItem(storageKey(room))
+    if (!raw) return null
+    const idx = raw.lastIndexOf(':')
+    const email = raw.slice(0, idx)
+    const ts = Number(raw.slice(idx + 1))
+    if (!email || isNaN(ts)) return null
+    return { email, ts }
+  } catch {
+    return null
+  }
+}
+
+async function logDbEvent(supabase: ReturnType<typeof createTabClient>, email: string, room: string, event: string, metadata: Record<string, unknown>) {
+  try {
+    await supabase.from('audit_logs').insert({
+      event,
+      actor_email: email,
+      actor_type: 'admin',
+      severity: 'info',
+      app: 'admin_panel',
+      metadata: { room, ...metadata },
+    })
+  } catch { /* non-critical */ }
+}
+
 export default function DatabaseGate({ room, children }: Props) {
   const [authenticated, setAuthenticated] = useState(false)
-  const [passcode, setPasscode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
+  const [sessionStart, setSessionStart]   = useState<number | null>(null)
+  const [timeLeftMs, setTimeLeftMs]       = useState<number | null>(null)
+  const [passcode, setPasscode]           = useState('')
+  const [loading, setLoading]             = useState(false)
+  const [error, setError]                 = useState<string | null>(null)
+  const [expiredMsg, setExpiredMsg]       = useState<string | null>(null)
+  const [mounted, setMounted]             = useState(false)
 
+  const handleExpiry = useCallback(async () => {
+    const session = parseStoredSession(room)
+    sessionStorage.removeItem(storageKey(room))
+    setAuthenticated(false)
+    setSessionStart(null)
+    setTimeLeftMs(null)
+    setExpiredMsg('Database session expired (60-minute limit). Re-enter your passcode to continue.')
+
+    if (session?.email) {
+      const supabase = createTabClient()
+      await logDbEvent(supabase, session.email, room, 'database.session_expired', {
+        reason: 'timeout_60min',
+        expired_at: new Date().toISOString(),
+      })
+    }
+  }, [room])
+
+  // On mount: validate stored session or detect immediate expiry
   useEffect(() => {
-    const token = sessionStorage.getItem(storageKey(room))
-    if (token) setAuthenticated(true)
+    const session = parseStoredSession(room)
+    if (session) {
+      const elapsed = Date.now() - session.ts
+      if (elapsed >= SESSION_DURATION_MS) {
+        sessionStorage.removeItem(storageKey(room))
+        setExpiredMsg('Database session expired (60-minute limit). Re-enter your passcode to continue.')
+      } else {
+        setAuthenticated(true)
+        setSessionStart(session.ts)
+      }
+    }
     setMounted(true)
   }, [room])
+
+  // Countdown + auto-expiry timers
+  useEffect(() => {
+    if (!authenticated || !sessionStart) return
+
+    const tick = () => {
+      const left = SESSION_DURATION_MS - (Date.now() - sessionStart)
+      if (left <= 0) {
+        void handleExpiry()
+        return
+      }
+      setTimeLeftMs(left)
+    }
+
+    tick()
+    const interval = setInterval(tick, 10_000) // refresh every 10 s
+    const expireTimeout = setTimeout(() => void handleExpiry(), SESSION_DURATION_MS - (Date.now() - sessionStart))
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(expireTimeout)
+    }
+  }, [authenticated, sessionStart, handleExpiry])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -108,7 +191,10 @@ export default function DatabaseGate({ room, children }: Props) {
         .update({ last_used_at: new Date().toISOString() })
         .eq('email', staffEmail)
 
-      sessionStorage.setItem(storageKey(room), `${staffEmail}:${Date.now()}`)
+      const now = Date.now()
+      sessionStorage.setItem(storageKey(room), `${staffEmail}:${now}`)
+      setSessionStart(now)
+      setExpiredMsg(null)
       setAuthenticated(true)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Verification failed. Please try again.')
@@ -118,7 +204,26 @@ export default function DatabaseGate({ room, children }: Props) {
   }
 
   if (!mounted) return null
-  if (authenticated) return <>{children}</>
+
+  if (authenticated) {
+    const showWarning = timeLeftMs !== null && timeLeftMs <= WARN_BEFORE_MS
+    const minsLeft = timeLeftMs !== null ? Math.ceil(timeLeftMs / 60_000) : null
+
+    return (
+      <>
+        {showWarning && minsLeft !== null && (
+          <div style={{
+            position: 'fixed', top: 64, left: 0, right: 0, zIndex: 1000,
+            backgroundColor: '#7C3AED', color: '#fff',
+            padding: '10px 24px', textAlign: 'center', fontSize: 13, fontWeight: 600,
+          }}>
+            Database session expires in {minsLeft} minute{minsLeft !== 1 ? 's' : ''} — save your work.
+          </div>
+        )}
+        {children}
+      </>
+    )
+  }
 
   const CARD = {
     backgroundColor: 'var(--bg-card)',
@@ -156,8 +261,19 @@ export default function DatabaseGate({ room, children }: Props) {
         </h2>
         <p className="text-center text-[13px] mb-6" style={{ color: 'var(--tx-3)' }}>
           Enter your personal security passcode to unlock this room.
-          <br />Access is session-bound and fully logged.
+          <br />Sessions are limited to 60 minutes and fully logged.
         </p>
+
+        {expiredMsg && (
+          <div style={{
+            backgroundColor: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.3)',
+            borderRadius: 10, padding: '10px 14px', marginBottom: 16,
+            fontSize: 12, color: '#F59E0B', textAlign: 'center',
+          }}>
+            {expiredMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
