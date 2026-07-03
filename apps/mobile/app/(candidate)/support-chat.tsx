@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
-  Linking, ActionSheetIOS, Modal, Pressable, Dimensions,
+  ActionSheetIOS, Modal, Pressable, Dimensions,
   AppState, type AppStateStatus,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -10,8 +10,9 @@ import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
-import * as FileSystem from 'expo-file-system'
 import Svg, { Path } from 'react-native-svg'
+import * as WebBrowser from 'expo-web-browser'
+import * as Sentry from '@sentry/react-native'
 import { supabase } from '@/lib/supabase'
 import { logEvent } from '@/lib/audit'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -130,7 +131,7 @@ function ImageBubble({ url, isUser, onPress }: { url: string; isUser: boolean; o
 function FileBubble({ name, url, isUser }: { name: string; url: string; isUser: boolean }) {
   return (
     <TouchableOpacity
-      onPress={() => Linking.openURL(url)}
+      onPress={() => WebBrowser.openBrowserAsync(url)}
       activeOpacity={0.8}
       style={{
         flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -270,24 +271,35 @@ export default function CandidateSupportChatScreen() {
     return () => sub.remove()
   }, [subscribeToMessages])
 
-  async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file') {
+  async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file', fileSize?: number) {
     if (!thread) return
+    if (fileSize && fileSize > MAX_FILE_BYTES) {
+      Alert.alert('File too large', 'Please send files under 10 MB.')
+      return
+    }
     setUploading(true)
     const optimisticId = `optimistic-${Date.now()}`
     try {
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' })
-      const binaryStr = atob(base64)
-      const bytes = new Uint8Array(binaryStr.length)
-      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
-      if (bytes.byteLength > MAX_FILE_BYTES) {
-        Alert.alert('File too large', 'Please send files under 10 MB.')
-        return
-      }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+
       const path = `${thread.id}/${Date.now()}-${filename}`
-      const { error: uploadError } = await supabase.storage
-        .from('chat-attachments')
-        .upload(path, bytes, { contentType: mimeType })
-      if (uploadError) throw uploadError
+
+      const formData = new FormData()
+      formData.append('file', { uri, name: filename, type: mimeType } as unknown as Blob)
+
+      const uploadRes = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/chat-attachments/${path}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: formData,
+        }
+      )
+      if (!uploadRes.ok) {
+        const body = await uploadRes.text()
+        throw new Error(`Upload failed (${uploadRes.status}): ${body}`)
+      }
 
       const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(path)
 
@@ -330,9 +342,11 @@ export default function CandidateSupportChatScreen() {
 
       // DB trigger handles last_message, last_message_at, unread_admin increment
       logEvent({ event: 'candidate.support_attachment_sent', app: 'candidate_app', targetId: thread.id, targetType: 'chat_thread' })
-    } catch {
+    } catch (err) {
+      Sentry.captureException(err)
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
-      Alert.alert('Upload failed', 'Could not send the file. Please try again.')
+      const detail = err instanceof Error ? err.message : String(err)
+      Alert.alert('Upload failed', detail)
     } finally {
       setUploading(false)
     }
@@ -353,7 +367,7 @@ export default function CandidateSupportChatScreen() {
     const asset = result.assets[0]
     const filename = asset.fileName ?? `image-${Date.now()}.jpg`
     const mime = asset.mimeType ?? 'image/jpeg'
-    await uploadAndSend(asset.uri, mime, filename, 'image')
+    await uploadAndSend(asset.uri, mime, filename, 'image', asset.fileSize ?? undefined)
   }
 
   async function pickFile() {
@@ -367,7 +381,7 @@ export default function CandidateSupportChatScreen() {
     })
     if (result.canceled || !result.assets[0]) return
     const asset = result.assets[0]
-    await uploadAndSend(asset.uri, asset.mimeType ?? 'application/octet-stream', asset.name, 'file')
+    await uploadAndSend(asset.uri, asset.mimeType ?? 'application/octet-stream', asset.name, 'file', asset.size ?? undefined)
   }
 
   function openAttachmentPicker() {

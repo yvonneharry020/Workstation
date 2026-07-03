@@ -10,6 +10,7 @@ import {
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
@@ -205,12 +206,14 @@ export default function CompanyStep4() {
       const fileExt = asset.name.split('.').pop() ?? 'pdf'
       const filePath = `${user?.id ?? 'unknown'}/${key}_${Date.now()}.${fileExt}`
 
-      const response = await fetch(asset.uri)
-      const blob = await response.blob()
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' })
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
 
       const { error: uploadError } = await supabase.storage
         .from('company-docs')
-        .upload(filePath, blob, { contentType: asset.mimeType ?? 'application/pdf', upsert: true })
+        .upload(filePath, bytes, { contentType: asset.mimeType ?? 'application/pdf', upsert: true })
 
       if (uploadError) throw uploadError
 

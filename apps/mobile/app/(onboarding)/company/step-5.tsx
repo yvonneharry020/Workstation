@@ -16,6 +16,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import * as ImagePicker from 'expo-image-picker'
+import * as FileSystem from 'expo-file-system'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
@@ -170,12 +171,14 @@ export default function CompanyStep5() {
       const bucket = field === 'logo' ? 'company-logos' : 'company-banners'
       const filePath = `${user?.id ?? 'unknown'}/${field}_${Date.now()}.${fileExt}`
 
-      const response = await fetch(asset.uri)
-      const blob = await response.blob()
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' })
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
 
       const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, blob, { contentType: 'image/jpeg', upsert: true })
+        .upload(filePath, bytes, { contentType: 'image/jpeg', upsert: true })
 
       if (uploadError) throw uploadError
 

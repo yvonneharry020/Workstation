@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
+import * as FileSystem from 'expo-file-system'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
@@ -152,9 +153,11 @@ function ItemModal({
         const uri = result.assets[0].uri
         const ext = uri.split('.').pop() ?? 'jpg'
         const path = `${userId}/${Date.now()}.${ext}`
-        const resp = await fetch(uri)
-        const blob = await resp.blob()
-        await supabase.storage.from('portfolio').upload(path, blob, {
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' })
+        const binaryStr = atob(base64)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+        await supabase.storage.from('portfolio').upload(path, bytes, {
           upsert: false,
           contentType: `image/${ext}`,
         })

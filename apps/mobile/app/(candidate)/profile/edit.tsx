@@ -1,6 +1,7 @@
 import {
   View, Text, Pressable, ScrollView, TextInput,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Switch,
+  KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  Switch, Modal, Dimensions, FlatList,
 } from 'react-native'
 import { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -13,25 +14,34 @@ import { useAuthStore } from '@/stores/authStore'
 
 const MAX_SKILLS = 20
 const MAX_TOOLS = 20
-const MAX_PORTFOLIO = 10
+const MAX_GALLERY = 10
 
+const NIGERIAN_STATES = [
+  { id: 1, name: 'Abia' }, { id: 2, name: 'Adamawa' }, { id: 3, name: 'Akwa Ibom' },
+  { id: 4, name: 'Anambra' }, { id: 5, name: 'Bauchi' }, { id: 6, name: 'Bayelsa' },
+  { id: 7, name: 'Benue' }, { id: 8, name: 'Borno' }, { id: 9, name: 'Cross River' },
+  { id: 10, name: 'Delta' }, { id: 11, name: 'Ebonyi' }, { id: 12, name: 'Edo' },
+  { id: 13, name: 'Ekiti' }, { id: 14, name: 'Enugu' }, { id: 15, name: 'Federal Capital Territory' },
+  { id: 16, name: 'Gombe' }, { id: 17, name: 'Imo' }, { id: 18, name: 'Jigawa' },
+  { id: 19, name: 'Kaduna' }, { id: 20, name: 'Kano' }, { id: 21, name: 'Katsina' },
+  { id: 22, name: 'Kebbi' }, { id: 23, name: 'Kogi' }, { id: 24, name: 'Kwara' },
+  { id: 25, name: 'Lagos' }, { id: 26, name: 'Nasarawa' }, { id: 27, name: 'Niger' },
+  { id: 28, name: 'Ogun' }, { id: 29, name: 'Ondo' }, { id: 30, name: 'Osun' },
+  { id: 31, name: 'Oyo' }, { id: 32, name: 'Plateau' }, { id: 33, name: 'Rivers' },
+  { id: 34, name: 'Sokoto' }, { id: 35, name: 'Taraba' }, { id: 36, name: 'Yobe' },
+  { id: 37, name: 'Zamfara' },
+]
+
+interface GalleryImage { id: string; image_url: string; sort_order: number }
 interface CandidateProfile {
-  first_name: string
-  last_name: string
-  headline: string | null
-  bio: string | null
-  avatar_url: string | null
-  github_url: string | null
-  linkedin_url: string | null
-  portfolio_url: string | null
-  is_open_to_work: boolean
-  tools: string[] | null
+  first_name: string; last_name: string; headline: string | null; bio: string | null
+  avatar_url: string | null; github_url: string | null; linkedin_url: string | null
+  portfolio_url: string | null; is_open_to_work: boolean; tools: string[] | null
+  date_of_birth: string | null; state_of_origin_id: number | null
 }
-
 interface SkillRow { id: string; skills: { name: string } | null }
 interface WorkRow { id: string; role_title: string; company_name: string; start_date: string; end_date: string | null; is_current: boolean; description: string | null }
 interface EduRow { id: string; institution: string; degree: string; field_of_study: string | null; start_year: number | null; end_year: number | null }
-interface PortfolioRow { id: string; title: string; project_url: string | null; thumbnail_url: string | null }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
@@ -40,30 +50,32 @@ function SectionCard({ children }: { children: React.ReactNode }) {
     </View>
   )
 }
-
 function SectionTitle({ text }: { text: string }) {
   return <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', marginBottom: 14 }}>{text}</Text>
 }
-
 function FieldLabel({ text }: { text: string }) {
   return <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>{text}</Text>
 }
-
-function StyledInput({ value, onChangeText, placeholder, multiline, maxLength, keyboardType, autoCapitalize }: {
+function StyledInput({ value, onChangeText, placeholder, multiline, maxLength, keyboardType, autoCapitalize, editable }: {
   value: string; onChangeText: (t: string) => void; placeholder?: string; multiline?: boolean
   maxLength?: number; keyboardType?: 'default' | 'url' | 'email-address' | 'phone-pad'
-  autoCapitalize?: 'none' | 'words' | 'sentences'
+  autoCapitalize?: 'none' | 'words' | 'sentences'; editable?: boolean
 }) {
   return (
     <TextInput
-      value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#475569"
-      multiline={multiline} maxLength={maxLength} keyboardType={keyboardType ?? 'default'}
-      autoCapitalize={autoCapitalize ?? 'sentences'} textAlignVertical={multiline ? 'top' : 'center'}
-      style={{ backgroundColor: '#F5F0E8', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: '#1A1625', fontSize: 14, minHeight: multiline ? 88 : undefined }}
+      value={value} onChangeText={onChangeText} placeholder={placeholder}
+      placeholderTextColor="#475569" multiline={multiline} maxLength={maxLength}
+      keyboardType={keyboardType ?? 'default'} autoCapitalize={autoCapitalize ?? 'sentences'}
+      textAlignVertical={multiline ? 'top' : 'center'} editable={editable !== false}
+      style={{
+        backgroundColor: editable === false ? '#E8E3D8' : '#F5F0E8',
+        borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 12,
+        paddingHorizontal: 14, paddingVertical: 12, color: editable === false ? '#64748B' : '#1A1625',
+        fontSize: 14, minHeight: multiline ? 88 : undefined,
+      }}
     />
   )
 }
-
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F0E8', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, gap: 6 }}>
@@ -74,7 +86,6 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
     </View>
   )
 }
-
 function AddRow({ value, onChange, onAdd, placeholder, disabled }: {
   value: string; onChange: (t: string) => void; onAdd: () => void; placeholder: string; disabled?: boolean
 }) {
@@ -86,11 +97,35 @@ function AddRow({ value, onChange, onAdd, placeholder, disabled }: {
         style={{ flex: 1, backgroundColor: '#F5F0E8', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: '#1A1625', fontSize: 13 }}
         onSubmitEditing={onAdd} returnKeyType="done"
       />
-      <Pressable onPress={onAdd} disabled={disabled} style={{ backgroundColor: disabled ? '#DDD6C9' : '#FF6240', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, justifyContent: 'center' }} className="active:opacity-80">
+      <Pressable onPress={onAdd} disabled={disabled} style={{ backgroundColor: disabled ? '#DDD6C9' : '#FF6240', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, justifyContent: 'center' }}>
         <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Add</Text>
       </Pressable>
     </View>
   )
+}
+
+async function uploadImageToStorage(uri: string, bucket: string, path: string, contentType: string): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('Not authenticated')
+
+  const formData = new FormData()
+  const filename = path.split('/').pop() ?? 'upload'
+  formData.append('file', { uri, name: filename, type: contentType } as unknown as Blob)
+
+  const res = await fetch(
+    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/${bucket}/${path}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}`, 'x-upsert': 'true' },
+      body: formData,
+    }
+  )
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Upload failed (${res.status}): ${body}`)
+  }
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+  return data.publicUrl
 }
 
 export default function EditProfileScreen() {
@@ -101,6 +136,10 @@ export default function EditProfileScreen() {
   const [lastName, setLastName] = useState('')
   const [headline, setHeadline] = useState('')
   const [bio, setBio] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
+  const [locationId, setLocationId] = useState<number | null>(null)
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
   const [linkedinUrl, setLinkedinUrl] = useState('')
   const [portfolioUrl, setPortfolioUrl] = useState('')
@@ -111,7 +150,6 @@ export default function EditProfileScreen() {
 
   const [tools, setTools] = useState<string[]>([])
   const [toolInput, setToolInput] = useState('')
-
   const [skillInput, setSkillInput] = useState('')
   const [isAddingSkill, setIsAddingSkill] = useState(false)
 
@@ -121,14 +159,19 @@ export default function EditProfileScreen() {
   const [showAddEdu, setShowAddEdu] = useState(false)
   const [eduForm, setEduForm] = useState({ institution: '', degree: '', field_of_study: '', start_year: '', end_year: '' })
 
-  const [isUploadingPortfolio, setIsUploadingPortfolio] = useState(false)
+  const [gallery, setGallery] = useState<GalleryImage[]>([])
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [showStatePicker, setShowStatePicker] = useState(false)
+
+  // ── Queries — use the SAME keys as profile.tsx so invalidation works ──
 
   const { data: profile } = useQuery<CandidateProfile>({
-    queryKey: ['candidate-profile-edit', user?.id],
+    queryKey: ['candidate-profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('candidate_profiles')
-        .select('first_name,last_name,headline,bio,avatar_url,github_url,linkedin_url,portfolio_url,is_open_to_work,tools')
+        .select('first_name,last_name,headline,bio,avatar_url,github_url,linkedin_url,portfolio_url,is_open_to_work,tools,date_of_birth,state_of_origin_id')
         .eq('id', user!.id).maybeSingle()
       if (error) throw new Error(error.message)
       return (data ?? {}) as CandidateProfile
@@ -136,8 +179,17 @@ export default function EditProfileScreen() {
     enabled: !!user?.id,
   })
 
+  const { data: profileRow } = useQuery<{ email: string | null; phone: string | null }>({
+    queryKey: ['profile-contact', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('email,phone').eq('id', user!.id).maybeSingle()
+      return (data ?? {}) as { email: string | null; phone: string | null }
+    },
+    enabled: !!user?.id,
+  })
+
   const { data: skillRows = [], refetch: refetchSkills } = useQuery<SkillRow[]>({
-    queryKey: ['edit-skills', user?.id],
+    queryKey: ['candidate-skills', user?.id],
     queryFn: async () => {
       const { data } = await supabase.from('candidate_skills').select('id,skills(name)').eq('candidate_id', user!.id)
       return (data ?? []) as unknown as SkillRow[]
@@ -146,7 +198,7 @@ export default function EditProfileScreen() {
   })
 
   const { data: workRows = [], refetch: refetchWork } = useQuery<WorkRow[]>({
-    queryKey: ['edit-work', user?.id],
+    queryKey: ['candidate-work', user?.id],
     queryFn: async () => {
       const { data } = await supabase.from('candidate_work_history').select('*').eq('candidate_id', user!.id).order('start_date', { ascending: false })
       return (data ?? []) as WorkRow[]
@@ -155,7 +207,7 @@ export default function EditProfileScreen() {
   })
 
   const { data: eduRows = [], refetch: refetchEdu } = useQuery<EduRow[]>({
-    queryKey: ['edit-edu', user?.id],
+    queryKey: ['candidate-education', user?.id],
     queryFn: async () => {
       const { data } = await supabase.from('candidate_education').select('*').eq('candidate_id', user!.id)
       return (data ?? []) as EduRow[]
@@ -163,14 +215,16 @@ export default function EditProfileScreen() {
     enabled: !!user?.id,
   })
 
-  const { data: portfolioRows = [], refetch: refetchPortfolio } = useQuery<PortfolioRow[]>({
-    queryKey: ['edit-portfolio', user?.id],
+  const { data: galleryRows = [] } = useQuery<GalleryImage[]>({
+    queryKey: ['candidate-gallery', user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('portfolio_items').select('id,title,project_url,thumbnail_url').eq('candidate_id', user!.id).order('sort_order')
-      return (data ?? []) as PortfolioRow[]
+      const { data } = await supabase.from('candidate_gallery').select('id,image_url,sort_order').eq('candidate_id', user!.id).order('sort_order')
+      return (data ?? []) as GalleryImage[]
     },
     enabled: !!user?.id,
   })
+
+  useEffect(() => { setGallery(galleryRows) }, [galleryRows])
 
   useEffect(() => {
     if (!profile) return
@@ -184,46 +238,70 @@ export default function EditProfileScreen() {
     setIsOpenToWork(profile.is_open_to_work ?? true)
     setAvatarUrl(profile.avatar_url ?? null)
     setTools(profile.tools ?? [])
+    setDateOfBirth(profile.date_of_birth ?? '')
+    setLocationId(profile.state_of_origin_id ?? null)
   }, [profile])
 
+  useEffect(() => {
+    if (!profileRow) return
+    setEmail(profileRow.email ?? user?.email ?? '')
+    setPhone(profileRow.phone ?? '')
+  }, [profileRow, user?.email])
+
+  // ── Photo upload — no FileSystem, uses native FormData + fetch ──
   const pickAndUploadPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8 })
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, aspect: [1, 1], quality: 0.8,
+    })
     if (result.canceled || !result.assets[0]) return
     setIsUploading(true)
     try {
-      const uri = result.assets[0].uri
-      const ext = uri.split('.').pop() ?? 'jpg'
+      const asset = result.assets[0]
+      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const ext = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
+      const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
       const path = `${user!.id}/avatar.${ext}`
-      const response = await fetch(uri)
-      const blob = await response.blob()
-      const { error } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: `image/${ext}` })
-      if (error) throw error
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
-      setAvatarUrl(urlData.publicUrl)
-    } catch {
-      Alert.alert('Error', 'Could not upload photo. Please try again.')
+      const publicUrl = await uploadImageToStorage(asset.uri, 'avatars', path, contentType)
+      setAvatarUrl(publicUrl)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not upload photo.'
+      Alert.alert('Upload failed', msg)
     } finally {
       setIsUploading(false)
     }
   }
 
+  // ── Save ──
   const handleSave = async () => {
-    if (!firstName.trim() || !lastName.trim()) { Alert.alert('Required', 'First and last name are required.'); return }
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert('Required', 'First and last name are required.')
+      return
+    }
     setIsSaving(true)
     try {
-      const { error } = await supabase.from('candidate_profiles').update({
+      const { error: profileErr } = await supabase.from('candidate_profiles').update({
         first_name: firstName.trim(), last_name: lastName.trim(),
         headline: headline.trim() || null, bio: bio.trim() || null,
         github_url: githubUrl.trim() || null, linkedin_url: linkedinUrl.trim() || null,
         portfolio_url: portfolioUrl.trim() || null,
         is_open_to_work: isOpenToWork, avatar_url: avatarUrl,
         tools: tools.length ? tools : [],
+        date_of_birth: dateOfBirth.trim() || null,
+        state_of_origin_id: locationId,
       }).eq('id', user!.id)
-      if (error) throw error
-      queryClient.invalidateQueries({ queryKey: ['candidate-profile'] })
+      if (profileErr) throw profileErr
+
+      if (phone.trim()) {
+        await supabase.from('profiles').update({ phone: phone.trim() }).eq('id', user!.id)
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['candidate-profile', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['profile-contact', user?.id] })
       router.back()
-    } catch {
-      Alert.alert('Error', 'Could not save profile. Please try again.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not save profile.'
+      Alert.alert('Error', msg)
     } finally {
       setIsSaving(false)
     }
@@ -239,7 +317,10 @@ export default function EditProfileScreen() {
   const addSkill = async () => {
     const name = skillInput.trim()
     if (!name || skillRows.length >= MAX_SKILLS) return
-    if (skillRows.some((s) => s.skills?.name?.toLowerCase() === name.toLowerCase())) { setSkillInput(''); return }
+    if (skillRows.some((s) => s.skills?.name?.toLowerCase() === name.toLowerCase())) {
+      setSkillInput('')
+      return
+    }
     setIsAddingSkill(true)
     try {
       let skillId: string
@@ -255,8 +336,9 @@ export default function EditProfileScreen() {
       if (error) throw error
       setSkillInput('')
       refetchSkills()
-    } catch {
-      Alert.alert('Error', 'Could not add skill.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not add skill.'
+      Alert.alert('Error', msg)
     } finally {
       setIsAddingSkill(false)
     }
@@ -269,10 +351,14 @@ export default function EditProfileScreen() {
 
   const addWork = async () => {
     const { role_title, company_name, start_date, is_current, end_date, description } = workForm
-    if (!role_title.trim() || !company_name.trim() || !start_date.trim()) { Alert.alert('Required', 'Role, company, and start date are required.'); return }
+    if (!role_title.trim() || !company_name.trim() || !start_date.trim()) {
+      Alert.alert('Required', 'Role, company, and start date are required.')
+      return
+    }
     const { error } = await supabase.from('candidate_work_history').insert({
       candidate_id: user!.id, role_title: role_title.trim(), company_name: company_name.trim(),
-      start_date, end_date: is_current ? null : (end_date || null), is_current, description: description.trim() || null,
+      start_date, end_date: is_current ? null : (end_date || null), is_current,
+      description: description.trim() || null,
     })
     if (error) { Alert.alert('Error', error.message); return }
     setWorkForm({ role_title: '', company_name: '', start_date: '', end_date: '', is_current: false, description: '' })
@@ -287,7 +373,10 @@ export default function EditProfileScreen() {
 
   const addEdu = async () => {
     const { institution, degree, field_of_study, start_year, end_year } = eduForm
-    if (!institution.trim() || !degree.trim()) { Alert.alert('Required', 'Institution and degree are required.'); return }
+    if (!institution.trim() || !degree.trim()) {
+      Alert.alert('Required', 'Institution and degree are required.')
+      return
+    }
     const { error } = await supabase.from('candidate_education').insert({
       candidate_id: user!.id, institution: institution.trim(), degree: degree.trim(),
       field_of_study: field_of_study.trim() || null,
@@ -305,47 +394,63 @@ export default function EditProfileScreen() {
     refetchEdu()
   }
 
-  const pickPortfolioImage = async () => {
-    if (portfolioRows.length >= MAX_PORTFOLIO) { Alert.alert('Limit reached', `Maximum ${MAX_PORTFOLIO} portfolio items.`); return }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.8 })
+  const addGalleryImage = async () => {
+    if (gallery.length >= MAX_GALLERY) {
+      Alert.alert('Limit reached', `Maximum ${MAX_GALLERY} gallery images.`)
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false, quality: 0.8,
+    })
     if (result.canceled || !result.assets[0]) return
-    setIsUploadingPortfolio(true)
+    setIsUploadingGallery(true)
     try {
-      const uri = result.assets[0].uri
-      const ext = uri.split('.').pop() ?? 'jpg'
-      const path = `${user!.id}/portfolio_${Date.now()}.${ext}`
-      const response = await fetch(uri)
-      const blob = await response.blob()
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, blob, { upsert: false, contentType: `image/${ext}` })
-      if (upErr) throw upErr
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
-      const { error } = await supabase.from('portfolio_items').insert({ candidate_id: user!.id, title: `Portfolio item`, thumbnail_url: urlData.publicUrl, item_type: 'image', sort_order: portfolioRows.length })
+      const asset = result.assets[0]
+      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const ext = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
+      const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
+      const path = `${user!.id}/gallery_${Date.now()}.${ext}`
+
+      const publicUrl = await uploadImageToStorage(asset.uri, 'candidate-gallery', path, contentType)
+
+      const { data: inserted, error } = await supabase
+        .from('candidate_gallery')
+        .insert({ candidate_id: user!.id, image_url: publicUrl, sort_order: gallery.length })
+        .select('id,image_url,sort_order')
+        .single()
       if (error) throw error
-      refetchPortfolio()
-    } catch {
-      Alert.alert('Error', 'Could not upload image. Please try again.')
+      setGallery((prev) => [...prev, inserted as GalleryImage])
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not upload image.'
+      Alert.alert('Upload failed', msg)
     } finally {
-      setIsUploadingPortfolio(false)
+      setIsUploadingGallery(false)
     }
   }
 
-  const removePortfolioItem = async (id: string) => {
-    await supabase.from('portfolio_items').delete().eq('id', id)
-    refetchPortfolio()
+  const removeGalleryImage = async (id: string) => {
+    await supabase.from('candidate_gallery').delete().eq('id', id)
+    setGallery((prev) => prev.filter((g) => g.id !== id))
   }
 
+  const selectedStateName = locationId ? (NIGERIAN_STATES.find((s) => s.id === locationId)?.name ?? '') : ''
   const initials = `${firstName[0] ?? 'U'}${lastName[0] ?? ''}`.toUpperCase()
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+
+        {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={{ color: '#5A4F6E', fontSize: 14 }}>← Back</Text>
           </Pressable>
           <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Edit Profile</Text>
           <Pressable onPress={handleSave} disabled={isSaving} hitSlop={12}>
-            <Text style={{ color: isSaving ? '#64748B' : '#FF6240', fontSize: 14, fontWeight: '600' }}>{isSaving ? 'Saving…' : 'Save'}</Text>
+            <Text style={{ color: isSaving ? '#64748B' : '#FF6240', fontSize: 14, fontWeight: '600' }}>
+              {isSaving ? 'Saving…' : 'Save'}
+            </Text>
           </Pressable>
         </View>
 
@@ -362,7 +467,9 @@ export default function EditProfileScreen() {
                 </View>
               )}
               <Pressable onPress={pickAndUploadPhoto} disabled={isUploading} style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: '#FF6240', opacity: isUploading ? 0.5 : 1 }}>
-                <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>{isUploading ? 'Uploading…' : 'Change photo'}</Text>
+                {isUploading
+                  ? <ActivityIndicator color="#FF6240" size="small" />
+                  : <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>Change photo</Text>}
               </Pressable>
             </View>
           </SectionCard>
@@ -370,12 +477,60 @@ export default function EditProfileScreen() {
           {/* ── Basic Info ── */}
           <SectionCard>
             <SectionTitle text="Basic Info" />
+
+            {/* Name row */}
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-              <View style={{ flex: 1 }}><FieldLabel text="First name" /><StyledInput value={firstName} onChangeText={setFirstName} placeholder="First name" autoCapitalize="words" /></View>
-              <View style={{ flex: 1 }}><FieldLabel text="Last name" /><StyledInput value={lastName} onChangeText={setLastName} placeholder="Last name" autoCapitalize="words" /></View>
+              <View style={{ flex: 1 }}>
+                <FieldLabel text="First name" />
+                <StyledInput value={firstName} onChangeText={setFirstName} placeholder="First name" autoCapitalize="words" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <FieldLabel text="Last name" />
+                <StyledInput value={lastName} onChangeText={setLastName} placeholder="Last name" autoCapitalize="words" />
+              </View>
             </View>
-            <FieldLabel text="Professional headline" />
-            <StyledInput value={headline} onChangeText={setHeadline} placeholder="e.g. Senior Software Engineer at Flutterwave" autoCapitalize="words" />
+
+            {/* Headline */}
+            <View style={{ marginBottom: 12 }}>
+              <FieldLabel text="Professional headline" />
+              <StyledInput value={headline} onChangeText={setHeadline} placeholder="e.g. Senior Software Engineer" autoCapitalize="words" />
+            </View>
+
+            {/* Email — read only */}
+            <View style={{ marginBottom: 12 }}>
+              <FieldLabel text="Email address" />
+              <StyledInput value={email} onChangeText={setEmail} placeholder="Your email" keyboardType="email-address" autoCapitalize="none" editable={false} />
+            </View>
+
+            {/* Phone */}
+            <View style={{ marginBottom: 12 }}>
+              <FieldLabel text="Phone number" />
+              <StyledInput value={phone} onChangeText={setPhone} placeholder="+234 000 000 0000" keyboardType="phone-pad" autoCapitalize="none" />
+            </View>
+
+            {/* Date of birth */}
+            <View style={{ marginBottom: 12 }}>
+              <FieldLabel text="Date of birth (YYYY-MM-DD)" />
+              <StyledInput value={dateOfBirth} onChangeText={setDateOfBirth} placeholder="e.g. 1998-07-15" autoCapitalize="none" keyboardType="default" />
+            </View>
+
+            {/* Location — state picker */}
+            <View>
+              <FieldLabel text="Location (State)" />
+              <Pressable
+                onPress={() => setShowStatePicker(true)}
+                style={{
+                  backgroundColor: '#F5F0E8', borderWidth: 1, borderColor: '#DDD6C9',
+                  borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                }}
+              >
+                <Text style={{ color: selectedStateName ? '#1A1625' : '#475569', fontSize: 14 }}>
+                  {selectedStateName || 'Select a state…'}
+                </Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12 }}>▼</Text>
+              </Pressable>
+            </View>
           </SectionCard>
 
           {/* ── Professional Summary ── */}
@@ -384,7 +539,7 @@ export default function EditProfileScreen() {
               <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }}>Professional Summary</Text>
               <Text style={{ color: '#64748B', fontSize: 12 }}>{bio.length}/500</Text>
             </View>
-            <StyledInput value={bio} onChangeText={(t) => { if (t.length <= 500) setBio(t) }} placeholder="Tell employers about your background, skills, and what you're looking for…" multiline />
+            <StyledInput value={bio} onChangeText={(t) => { if (t.length <= 500) setBio(t) }} placeholder="Tell employers about your background…" multiline />
           </SectionCard>
 
           {/* ── Skills ── */}
@@ -409,7 +564,7 @@ export default function EditProfileScreen() {
               <SectionTitle text="Tools" />
               <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 14 }}>{tools.length}/{MAX_TOOLS}</Text>
             </View>
-            <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>Software, frameworks, or platforms you work with (e.g. Figma, Docker, PostgreSQL)</Text>
+            <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 10 }}>Software, frameworks, or platforms (e.g. Figma, Docker, PostgreSQL)</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {tools.map((t) => (
                 <Chip key={t} label={t} onRemove={() => setTools((prev) => prev.filter((x) => x !== t))} />
@@ -465,7 +620,7 @@ export default function EditProfileScreen() {
                 </View>
               </View>
             ) : (
-              <Pressable onPress={() => setShowAddWork(true)} style={{ borderWidth: 1, borderColor: '#FF624040', borderRadius: 12, borderStyle: 'dashed', paddingVertical: 12, alignItems: 'center' }} className="active:opacity-70">
+              <Pressable onPress={() => setShowAddWork(true)} style={{ borderWidth: 1, borderColor: '#FF624040', borderRadius: 12, borderStyle: 'dashed', paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>+ Add work experience</Text>
               </Pressable>
             )}
@@ -515,41 +670,44 @@ export default function EditProfileScreen() {
                 </View>
               </View>
             ) : (
-              <Pressable onPress={() => setShowAddEdu(true)} style={{ borderWidth: 1, borderColor: '#FF624040', borderRadius: 12, borderStyle: 'dashed', paddingVertical: 12, alignItems: 'center' }} className="active:opacity-70">
+              <Pressable onPress={() => setShowAddEdu(true)} style={{ borderWidth: 1, borderColor: '#FF624040', borderRadius: 12, borderStyle: 'dashed', paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>+ Add education</Text>
               </Pressable>
             )}
           </SectionCard>
 
-          {/* ── Portfolio Images ── */}
+          {/* ── Gallery ── */}
           <SectionCard>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <SectionTitle text="Portfolio" />
-              <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 14 }}>{portfolioRows.length}/{MAX_PORTFOLIO}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <SectionTitle text="Gallery" />
+              <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 14 }}>{gallery.length}/{MAX_GALLERY}</Text>
             </View>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {portfolioRows.map((p) => (
-                <View key={p.id} style={{ width: 90, position: 'relative' }}>
-                  <View style={{ width: 90, height: 90, borderRadius: 10, backgroundColor: '#DDD6C9', overflow: 'hidden' }}>
-                    {p.thumbnail_url ? (
-                      <Image source={{ uri: p.thumbnail_url }} style={{ width: 90, height: 90 }} contentFit="cover" />
-                    ) : (
-                      <View style={{ width: 90, height: 90, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 28 }}>🖼️</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Pressable onPress={() => removePortfolioItem(p.id)} style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#DC262690', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 12 }}>Up to 10 photos companies will see on your profile</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
+              {gallery.map((img) => (
+                <View key={img.id} style={{ width: 90, height: 90, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>
+                  <Pressable onPress={() => setLightboxUrl(img.image_url)} style={{ width: '100%', height: '100%' }}>
+                    <Image source={{ uri: img.image_url }} style={{ width: 90, height: 90 }} contentFit="cover" />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => removeGalleryImage(img.id)}
+                    style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, borderRadius: 10, backgroundColor: '#DC262690', alignItems: 'center', justifyContent: 'center' }}
+                    hitSlop={6}
+                  >
                     <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', lineHeight: 14 }}>×</Text>
                   </Pressable>
                 </View>
               ))}
-              {portfolioRows.length < MAX_PORTFOLIO && (
-                <Pressable onPress={pickPortfolioImage} disabled={isUploadingPortfolio} style={{ width: 90, height: 90, borderRadius: 10, borderWidth: 1, borderColor: '#FF624040', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', opacity: isUploadingPortfolio ? 0.5 : 1 }} className="active:opacity-70">
-                  {isUploadingPortfolio ? <ActivityIndicator color="#FF6240" size="small" /> : <Text style={{ color: '#FF6240', fontSize: 28 }}>+</Text>}
+              {gallery.length < MAX_GALLERY && (
+                <Pressable
+                  onPress={addGalleryImage}
+                  disabled={isUploadingGallery}
+                  style={{ width: 90, height: 90, borderRadius: 10, borderWidth: 1, borderColor: '#FF624040', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', opacity: isUploadingGallery ? 0.5 : 1 }}
+                >
+                  {isUploadingGallery ? <ActivityIndicator color="#FF6240" size="small" /> : <Text style={{ color: '#FF6240', fontSize: 28 }}>+</Text>}
                 </Pressable>
               )}
-            </View>
+            </ScrollView>
           </SectionCard>
 
           {/* ── Social Links ── */}
@@ -580,10 +738,54 @@ export default function EditProfileScreen() {
           </SectionCard>
 
           <Pressable onPress={handleSave} disabled={isSaving} style={{ backgroundColor: '#FF6240', borderRadius: 16, paddingVertical: 16, alignItems: 'center', opacity: isSaving ? 0.6 : 1 }}>
-            <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>{isSaving ? 'Saving…' : 'Save changes'}</Text>
+            {isSaving
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Save changes</Text>}
           </Pressable>
+
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* ── State picker modal ── */}
+      <Modal visible={showStatePicker} transparent animationType="slide" onRequestClose={() => setShowStatePicker(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setShowStatePicker(false)} />
+        <View style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: Dimensions.get('window').height * 0.7, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, borderBottomWidth: 1, borderColor: '#DDD6C9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 16 }}>Select your state</Text>
+            <Pressable onPress={() => setShowStatePicker(false)} hitSlop={12}>
+              <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>Done</Text>
+            </Pressable>
+          </View>
+          <FlatList
+            data={NIGERIAN_STATES}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => { setLocationId(item.id); setShowStatePicker(false) }}
+                style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderColor: '#EDE9E0', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Text style={{ color: '#1A1625', fontSize: 15 }}>{item.name}</Text>
+                {locationId === item.id && <Text style={{ color: '#FF6240', fontWeight: '700', fontSize: 14 }}>✓</Text>}
+              </Pressable>
+            )}
+          />
+        </View>
+      </Modal>
+
+      {/* ── Gallery lightbox ── */}
+      <Modal visible={!!lightboxUrl} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLightboxUrl(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setLightboxUrl(null)}>
+          {lightboxUrl && (
+            <Image
+              source={{ uri: lightboxUrl }}
+              style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').width, maxHeight: Dimensions.get('window').height * 0.8 }}
+              contentFit="contain"
+            />
+          )}
+          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 16 }}>Tap anywhere to close</Text>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

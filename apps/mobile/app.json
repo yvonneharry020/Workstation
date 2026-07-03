@@ -90,7 +90,8 @@
           "photosPermission": "Workstation needs access to your photos for profile and portfolio uploads."
         }
       ],
-      "expo-font"
+      "expo-font",
+      ["@sentry/react-native/expo", { "organization": "hive-digital-studio", "project": "workstation-mobile" }]
     ],
     "experiments": {
       "typedRoutes": true

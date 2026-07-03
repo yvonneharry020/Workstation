@@ -138,9 +138,10 @@ export default function JobDetailScreen() {
       const { data, error } = await supabase
         .from('job_postings')
         .select(
-          'id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, screening_questions, applications_count, published_at, company_id, company_profiles(id, company_name, logo_url, is_verified, industry, city)'
+          'id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, screening_questions, screening_type, quiz_duration_minutes, applications_count, published_at, company_id, company_profiles(id, company_name, logo_url, is_verified, industry, city)'
         )
         .eq('id', id)
+        .eq('status', 'active')
         .single()
       if (error) throw error
       return data as unknown as JobDetail
@@ -394,7 +395,7 @@ export default function JobDetailScreen() {
         ) : (
           <View className="flex-row gap-3">
             <Pressable
-              onPress={() => router.push(`/(candidate)/jobs/apply?jobId=${id}`)}
+              onPress={() => router.push(`/(candidate)/jobs/apply-step1?jobId=${id}`)}
               className="flex-1 bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
             >
               <Text className="text-[#1A1625] font-semibold text-base">Apply now</Text>

@@ -9,10 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Modal,
+  Dimensions,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
+import * as FileSystem from 'expo-file-system'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
@@ -142,6 +145,7 @@ export default function EditCompanyProfileScreen() {
   const [bannerUri, setBannerUri] = useState<string | null>(null)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
   const [gallery, setGallery] = useState<GalleryImage[]>([])
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const { isLoading, data: profileData } = useQuery({
     queryKey: ['company-profile-edit', user?.id],
@@ -280,6 +284,7 @@ export default function EditCompanyProfileScreen() {
   }
 
   const addGalleryImage = async () => {
+    if (gallery.length >= 10) return
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -293,9 +298,11 @@ export default function EditCompanyProfileScreen() {
       const fileExt = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
       const contentType = fileExt === 'png' ? 'image/png' : fileExt === 'webp' ? 'image/webp' : 'image/jpeg'
       const filePath = `${user?.id}/gallery_${Date.now()}.${fileExt}`
-      const response = await fetch(asset.uri)
-      const arrayBuffer = await response.arrayBuffer()
-      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, arrayBuffer, { contentType, upsert: true })
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' })
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, bytes, { contentType, upsert: true })
       if (uploadError) throw uploadError
       const { data } = supabase.storage.from('company-gallery').getPublicUrl(filePath)
       const { data: inserted, error: insertError } = await supabase
@@ -517,35 +524,62 @@ export default function EditCompanyProfileScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(250).duration(300)} className="mt-4">
-            <SectionLabel>Company gallery</SectionLabel>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
-              {gallery.map((img) => (
-                <View key={img.id} style={{ width: 100, height: 100, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
-                  <Image source={{ uri: img.image_url }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                  <Pressable
-                    onPress={() => removeGalleryImage(img.id)}
-                    style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#09080ECC', borderRadius: 8, padding: 5 }}
-                    className="active:opacity-70"
-                  >
-                    <TrashIcon />
-                  </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginTop: 8 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase' }}>Company gallery</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 12 }}>{gallery.length}/10 photos</Text>
+            </View>
+            <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 14 }}>Showcase your office, team, and culture. Tap an image to expand, tap × to remove.</Text>
+            {(() => {
+              const tileSize = Math.floor((Dimensions.get('window').width - 80 - 16) / 3)
+              return (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {gallery.map((img) => (
+                    <View key={img.id} style={{ width: tileSize, height: tileSize, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+                      <Pressable onPress={() => setLightboxUrl(img.image_url)} style={{ width: '100%', height: '100%' }} className="active:opacity-90">
+                        <Image source={{ uri: img.image_url }} style={{ width: tileSize, height: tileSize }} contentFit="cover" />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => removeGalleryImage(img.id)}
+                        style={{ position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: 11, backgroundColor: '#DC262690', alignItems: 'center', justifyContent: 'center' }}
+                        hitSlop={6}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', lineHeight: 15 }}>×</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                  {gallery.length < 10 && (
+                    <Pressable
+                      onPress={addGalleryImage}
+                      disabled={uploadingField === 'gallery'}
+                      style={{ width: tileSize, height: tileSize, borderRadius: 12, backgroundColor: '#EDE7DB', borderWidth: 1.5, borderColor: '#DDD6C9', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', opacity: uploadingField === 'gallery' ? 0.5 : 1 }}
+                      className="active:opacity-70"
+                    >
+                      {uploadingField === 'gallery'
+                        ? <ActivityIndicator color="#94A3B8" size="small" />
+                        : <PlusIcon />
+                      }
+                    </Pressable>
+                  )}
                 </View>
-              ))}
-              <Pressable
-                onPress={addGalleryImage}
-                disabled={uploadingField === 'gallery'}
-                style={{ width: 100, height: 100, borderRadius: 12, backgroundColor: '#EDE7DB', borderWidth: 1.5, borderColor: '#DDD6C9', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}
-                className="active:opacity-70"
-              >
-                {uploadingField === 'gallery'
-                  ? <ActivityIndicator color="#94A3B8" size="small" />
-                  : <PlusIcon />
-                }
-              </Pressable>
-            </ScrollView>
+              )
+            })()}
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Lightbox */}
+      <Modal visible={!!lightboxUrl} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLightboxUrl(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setLightboxUrl(null)}>
+          {lightboxUrl && (
+            <Image
+              source={{ uri: lightboxUrl }}
+              style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').width, maxHeight: Dimensions.get('window').height * 0.8 }}
+              contentFit="contain"
+            />
+          )}
+          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 16 }}>Tap anywhere to close</Text>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

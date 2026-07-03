@@ -1,4 +1,12 @@
+import * as Sentry from '@sentry/react-native'
 import { useEffect, useState } from 'react'
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
+  environment: process.env.NODE_ENV ?? 'development',
+  enableInExpoDevelopment: true,
+  debug: false,
+})
 import { View, Modal, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -123,7 +131,7 @@ function SystemOverlay() {
   )
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const { setSession, setRole, setOnboardingComplete, setLoading, setResolvingProfile, reset } = useAuthStore()
 
   const [fontsLoaded] = useFonts({
@@ -197,3 +205,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
+export default Sentry.wrap(RootLayout)

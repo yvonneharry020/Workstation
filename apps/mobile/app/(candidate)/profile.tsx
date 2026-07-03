@@ -4,9 +4,12 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
+  Modal,
+  Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
+import { useState } from 'react'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -62,6 +65,12 @@ interface BadgeSummary {
   role_held: string
   issued_at: string
   company_profiles: { company_name: string; logo_url: string | null; is_verified: boolean } | null
+}
+
+interface GalleryImage {
+  id: string
+  image_url: string
+  sort_order: number
 }
 
 const TRUST_LEVEL_COLORS: Record<string, string> = {
@@ -144,7 +153,7 @@ export default function CandidateProfileScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('candidate_profiles')
-        .select('*, trust_scores(score, level)')
+        .select('*')
         .eq('id', user!.id)
         .maybeSingle()
       if (error) throw new Error(error.message)
@@ -152,6 +161,20 @@ export default function CandidateProfileScreen() {
     },
     enabled: !!user?.id,
     staleTime: 1000 * 60 * 2,
+  })
+
+  const { data: trustScoreData } = useQuery<{ score: number; level: string } | null>({
+    queryKey: ['candidate-trust-score', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('trust_scores')
+        .select('score, level')
+        .eq('candidate_id', user!.id)
+        .maybeSingle()
+      return data ?? null
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
   })
 
   const { data: workHistory = [] } = useQuery<WorkHistory[]>({
@@ -209,6 +232,21 @@ export default function CandidateProfileScreen() {
     enabled: !!user?.id,
   })
 
+  const { data: gallery = [] } = useQuery<GalleryImage[]>({
+    queryKey: ['candidate-gallery', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('candidate_gallery')
+        .select('id, image_url, sort_order')
+        .eq('candidate_id', user!.id)
+        .order('sort_order')
+      return (data ?? []) as GalleryImage[]
+    },
+    enabled: !!user?.id,
+  })
+
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+
   if (isLoading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' }}>
@@ -217,8 +255,8 @@ export default function CandidateProfileScreen() {
     )
   }
 
-  const trustScore = candidate?.trust_scores?.score ?? 0
-  const trustLevel = candidate?.trust_scores?.level ?? 'bronze'
+  const trustScore = trustScoreData?.score ?? 0
+  const trustLevel = trustScoreData?.level ?? 'bronze'
   const levelColor = TRUST_LEVEL_COLORS[trustLevel] ?? '#CD7F32'
   const fullName = candidate ? `${candidate.first_name} ${candidate.last_name}` : 'Your Profile'
   const initials = `${(candidate?.first_name ?? 'U')[0]}${(candidate?.last_name ?? '')[0] ?? ''}`.toUpperCase()
@@ -404,6 +442,26 @@ export default function CandidateProfileScreen() {
           </Animated.View>
         )}
 
+        {/* Gallery */}
+        {gallery.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(310).duration(350)} style={{ marginBottom: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
+              <SectionLabel title="Gallery" />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                {gallery.map((img) => (
+                  <Pressable key={img.id} onPress={() => setLightboxUrl(img.image_url)} hitSlop={4}>
+                    <Image
+                      source={{ uri: img.image_url }}
+                      style={{ width: 100, height: 100, borderRadius: 12 }}
+                      contentFit="cover"
+                    />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        )}
+
         {/* Links */}
         {(candidate?.github_url || candidate?.linkedin_url || candidate?.portfolio_url) && (
           <Animated.View entering={FadeInDown.delay(320).duration(350)} style={{ marginBottom: 16 }}>
@@ -435,6 +493,20 @@ export default function CandidateProfileScreen() {
           </View>
         </Animated.View>
       </ScrollView>
+
+      {/* Lightbox */}
+      <Modal visible={!!lightboxUrl} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setLightboxUrl(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setLightboxUrl(null)}>
+          {lightboxUrl && (
+            <Image
+              source={{ uri: lightboxUrl }}
+              style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').width, maxHeight: Dimensions.get('window').height * 0.82 }}
+              contentFit="contain"
+            />
+          )}
+          <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 14 }}>Tap anywhere to close</Text>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }

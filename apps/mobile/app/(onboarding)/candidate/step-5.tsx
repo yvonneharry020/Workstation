@@ -11,6 +11,7 @@ import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -134,12 +135,14 @@ export default function CandidateStep5() {
       // Production: upload to Supabase Storage, then call AI scan function
       const fileExt = asset.name.split('.').pop()
       const filePath = `${user?.id}/${slotId}_${Date.now()}.${fileExt}`
-      const response = await fetch(asset.uri)
-      const blob = await response.blob()
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' })
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
 
       const { error: uploadError } = await supabase.storage
         .from('verification-docs')
-        .upload(filePath, blob)
+        .upload(filePath, bytes)
 
       if (uploadError) {
         updateSlot(slotId, { status: 'failed', feedback: 'Upload failed. Please try again.' })

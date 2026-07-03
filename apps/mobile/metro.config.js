@@ -16,6 +16,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ]
 
+// pnpm stores packages as symlinks — Metro must follow them to resolve the real files
+config.resolver.unstable_enableSymlinks = true
+
 // Force React singletons to a single instance across the monorepo.
 // Without this, pnpm symlinks can cause two copies of React in the bundle (invalid hook call).
 config.resolver.extraNodeModules = {
