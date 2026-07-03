@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import TopBar from '@/components/layout/TopBar'
 import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface Thread {
   id: string
@@ -75,8 +76,13 @@ export default function OpsLiveChatPage() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [fileModal, setFileModal] = useState<{ url: string; name: string } | null>(null)
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set())
+  const [realtimeOk, setRealtimeOk] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const supabase = useMemo(() => createClient(), [])
+  const threadsChRef = useRef<RealtimeChannel | null>(null)
+  const threadsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const msgsChRef = useRef<RealtimeChannel | null>(null)
+  const msgsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const selected = threads.find(t => t.id === selectedId)
 
@@ -99,6 +105,8 @@ export default function OpsLiveChatPage() {
     await supabase.from('chat_messages').update({ is_read: true }).eq('thread_id', threadId).eq('sender_type', 'user').eq('is_read', false)
     await supabase.from('chat_threads').update({ unread_admin: 0 }).eq('id', threadId)
     setThreads(prev => prev.map(t => t.id === threadId ? { ...t, unread_admin: 0 } : t))
+    // Update local state so user-sent messages immediately show double-blue tick
+    setMessages(prev => prev.map(m => m.sender_type === 'user' ? { ...m, is_read: true } : m))
   }, [supabase])
 
   useEffect(() => { void fetchThreads() }, [fetchThreads])
@@ -107,29 +115,88 @@ export default function OpsLiveChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  useEffect(() => {
-    const ch = supabase.channel('ops-chat-threads')
+  const subscribeThreadsChannel = useCallback(() => {
+    if (threadsTimerRef.current) { clearTimeout(threadsTimerRef.current); threadsTimerRef.current = null }
+    if (threadsChRef.current) { void supabase.removeChannel(threadsChRef.current) }
+    threadsChRef.current = supabase
+      .channel(`ops-chat-threads-${Date.now()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_threads' }, () => void fetchThreads())
-      .subscribe()
-    return () => { void supabase.removeChannel(ch) }
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setRealtimeOk(true)
+          void fetchThreads()
+        } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') {
+          setRealtimeOk(false)
+          threadsTimerRef.current = setTimeout(() => subscribeThreadsChannel(), 5_000)
+        }
+      })
   }, [supabase, fetchThreads])
 
   useEffect(() => {
-    if (!selectedId) return
-    const ch = supabase.channel(`ops-chat-msgs-${selectedId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${selectedId}` }, (payload) => {
+    subscribeThreadsChannel()
+    return () => {
+      if (threadsTimerRef.current) clearTimeout(threadsTimerRef.current)
+      if (threadsChRef.current) void supabase.removeChannel(threadsChRef.current)
+    }
+  }, [subscribeThreadsChannel, supabase])
+
+  const subscribeMsgsChannel = useCallback((threadId: string) => {
+    if (msgsTimerRef.current) { clearTimeout(msgsTimerRef.current); msgsTimerRef.current = null }
+    if (msgsChRef.current) { void supabase.removeChannel(msgsChRef.current) }
+    msgsChRef.current = supabase
+      .channel(`ops-chat-msgs-${threadId}-${Date.now()}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` }, (payload) => {
         const incoming = payload.new as Message
         setMessages(prev => {
           const withoutOptimistic = prev.filter(m => !m.id.startsWith('optimistic-') || m.sender_type !== 'admin')
+          if (withoutOptimistic.some(m => m.id === incoming.id)) return withoutOptimistic
           return [...withoutOptimistic, incoming]
         })
         if (incoming.sender_type === 'user') {
           void supabase.from('chat_messages').update({ is_read: true }).eq('id', incoming.id)
+          setMessages(prev => prev.map(m => m.id === incoming.id ? { ...m, is_read: true } : m))
         }
       })
-      .subscribe()
-    return () => { void supabase.removeChannel(ch) }
-  }, [supabase, selectedId])
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` }, (payload) => {
+        const updated = payload.new as Message
+        setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, is_read: updated.is_read } : m))
+      })
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') {
+          msgsTimerRef.current = setTimeout(() => subscribeMsgsChannel(threadId), 5_000)
+        }
+      })
+  }, [supabase])
+
+  useEffect(() => {
+    if (!selectedId) return
+    subscribeMsgsChannel(selectedId)
+    return () => {
+      if (msgsTimerRef.current) clearTimeout(msgsTimerRef.current)
+      if (msgsChRef.current) void supabase.removeChannel(msgsChRef.current)
+    }
+  }, [selectedId, subscribeMsgsChannel, supabase])
+
+  // 30-second polling fallback when realtime is down
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void fetchThreads()
+      if (selectedId) void fetchMessages(selectedId)
+    }, 30_000)
+    return () => clearInterval(interval)
+  }, [selectedId, fetchThreads, fetchMessages])
+
+  // Refresh on tab visibility (handles browser tab switching)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchThreads()
+        if (selectedId) void fetchMessages(selectedId)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [selectedId, fetchThreads, fetchMessages])
 
   async function handleSendReply() {
     if (!reply.trim() || !selectedId || sending) return
@@ -222,7 +289,7 @@ export default function OpsLiveChatPage() {
     <div className="flex flex-col min-h-full">
       <TopBar
         title="Live Chat"
-        subtitle={`${threads.filter(t => t.status !== 'resolved').length} active · ${totalUnread > 0 ? `${totalUnread} unread` : 'all read'}`}
+        subtitle={`${threads.filter(t => t.status !== 'resolved').length} active · ${totalUnread > 0 ? `${totalUnread} unread` : 'all read'}${!realtimeOk ? ' · ⚡ reconnecting…' : ''}`}
       />
 
       <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>

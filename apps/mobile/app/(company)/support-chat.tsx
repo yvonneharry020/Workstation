@@ -3,15 +3,18 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
   Modal, ActionSheetIOS, Dimensions, Pressable, Linking,
+  AppState, type AppStateStatus,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
+import * as FileSystem from 'expo-file-system'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { logEvent } from '@/lib/audit'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024
 
@@ -86,6 +89,23 @@ function SendIcon() {
   )
 }
 
+function SingleTick({ color }: { color: string }) {
+  return (
+    <Svg width={12} height={9} viewBox="0 0 12 9" fill="none">
+      <Path d="M1 4.5l2.5 2.5L9 1" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+function DoubleTick() {
+  return (
+    <Svg width={18} height={9} viewBox="0 0 18 9" fill="none">
+      <Path d="M1 4.5l2.5 2.5L9 1" stroke="#3B82F6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M6 4.5l2.5 2.5L14 1" stroke="#3B82F6" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
 function ImageBubble({ url, isUser, onPress }: { url: string; isUser: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
@@ -139,6 +159,9 @@ export default function CompanySupportChatScreen() {
   const [loading, setLoading] = useState(true)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const listRef = useRef<FlatList>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const threadIdRef = useRef<string | null>(null)
 
   const initThread = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -194,13 +217,14 @@ export default function CompanySupportChatScreen() {
 
   useEffect(() => { void initThread() }, [initThread])
 
-  useEffect(() => {
-    if (!thread?.id) return
-    const channel = supabase
-      .channel(`support-chat-company-${thread.id}`)
+  const subscribeToMessages = useCallback((threadId: string) => {
+    if (reconnectTimerRef.current) { clearTimeout(reconnectTimerRef.current); reconnectTimerRef.current = null }
+    if (channelRef.current) { void supabase.removeChannel(channelRef.current) }
+    channelRef.current = supabase
+      .channel(`support-chat-company-${threadId}-${Date.now()}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'chat_messages',
-        filter: `thread_id=eq.${thread.id}`,
+        filter: `thread_id=eq.${threadId}`,
       }, (payload) => {
         const incoming = payload.new as Message
         setMessages(prev => {
@@ -209,25 +233,57 @@ export default function CompanySupportChatScreen() {
         })
         setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
       })
-      .subscribe()
-    return () => { void supabase.removeChannel(channel) }
-  }, [thread?.id])
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'chat_messages',
+        filter: `thread_id=eq.${threadId}`,
+      }, (payload) => {
+        const updated = payload.new as Message
+        setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, is_read: updated.is_read } : m))
+      })
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') {
+          reconnectTimerRef.current = setTimeout(() => subscribeToMessages(threadId), 5_000)
+        }
+      })
+  }, [])
+
+  useEffect(() => {
+    if (!thread?.id) return
+    threadIdRef.current = thread.id
+    subscribeToMessages(thread.id)
+    return () => {
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current)
+      if (channelRef.current) void supabase.removeChannel(channelRef.current)
+    }
+  }, [thread?.id, subscribeToMessages])
+
+  // Reconnect when app returns to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active' && threadIdRef.current) {
+        subscribeToMessages(threadIdRef.current)
+      }
+    })
+    return () => sub.remove()
+  }, [subscribeToMessages])
 
   async function uploadAndSend(uri: string, mimeType: string, filename: string, type: 'image' | 'file') {
     if (!thread) return
     setUploading(true)
     const optimisticId = `optimistic-${Date.now()}`
     try {
-      const resp = await fetch(uri)
-      const blob = await resp.blob()
-      if (blob.size > MAX_FILE_BYTES) {
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' })
+      const binaryStr = atob(base64)
+      const bytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+      if (bytes.byteLength > MAX_FILE_BYTES) {
         Alert.alert('File too large', 'Please send files under 10 MB.')
         return
       }
       const path = `${thread.id}/${Date.now()}-${filename}`
       const { error: uploadError } = await supabase.storage
         .from('chat-attachments')
-        .upload(path, blob, { contentType: mimeType })
+        .upload(path, bytes, { contentType: mimeType })
       if (uploadError) throw uploadError
 
       const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(path)
@@ -270,12 +326,7 @@ export default function CompanySupportChatScreen() {
         setMessages(prev => prev.map(m => m.id === optimisticId ? { ...m, id: (inserted as { id: string }).id } : m))
       }
 
-      await supabase.from('chat_threads').update({
-        last_message: type === 'image' ? '📷 Image' : `📎 ${filename}`,
-        last_message_at: new Date().toISOString(),
-        unread_admin: 1,
-      }).eq('id', thread.id)
-
+      // DB trigger handles last_message, last_message_at, unread_admin increment
       logEvent({ event: 'company.support_attachment_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
     } catch {
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
@@ -374,11 +425,7 @@ export default function CompanySupportChatScreen() {
 
     if (!error && inserted) {
       setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? { ...m, id: (inserted as { id: string }).id } : m))
-      await supabase.from('chat_threads').update({
-        last_message: content,
-        last_message_at: new Date().toISOString(),
-        unread_admin: 1,
-      }).eq('id', thread.id)
+      // DB trigger handles last_message, last_message_at, unread_admin increment
       logEvent({ event: 'company.support_message_sent', app: 'company_app', targetId: thread.id, targetType: 'chat_thread' })
     } else if (error) {
       setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
@@ -462,7 +509,18 @@ export default function CompanySupportChatScreen() {
                   </View>
                 )}
 
-                <Text className="text-[10px] text-gray-400 mt-1 px-1">{formatTime(item.created_at)}</Text>
+                <View className={`flex-row items-center gap-1 mt-1 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+                  <Text className="text-[10px] text-gray-400">{formatTime(item.created_at)}</Text>
+                  {isUser && (
+                    item.id.startsWith('optimistic-') ? (
+                      <SingleTick color="rgba(156,163,175,0.5)" />
+                    ) : item.is_read ? (
+                      <DoubleTick />
+                    ) : (
+                      <SingleTick color="rgba(156,163,175,0.7)" />
+                    )
+                  )}
+                </View>
               </View>
             )
           }}
