@@ -267,7 +267,7 @@ function JobModal({ report, onClose }: { report: FlagReport; onClose: () => void
             <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1">Report Details</p>
             <p className="text-xs text-text-secondary">
               <span className="text-text-primary font-medium">{report.candidateName}</span> reported this job for:{' '}
-              <span className="text-red-400 font-semibold">"{report.reason}"</span>
+              <span className="text-red-400 font-semibold">{'"'}{report.reason}{'"'}</span>
             </p>
             <p className="text-xs text-text-muted mt-0.5">Reported on {formatDateTime(report.reportedAt)}</p>
           </div>
@@ -379,7 +379,7 @@ export default function ModerationPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider w-24">Job Post</span>
-                        <span className="text-sm text-text-secondary italic">"{report.job.title}"</span>
+                        <span className="text-sm text-text-secondary italic">{'"'}{report.job.title}{'"'}</span>
                       </div>
                     </div>
                   </div>
