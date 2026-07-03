@@ -85,6 +85,8 @@ export default function CandidateLayout() {
       <Tabs.Screen name="jobs/[id]" options={{ href: null }} />
       <Tabs.Screen name="jobs/applied" options={{ href: null }} />
       <Tabs.Screen name="jobs/apply" options={{ href: null }} />
+      <Tabs.Screen name="jobs/apply-step1" options={{ href: null }} />
+      <Tabs.Screen name="jobs/apply-step2" options={{ href: null }} />
       <Tabs.Screen name="profile/edit" options={{ href: null }} />
       <Tabs.Screen name="profile-template" options={{ href: null }} />
       <Tabs.Screen name="push-notifications" options={{ href: null }} />

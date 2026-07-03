@@ -141,10 +141,9 @@ export default function JobDetailScreen() {
           'id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, screening_questions, screening_type, quiz_duration_minutes, applications_count, published_at, company_id, company_profiles(id, company_name, logo_url, is_verified, industry, city)'
         )
         .eq('id', id)
-        .eq('status', 'active')
-        .single()
+        .maybeSingle()
       if (error) throw error
-      return data as unknown as JobDetail
+      return data as unknown as JobDetail | null
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
