@@ -35,6 +35,7 @@ interface CandidateProfile {
   profile_completion: number | null
   gender: string | null
   date_of_birth: string | null
+  avatar_url: string | null
 }
 
 interface CompanyProfile {
@@ -48,6 +49,8 @@ interface CompanyProfile {
   industry: string | null
   company_size: string | null
   headquarters_city: string | null
+  logo_url: string | null
+  cover_banner_url: string | null
 }
 
 interface ActivityLog {
@@ -180,14 +183,14 @@ export default function UserFolderContent({ userId, room, baseRoute }: Props) {
       if (p.role === 'candidate') {
         const { data: cp } = await supabase
           .from('candidate_profiles')
-          .select('first_name, last_name, other_names, nin_number, nin_verified, liveness_verified, phone_verified, experience_years, profile_completion, gender, date_of_birth')
+          .select('first_name, last_name, other_names, nin_number, nin_verified, liveness_verified, phone_verified, experience_years, profile_completion, gender, date_of_birth, avatar_url')
           .eq('id', userId)
           .maybeSingle()
         if (cp) setCandidateProfile(cp as CandidateProfile)
       } else if (p.role === 'company') {
         const { data: cp } = await supabase
           .from('company_profiles')
-          .select('company_name, legal_name, rc_number, cac_verified, is_verified, business_email, business_phone, industry, company_size, headquarters_city')
+          .select('company_name, legal_name, rc_number, cac_verified, is_verified, business_email, business_phone, industry, company_size, headquarters_city, logo_url, cover_banner_url')
           .eq('id', userId)
           .maybeSingle()
         if (cp) setCompanyProfile(cp as CompanyProfile)
@@ -401,8 +404,16 @@ export default function UserFolderContent({ userId, room, baseRoute }: Props) {
             backgroundColor: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '18px', fontWeight: 700, color: '#818CF8',
+            overflow: 'hidden',
           }}>
-            {(displayName[0] ?? '?').toUpperCase()}
+            {(candidateProfile?.avatar_url || companyProfile?.logo_url)
+              ? <img
+                  src={(candidateProfile?.avatar_url ?? companyProfile?.logo_url) as string}
+                  alt={displayName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              : (displayName[0] ?? '?').toUpperCase()
+            }
           </div>
           <div>
             <h2 className="text-[18px] font-bold font-display" style={{ color: 'var(--tx-1)' }}>{displayName}</h2>
@@ -495,6 +506,18 @@ export default function UserFolderContent({ userId, room, baseRoute }: Props) {
                       ].filter(Boolean).join('  ') || 'None'} />
                     </div>
 
+                    {/* Profile photo */}
+                    {candidateProfile.avatar_url && (
+                      <div className="mt-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--tx-3)' }}>Profile Photo</p>
+                        <img
+                          src={candidateProfile.avatar_url}
+                          alt="Profile"
+                          style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', border: '1px solid var(--border)' }}
+                        />
+                      </div>
+                    )}
+
                     {/* NIN (masked + reveal) */}
                     <div className="mt-4">
                       <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--tx-3)' }}>NIN</p>
@@ -538,6 +561,32 @@ export default function UserFolderContent({ userId, room, baseRoute }: Props) {
                     <Field label="CAC Verified" value={companyProfile.cac_verified ? 'Yes ✓' : 'No'} />
                     <Field label="Platform Verified" value={companyProfile.is_verified ? 'Yes ✓' : 'No'} />
                   </div>
+
+                  {/* Logo + Banner */}
+                  {(companyProfile.logo_url || companyProfile.cover_banner_url) && (
+                    <div className="mt-5 space-y-4">
+                      {companyProfile.logo_url && (
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--tx-3)' }}>Company Logo</p>
+                          <img
+                            src={companyProfile.logo_url}
+                            alt="Company Logo"
+                            style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', border: '1px solid var(--border)' }}
+                          />
+                        </div>
+                      )}
+                      {companyProfile.cover_banner_url && (
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--tx-3)' }}>Cover Banner</p>
+                          <img
+                            src={companyProfile.cover_banner_url}
+                            alt="Cover Banner"
+                            style={{ width: '100%', maxWidth: '480px', height: '120px', borderRadius: '12px', objectFit: 'cover', border: '1px solid var(--border)' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

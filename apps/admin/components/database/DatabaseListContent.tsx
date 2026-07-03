@@ -18,6 +18,7 @@ interface UserRecord {
   nin: string | null
   rc_number: string | null
   userType: 'candidate' | 'company' | 'other'
+  avatarUrl: string | null
 }
 
 interface Props {
@@ -68,7 +69,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
         .select(`
           id, email, phone, role, is_active, is_suspended,
           device_fingerprint, last_seen_at, created_at,
-          candidate_profiles ( id, first_name, last_name, nin_number, profile_completion )
+          candidate_profiles ( id, first_name, last_name, nin_number, profile_completion, avatar_url )
         `)
         .eq('role', 'candidate')
         .order('created_at', { ascending: false })
@@ -78,7 +79,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
         .select(`
           id, email, phone, role, is_active, is_suspended,
           device_fingerprint, last_seen_at, created_at,
-          company_profiles ( id, company_name, rc_number, is_verified )
+          company_profiles ( id, company_name, rc_number, is_verified, logo_url )
         `)
         .eq('role', 'company')
         .order('created_at', { ascending: false })
@@ -90,7 +91,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
     for (const row of (candidatesRes.data ?? []).filter(r => !staffEmails.has((r.email ?? '').toLowerCase()))) {
       const cp = Array.isArray(row.candidate_profiles)
         ? row.candidate_profiles[0]
-        : (row.candidate_profiles as { first_name?: string; last_name?: string; nin_number?: string } | null)
+        : (row.candidate_profiles as { first_name?: string; last_name?: string; nin_number?: string; avatar_url?: string } | null)
       const firstName = cp?.first_name ?? ''
       const lastName = cp?.last_name ?? ''
       records.push({
@@ -107,13 +108,14 @@ export default function DatabaseListContent({ baseRoute }: Props) {
         nin: (cp as { nin_number?: string } | null)?.nin_number ?? null,
         rc_number: null,
         userType: 'candidate',
+        avatarUrl: (cp as { avatar_url?: string } | null)?.avatar_url ?? null,
       })
     }
 
     for (const row of (companiesRes.data ?? []).filter(r => !staffEmails.has((r.email ?? '').toLowerCase()))) {
       const cp = Array.isArray(row.company_profiles)
         ? row.company_profiles[0]
-        : (row.company_profiles as { company_name?: string; rc_number?: string } | null)
+        : (row.company_profiles as { company_name?: string; rc_number?: string; logo_url?: string } | null)
       records.push({
         id: row.id,
         email: row.email ?? '',
@@ -128,6 +130,7 @@ export default function DatabaseListContent({ baseRoute }: Props) {
         nin: null,
         rc_number: (cp as { rc_number?: string } | null)?.rc_number ?? null,
         userType: 'company',
+        avatarUrl: (cp as { logo_url?: string } | null)?.logo_url ?? null,
       })
     }
 
@@ -285,8 +288,12 @@ export default function DatabaseListContent({ baseRoute }: Props) {
                           border: '1px solid rgba(99,102,241,0.2)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '11px', fontWeight: 700, color: '#818CF8',
+                          overflow: 'hidden',
                         }}>
-                          {initials(u.displayName)}
+                          {u.avatarUrl
+                            ? <img src={u.avatarUrl} alt={u.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : initials(u.displayName)
+                          }
                         </div>
                         <span className="font-semibold" style={{ color: 'var(--tx-1)' }}>
                           {u.displayName}

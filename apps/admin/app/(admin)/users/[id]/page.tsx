@@ -28,6 +28,7 @@ interface UserProfile {
   company_name?: string
   industry?: string
   website?: string
+  avatarUrl?: string | null
 }
 
 interface Application {
@@ -144,10 +145,14 @@ export default function UserProfilePage() {
     let userProfile: UserProfile | null = null
     const { data: cand } = await supabase.from('candidates').select('*').eq('id', id).single()
     if (cand) {
-      userProfile = { ...cand, type: 'candidate' }
+      const { data: cp } = await supabase.from('candidate_profiles').select('avatar_url').eq('id', id).maybeSingle()
+      userProfile = { ...cand, type: 'candidate', avatarUrl: cp?.avatar_url ?? null }
     } else {
       const { data: comp } = await supabase.from('companies').select('*').eq('id', id).single()
-      if (comp) userProfile = { id: comp.id, full_name: comp.name, email: comp.email, verification_status: comp.verification_status, trust_score: null, skills: null, experience: null, status: comp.status ?? 'active', created_at: comp.created_at, type: 'company', company_name: comp.name, industry: comp.industry, website: comp.website }
+      if (comp) {
+        const { data: cp } = await supabase.from('company_profiles').select('logo_url').eq('id', id).maybeSingle()
+        userProfile = { id: comp.id, full_name: comp.name, email: comp.email, verification_status: comp.verification_status, trust_score: null, skills: null, experience: null, status: comp.status ?? 'active', created_at: comp.created_at, type: 'company', company_name: comp.name, industry: comp.industry, website: comp.website, avatarUrl: cp?.logo_url ?? null }
+      }
     }
     setProfile(userProfile)
 
@@ -254,8 +259,11 @@ export default function UserProfilePage() {
         <div style={CARD} className="p-6">
           <div className="flex items-start gap-5">
             {/* Avatar */}
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #6366F1, #A78BFA)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 22 }}>{initials}</span>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg, #6366F1, #A78BFA)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              {profile.avatarUrl
+                ? <img src={profile.avatarUrl} alt={profile.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ color: '#fff', fontWeight: 700, fontSize: 22 }}>{initials}</span>
+              }
             </div>
 
             {/* Info */}
