@@ -159,6 +159,12 @@ export default function TechLayout({ children }: { children: React.ReactNode }) 
       ],
     },
     {
+      label: 'Intelligence',
+      items: [
+        { href: '/tech/user-data', label: 'User Data', icon: <StorageIcon /> },
+      ],
+    },
+    {
       label: 'Support Inbox',
       items: [
         { href: '/tech/tickets', label: 'Tickets Inbox', icon: <TicketIcon />, badge: counts.techTickets },

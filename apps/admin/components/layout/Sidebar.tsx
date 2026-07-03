@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Bell, TicketCheck, Inbox, MessageSquare,
   BarChart3, ScrollText, UserCog, Settings2, Sun, Moon,
-  Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp, Clock, CalendarClock,
+  Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp, Clock, CalendarClock, Database,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
@@ -98,6 +98,12 @@ export default function Sidebar() {
         { href: '/attendance',       label: 'Attendance',      icon: <Clock        size={15} /> },
         { href: '/work-config',      label: 'Work Config',     icon: <CalendarClock size={15} /> },
         { href: '/config',           label: 'System Config',   icon: <Settings2    size={15} /> },
+      ],
+    },
+    {
+      label: 'Intelligence',
+      items: [
+        { href: '/database', label: 'Database', icon: <Database size={15} /> },
       ],
     },
     {

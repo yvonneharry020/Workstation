@@ -178,6 +178,12 @@ export default function FinanceLayout({ children }: { children: React.ReactNode 
       ],
     },
     {
+      label: 'Intelligence',
+      items: [
+        { href: '/finance/database', label: 'Database', icon: <DbIcon /> },
+      ],
+    },
+    {
       label: 'Support Inbox',
       items: [
         { href: '/finance/tickets', label: 'Tickets Inbox', icon: <TicketInboxIcon />, badge: counts.financeTickets },
