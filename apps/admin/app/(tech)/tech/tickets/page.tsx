@@ -148,12 +148,32 @@ export default function TechTicketsPage() {
     if (!selectedId || !selected) return
     setReturning(true)
     const { data: { user } } = await supabase.auth.getUser()
-    const note = `[Tech → Management] Returned to management on ${new Date().toLocaleDateString('en-NG')}`
-    const merged = selected.internal_notes ? `${selected.internal_notes}\n${note}` : note
+    const now = new Date().toISOString()
+    const returnNote = `[Tech → Management] Returned to management on ${new Date().toLocaleDateString('en-NG')}`
+    const merged = selected.internal_notes ? `${selected.internal_notes}\n${returnNote}` : returnNote
+
     await supabase.from('support_tickets').update({
       department: 'Management',
       internal_notes: merged,
     }).eq('id', selectedId)
+
+    if (selected.parent_ticket_id) {
+      const { data: parent } = await supabase
+        .from('support_tickets')
+        .select('internal_notes')
+        .eq('id', selected.parent_ticket_id)
+        .single()
+      const parentNotes = parent?.internal_notes
+        ? `${parent.internal_notes}\n${returnNote}`
+        : returnNote
+      await supabase.from('support_tickets').update({
+        dept_resolved: true,
+        dept_resolved_at: now,
+        dept_resolved_by_email: user?.email ?? null,
+        internal_notes: parentNotes,
+      }).eq('id', selected.parent_ticket_id)
+    }
+
     await supabase.from('audit_logs').insert({
       event: 'tech.ticket_returned', actor_email: user?.email ?? null, actor_id: user?.id ?? null,
       actor_type: 'admin', target_id: selectedId, target_type: 'support_ticket',

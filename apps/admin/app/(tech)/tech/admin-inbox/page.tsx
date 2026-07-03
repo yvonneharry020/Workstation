@@ -194,15 +194,17 @@ export default function TechAdminInboxPage() {
                 <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{selected.description}</p>
               </div>
 
-              {selected.status === 'resolved' && (
-                <div className="bg-green-900/10 border border-green-800/30 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-green-400 uppercase tracking-wider mb-1">Admin Response</p>
-                  <p className="text-sm text-text-primary">{selected.resolution_note ?? 'Admin resolved this message.'}</p>
+              {selected.resolution_note && (
+                <div className={`rounded-xl p-4 ${selected.status === 'resolved' ? 'bg-green-900/10 border border-green-800/30' : 'bg-tech-900/10 border border-tech-800/30'}`}>
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${selected.status === 'resolved' ? 'text-green-400' : 'text-tech-400'}`}>
+                    Admin Reply
+                  </p>
+                  <p className="text-sm text-text-primary whitespace-pre-wrap">{selected.resolution_note}</p>
                   {selected.resolved_at && <p className="text-xs text-text-muted mt-1">Resolved {fmtTime(selected.resolved_at)}</p>}
                 </div>
               )}
 
-              {selected.status === 'in_progress' && (
+              {selected.status === 'in_progress' && !selected.resolution_note && (
                 <div className="bg-tech-900/10 border border-tech-800/30 rounded-xl p-4">
                   <p className="text-xs font-semibold text-tech-400 mb-1">Admin is reviewing this message</p>
                   <p className="text-xs text-text-muted">You&apos;ll see their response here once they&apos;ve handled it.</p>

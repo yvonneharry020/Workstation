@@ -438,7 +438,10 @@ export default function OpsTicketsPage() {
                     {t.routed_to_dept && !t.dept_resolved && (
                       <span className="text-[9px] text-ops-400 font-mono">→ {t.routed_to_dept}</span>
                     )}
-                    {t.dept_resolved && (
+                    {t.dept_resolved && t.internal_notes?.includes('→ Management]') && (
+                      <span className="text-[9px] text-amber-400 font-mono border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded">↩ Returned</span>
+                    )}
+                    {t.dept_resolved && !t.internal_notes?.includes('→ Management]') && (
                       <span className="text-[9px] text-green-400 font-mono">✓ {t.routed_to_dept}</span>
                     )}
                   </div>
@@ -529,11 +532,17 @@ export default function OpsTicketsPage() {
                     <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Route to Department</p>
                     {selected.routed_to_dept && (
                       <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border
-                        ${selected.dept_resolved
-                          ? 'text-green-400 bg-green-500/10 border-green-500/30'
-                          : 'text-ops-400 bg-ops-500/10 border-ops-500/30'
+                        ${selected.dept_resolved && selected.internal_notes?.includes('→ Management]')
+                          ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                          : selected.dept_resolved
+                            ? 'text-green-400 bg-green-500/10 border-green-500/30'
+                            : 'text-ops-400 bg-ops-500/10 border-ops-500/30'
                         }`}>
-                        {selected.dept_resolved ? '✓ Resolved' : `Routed → ${selected.routed_to_dept}`}
+                        {selected.dept_resolved && selected.internal_notes?.includes('→ Management]')
+                          ? '↩ Returned'
+                          : selected.dept_resolved
+                            ? '✓ Resolved'
+                            : `Routed → ${selected.routed_to_dept}`}
                       </span>
                     )}
                   </div>
@@ -556,6 +565,21 @@ export default function OpsTicketsPage() {
                           }
                         </button>
                       ))}
+                    </div>
+                  ) : selected.dept_resolved && selected.internal_notes?.includes('→ Management]') ? (
+                    <div className="bg-amber-900/10 border border-amber-800/30 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                          <polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                        </svg>
+                        <p className="text-xs font-semibold text-amber-400">Returned by {selected.routed_to_dept} — needs your attention</p>
+                      </div>
+                      {selected.dept_resolved_by_email && (
+                        <p className="text-[11px] text-text-muted mt-1">Returned by {selected.dept_resolved_by_email}</p>
+                      )}
+                      {selected.dept_resolved_at && (
+                        <p className="text-[11px] text-text-muted">On {formatTime(selected.dept_resolved_at)}</p>
+                      )}
                     </div>
                   ) : selected.dept_resolved ? (
                     <div className="bg-green-900/10 border border-green-800/30 rounded-xl p-4">
