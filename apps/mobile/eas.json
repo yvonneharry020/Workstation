@@ -9,7 +9,8 @@
       "distribution": "internal",
       "env": {
         "APP_ENV": "development",
-        "EXPO_PUBLIC_MOCK_VERIFICATION": "true"
+        "EXPO_PUBLIC_MOCK_VERIFICATION": "true",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview": {
@@ -19,7 +20,8 @@
       },
       "env": {
         "APP_ENV": "preview",
-        "EXPO_PUBLIC_MOCK_VERIFICATION": "true"
+        "EXPO_PUBLIC_MOCK_VERIFICATION": "true",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
