@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
-type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired'
+type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired' | 'pending' | 'rejected'
 type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'internship' | 'freelance'
 type WorkMode = 'remote' | 'hybrid' | 'on_site'
 
@@ -27,11 +27,13 @@ interface JobPosting {
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string }> = {
-  active:  { label: 'Active',   color: '#22C55E', bg: '#14532D20' },
-  draft:   { label: 'Draft',    color: '#5A4F6E', bg: '#1E293B'   },
-  paused:  { label: 'Paused',   color: '#F59E0B', bg: '#78350F20' },
-  closed:  { label: 'Closed',   color: '#EF4444', bg: '#7F1D1D20' },
-  expired: { label: 'Expired',  color: '#64748B', bg: '#1E293B'   },
+  active:   { label: 'Active',   color: '#22C55E', bg: '#14532D20' },
+  draft:    { label: 'Draft',    color: '#5A4F6E', bg: '#1E293B'   },
+  paused:   { label: 'Paused',   color: '#F59E0B', bg: '#78350F20' },
+  closed:   { label: 'Closed',   color: '#EF4444', bg: '#7F1D1D20' },
+  expired:  { label: 'Expired',  color: '#64748B', bg: '#1E293B'   },
+  pending:  { label: 'Pending',  color: '#818CF8', bg: '#3730A320' },
+  rejected: { label: 'Rejected', color: '#F43F5E', bg: '#881337'   },
 }
 
 const EMPLOYMENT_LABELS: Record<EmploymentType, string> = {
@@ -51,12 +53,14 @@ const WORK_MODE_LABELS: Record<WorkMode, string> = {
 type FilterTab = 'all' | JobStatus
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all',     label: 'All' },
-  { key: 'active',  label: 'Active' },
-  { key: 'draft',   label: 'Draft' },
-  { key: 'paused',  label: 'Paused' },
-  { key: 'closed',  label: 'Closed' },
-  { key: 'expired', label: 'Expired' },
+  { key: 'all',      label: 'All' },
+  { key: 'active',   label: 'Active' },
+  { key: 'draft',    label: 'Draft' },
+  { key: 'paused',   label: 'Paused' },
+  { key: 'closed',   label: 'Closed' },
+  { key: 'expired',  label: 'Expired' },
+  { key: 'pending',  label: 'Pending' },
+  { key: 'rejected', label: 'Rejected' },
 ]
 
 function PlusIcon() {
@@ -103,7 +107,7 @@ function EditIcon() {
 }
 
 function JobCard({ job, onToggleStatus, onClose }: { job: JobPosting; onToggleStatus: (id: string, current: JobStatus) => void; onClose: (id: string) => void }) {
-  const config = STATUS_CONFIG[job.status]
+  const config = STATUS_CONFIG[job.status] ?? { label: job.status, color: '#64748B', bg: '#1E293B' }
   const daysAgo = job.published_at
     ? Math.floor((Date.now() - new Date(job.published_at).getTime()) / (1000 * 60 * 60 * 24))
     : null

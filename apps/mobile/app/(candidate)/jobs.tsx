@@ -114,7 +114,7 @@ function JobCard({
 
   return (
     <Pressable
-      onPress={() => router.push(`/(candidate)/jobs/${job.id}`)}
+      onPress={() => router.push({ pathname: '/(candidate)/jobs/[id]', params: { id: job.id } } as never)}
       style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 12, overflow: 'hidden' }}
     >
       {/* Top row: logo + title + bookmark */}

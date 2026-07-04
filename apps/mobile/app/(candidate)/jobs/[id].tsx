@@ -40,7 +40,6 @@ interface JobDetail {
     logo_url: string | null
     is_verified: boolean
     industry: string | null
-    city: string | null
   } | null
 }
 
@@ -138,15 +137,19 @@ export default function JobDetailScreen() {
       const { data, error } = await supabase
         .from('job_postings')
         .select(
-          'id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, screening_questions, screening_type, quiz_duration_minutes, applications_count, published_at, company_id, company_profiles(id, company_name, logo_url, is_verified, industry, city)'
+          'id, title, employment_type, work_mode, experience_level, city, description, requirements, benefits, salary_min, salary_max, salary_is_confidential, application_deadline, screening_questions, screening_type, quiz_duration_minutes, applications_count, published_at, company_id, company_profiles(id, company_name, logo_url, is_verified, industry)'
         )
-        .eq('id', id)
+        .eq('id', id!)
+        .eq('status', 'active')
         .maybeSingle()
-      if (error) throw error
+      if (error) {
+        console.error('[job-detail] Supabase error:', JSON.stringify(error))
+        throw error
+      }
+      if (!data) console.warn('[job-detail] No data returned for id:', id)
       return data as unknown as JobDetail | null
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 5,
   })
 
   const { data: existingApp } = useQuery({
@@ -190,7 +193,7 @@ export default function JobDetailScreen() {
     },
   })
 
-  if (isLoading) {
+  if (!id || isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-surface items-center justify-center">
         <ActivityIndicator color="#FF6240" size="large" />
@@ -364,7 +367,6 @@ export default function JobDetailScreen() {
                     {company.is_verified && <VerifiedBadge />}
                   </View>
                   {company.industry && <Text className="text-slate-400 text-xs mt-0.5">{company.industry}</Text>}
-                  {company.city && <Text className="text-slate-500 text-xs">{company.city}</Text>}
                 </View>
               </View>
               <Pressable
