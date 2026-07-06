@@ -10,7 +10,9 @@
     "type-check": "tsc --noEmit",
     "build:dev": "eas build --profile development --platform android",
     "build:preview": "eas build --profile preview --platform all",
-    "build:prod": "eas build --profile production --platform all"
+    "build:prod": "eas build --profile production --platform all",
+    "update:preview": "eas update --channel preview --auto",
+    "update:prod": "eas update --channel production --auto"
   },
   "dependencies": {
     "@babel/runtime": "^7.24.0",
