@@ -24,8 +24,10 @@ interface ShortlistedApplication {
   submitted_at: string
   job_postings: { id: string; title: string } | null
   candidate_profiles: {
+    first_name: string
+    last_name: string
+    avatar_url: string | null
     headline: string | null
-    profiles: { full_name: string; avatar_url: string | null } | null
   } | null
 }
 
@@ -82,9 +84,10 @@ function EmptyBookmarkIcon() {
 }
 
 function CandidateCard({ item }: { item: ShortlistedApplication }) {
-  const name = item.candidate_profiles?.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = item.candidate_profiles?.profiles?.avatar_url
-  const headline = item.candidate_profiles?.headline
+  const cp = item.candidate_profiles
+  const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown'
+  const avatarUrl = cp?.avatar_url
+  const headline = cp?.headline
   const emailSeen = !!item.email_opened_at
   const emailSent = !!item.email_sent_at
 
@@ -159,10 +162,7 @@ export default function ShortlistedScreen() {
         .select(`
           id, candidate_id, job_id, email_sent_at, email_opened_at, submitted_at,
           job_postings!inner ( id, title, company_id ),
-          candidate_profiles (
-            headline,
-            profiles ( full_name, avatar_url )
-          )
+          candidate_profiles ( first_name, last_name, avatar_url, headline )
         `)
         .eq('pipeline_stage', 'shortlisted')
         .eq('job_postings.company_id', user!.id)

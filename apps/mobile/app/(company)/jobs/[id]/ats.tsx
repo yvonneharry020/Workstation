@@ -29,8 +29,10 @@ interface ApplicationRow {
   skills_match_pct: number | null
   submitted_at: string
   candidate_profiles: {
+    first_name: string
+    last_name: string
+    avatar_url: string | null
     headline: string | null
-    profiles: { full_name: string; avatar_url: string | null } | null
   } | null
 }
 
@@ -105,8 +107,9 @@ function ApplicationCard({
   onMoveStage: (id: string, currentStage: PipelineStage) => void
   isMoving: boolean
 }) {
-  const name = item.candidate_profiles?.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = item.candidate_profiles?.profiles?.avatar_url
+  const cp = item.candidate_profiles
+  const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown'
+  const avatarUrl = cp?.avatar_url
   const headline = item.candidate_profiles?.headline
   const stage = STAGE_CONFIG[item.pipeline_stage]
   const emailSeen = !!item.email_opened_at
@@ -207,10 +210,7 @@ export default function JobAtsScreen() {
         .select(`
           id, candidate_id, pipeline_stage, email_sent_at, email_opened_at,
           skills_match_pct, submitted_at,
-          candidate_profiles (
-            headline,
-            profiles ( full_name, avatar_url )
-          )
+          candidate_profiles ( first_name, last_name, avatar_url, headline )
         `)
         .eq('job_id', jobId!)
         .order('submitted_at', { ascending: false })
@@ -255,8 +255,10 @@ export default function JobAtsScreen() {
         return (b.skills_match_pct ?? 0) - (a.skills_match_pct ?? 0)
       }
       if (sortKey === 'full_name') {
-        const nameA = a.candidate_profiles?.profiles?.full_name ?? ''
-        const nameB = b.candidate_profiles?.profiles?.full_name ?? ''
+        const cpA = a.candidate_profiles
+        const cpB = b.candidate_profiles
+        const nameA = cpA ? `${cpA.first_name} ${cpA.last_name}`.trim() : ''
+        const nameB = cpB ? `${cpB.first_name} ${cpB.last_name}`.trim() : ''
         return nameA.localeCompare(nameB)
       }
       return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()

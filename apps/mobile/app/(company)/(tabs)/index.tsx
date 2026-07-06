@@ -24,7 +24,7 @@ interface RecentApplication {
   email_opened_at: string | null
   submitted_at: string
   job_postings: { title: string } | null
-  candidate_profiles: { full_name: string; avatar_url: string | null } | null
+  candidate_profiles: { id: string; first_name: string; last_name: string; avatar_url: string | null } | null
 }
 
 interface DashboardStats {
@@ -221,15 +221,16 @@ function EmptyJobsState() {
 function ApplicationRow({ item, index }: { item: RecentApplication; index: number }) {
   const stageColor = STAGE_COLORS[item.pipeline_stage] ?? '#475569'
   const stageLabel = STAGE_LABELS[item.pipeline_stage] ?? item.pipeline_stage
-  const candidateName = item.candidate_profiles?.full_name ?? 'Candidate'
-  const avatarUrl = item.candidate_profiles?.avatar_url
+  const cp = item.candidate_profiles
+  const candidateName = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Candidate'
+  const avatarUrl = cp?.avatar_url
   const jobTitle = item.job_postings?.title ?? 'Job'
   const initials = candidateName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 60).duration(350)}>
       <Pressable
-        onPress={() => router.push(`/(company)/candidates/${item.candidate_profiles?.full_name ?? item.id}` as any)}
+        onPress={() => router.push(`/(company)/candidates/${item.candidate_profiles?.id ?? item.id}` as any)}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
         className="active:opacity-70"
       >
@@ -419,7 +420,7 @@ export default function CompanyDashboard() {
         supabase.from('company_profiles').select('company_name').eq('id', user!.id).maybeSingle(),
         supabase.from('trust_scores').select('score').eq('profile_id', user!.id).maybeSingle(),
         supabase.from('job_applications')
-          .select('id, pipeline_stage, email_opened_at, submitted_at, job_postings(title), candidate_profiles(full_name, avatar_url)')
+          .select('id, pipeline_stage, email_opened_at, submitted_at, job_postings(title), candidate_profiles(id, first_name, last_name, avatar_url)')
           .eq('job_postings.company_id', user!.id)
           .order('submitted_at', { ascending: false })
           .limit(5),

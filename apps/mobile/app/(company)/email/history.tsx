@@ -18,24 +18,24 @@ import { useAuthStore } from '@/stores/authStore'
 
 interface EmailSent {
   id: string
-  candidate_id: string
+  recipient_id: string
   subject: string
-  body: string
+  body_html: string
   sent_at: string
   opened_at: string | null
   open_count: number
-  profiles: { full_name: string; avatar_url: string | null } | null
+  recipient: { candidate_profiles: { first_name: string; last_name: string; avatar_url: string | null } | null } | null
 }
 
 interface EmailRow {
   id: string
-  candidate_id: string
+  recipient_id: string
   subject: string
-  body: string
+  body_html: string
   sent_at: string
   opened_at: string | null
   open_count: number
-  profiles: { full_name: string; avatar_url: string | null } | null
+  recipient: { candidate_profiles: { first_name: string; last_name: string; avatar_url: string | null } | null } | null
 }
 
 type FilterTab = 'all' | 'opened' | 'not_opened'
@@ -92,14 +92,15 @@ export default function EmailHistoryScreen() {
       try {
         const { data, error } = await supabase
           .from('emails_sent')
-          .select('id, candidate_id, subject, body, sent_at, opened_at, open_count, profiles:candidate_id(full_name, avatar_url)')
+          .select('id, recipient_id, subject, body_html, sent_at, recipient:recipient_id(candidate_profiles(first_name, last_name, avatar_url))')
           .eq('company_id', user!.id)
           .order('sent_at', { ascending: false })
           .limit(200)
         if (error) throw error
         return (data as unknown as EmailRow[]).map((r) => ({
           ...r,
-          open_count: r.open_count ?? 0,
+          opened_at: null,
+          open_count: 0,
         })) as EmailSent[]
       } catch {
         return [] as EmailSent[]
@@ -176,14 +177,16 @@ export default function EmailHistoryScreen() {
             </View>
           }
           renderItem={({ item }) => {
-            const initials = (item.profiles?.full_name ?? 'U').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+            const rcp = item.recipient?.candidate_profiles
+            const fullName = rcp ? `${rcp.first_name} ${rcp.last_name}`.trim() : 'Unknown'
+            const initials = fullName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
             return (
               <Pressable
                 onPress={() => setSelected(item)}
                 style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}
               >
-                {item.profiles?.avatar_url ? (
-                  <Image source={{ uri: item.profiles.avatar_url }} style={{ width: 42, height: 42, borderRadius: 21 }} />
+                {rcp?.avatar_url ? (
+                  <Image source={{ uri: rcp.avatar_url }} style={{ width: 42, height: 42, borderRadius: 21 }} />
                 ) : (
                   <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{initials}</Text>
@@ -191,7 +194,7 @@ export default function EmailHistoryScreen() {
                 )}
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
-                    {item.profiles?.full_name ?? 'Unknown'}
+                    {fullName}
                   </Text>
                   <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {item.subject}

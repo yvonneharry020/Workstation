@@ -4,6 +4,7 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  Alert,
 } from 'react-native'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
@@ -13,6 +14,7 @@ import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
+import { supabase } from '@/lib/supabase'
 
 function ChevronIcon({ expanded }: { expanded: boolean }) {
   return (
@@ -114,7 +116,17 @@ export default function ContactScreen() {
   const messageLength = watch('message')?.length ?? 0
 
   const onSubmit = async (data: Form) => {
-    await new Promise((r) => setTimeout(r, 800))
+    const { error } = await supabase.from('contact_submissions').insert({
+      name: data.name,
+      email: data.email,
+      subject: data.subject,
+      message: data.message,
+      submitted_at: new Date().toISOString(),
+    })
+    if (error) {
+      Alert.alert('Failed to send', 'Something went wrong. Please email us directly at support@workstationng.com.')
+      return
+    }
     setSubmitted(true)
   }
 

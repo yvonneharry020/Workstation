@@ -22,9 +22,10 @@ const PAGE_SIZE = 20
 
 interface CandidateRow {
   id: string
+  first_name: string
+  last_name: string
+  avatar_url: string | null
   headline: string | null
-  overall_status: string
-  profiles: { full_name: string; avatar_url: string | null } | null
   candidate_skills: { skills: { name: string } | null }[]
 }
 
@@ -70,8 +71,8 @@ function CandidateCard({
   isSaved: boolean
   onToggleSave: (id: string) => void
 }) {
-  const name = item.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = item.profiles?.avatar_url
+  const name = `${item.first_name} ${item.last_name}`.trim() || 'Unknown'
+  const avatarUrl = item.avatar_url
   const topSkills = item.candidate_skills
     .map((s) => s.skills?.name)
     .filter(Boolean)
@@ -158,16 +159,14 @@ export default function BrowseCandidatesScreen() {
         let query = supabase
           .from('candidate_profiles')
           .select(`
-            id, headline, overall_status,
-            profiles ( full_name, avatar_url ),
+            id, first_name, last_name, avatar_url, headline,
             candidate_skills ( skills ( name ) )
           `)
-          .eq('overall_status', 'approved')
           .range(from, to)
           .order('id', { ascending: true })
 
         if (debouncedSearch) {
-          query = query.ilike('profiles.full_name', `%${debouncedSearch}%`)
+          query = query.or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%`)
         }
 
         const { data: rows, error } = await query

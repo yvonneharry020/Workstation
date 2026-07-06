@@ -20,9 +20,11 @@ type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' 
 
 interface CandidateProfile {
   id: string
+  first_name: string
+  last_name: string
+  avatar_url: string | null
   headline: string | null
-  overall_status: string | null
-  profiles: { full_name: string; avatar_url: string | null; email: string | null } | null
+  profiles: { email: string | null } | null
   candidate_skills: { skills: { name: string } | null }[]
   candidate_work_history: {
     job_title: string
@@ -129,8 +131,8 @@ export default function CandidateProfileScreen() {
       const { data, error } = await supabase
         .from('candidate_profiles')
         .select(`
-          id, headline, overall_status,
-          profiles ( full_name, avatar_url, email ),
+          id, first_name, last_name, avatar_url, headline,
+          profiles ( email ),
           candidate_skills ( skills ( name ) ),
           candidate_work_history ( job_title, company_name, start_date, end_date, is_current )
         `)
@@ -221,8 +223,8 @@ export default function CandidateProfileScreen() {
     )
   }
 
-  const name = candidate.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = candidate.profiles?.avatar_url
+  const name = `${candidate.first_name} ${candidate.last_name}`.trim() || 'Unknown'
+  const avatarUrl = candidate.avatar_url
   const email = candidate.profiles?.email
   const currentStage = application?.pipeline_stage
   const stageConfig = currentStage ? STAGE_CONFIG[currentStage] : null

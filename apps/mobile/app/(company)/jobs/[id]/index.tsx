@@ -29,7 +29,7 @@ interface ApplicationSummary {
   email_opened_at: string | null
   submitted_at: string
   candidate_id: string
-  candidate_profiles: { full_name: string; avatar_url: string | null; headline: string | null } | null
+  candidate_profiles: { first_name: string; last_name: string; avatar_url: string | null; headline: string | null } | null
 }
 
 interface StageBucket {
@@ -112,7 +112,7 @@ export default function JobApplicantsOverview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_applications')
-        .select('id, pipeline_stage, email_opened_at, submitted_at, candidate_id, candidate_profiles(full_name, avatar_url, headline)')
+        .select('id, pipeline_stage, email_opened_at, submitted_at, candidate_id, candidate_profiles(first_name, last_name, avatar_url, headline)')
         .eq('job_id', jobId)
         .order('submitted_at', { ascending: false })
         .limit(10)
@@ -244,9 +244,10 @@ export default function JobApplicantsOverview() {
           ) : (
             <View style={{ backgroundColor: '#EDE7DB', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', paddingHorizontal: 16 }}>
               {applications.slice(0, 5).map((app, index) => {
-                const name = app.candidate_profiles?.full_name ?? 'Candidate'
-                const avatar = app.candidate_profiles?.avatar_url
-                const headline = app.candidate_profiles?.headline
+                const cp = app.candidate_profiles
+                const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Candidate'
+                const avatar = cp?.avatar_url
+                const headline = cp?.headline
                 const initials = name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
                 const stageCfg = STAGE_CONFIG.find((s) => s.stage === app.pipeline_stage)
                 const daysAgo = Math.floor((Date.now() - new Date(app.submitted_at).getTime()) / (1000 * 60 * 60 * 24))

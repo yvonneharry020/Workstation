@@ -31,7 +31,9 @@ interface InterviewBooking {
     meeting_link: string | null
   } | null
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
   job_postings: { title: string } | null
 }
@@ -51,7 +53,9 @@ interface BookingRow {
     meeting_link: string | null
   } | null
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
   job_postings: { title: string } | null
 }
@@ -149,7 +153,7 @@ export default function InterviewCalendarScreen() {
         .select(`
           id, status, interview_notes, internal_rating, candidate_id, slot_id,
           interview_slots!inner(slot_date, start_time, end_time, meeting_type, meeting_link),
-          candidate_profiles:candidate_id(profiles:profile_id(full_name, avatar_url)),
+          candidate_profiles:candidate_id(first_name, last_name, avatar_url),
           job_postings:job_id(title)
         `)
         .eq('company_id', user!.id)
@@ -213,7 +217,8 @@ export default function InterviewCalendarScreen() {
                     <Text style={{ color: isToday ? '#FF6240' : '#5A4F6E', fontSize: 18, fontWeight: '700' }}>{d.getDate()}</Text>
                   </View>
                   {dayBookings.map((b) => {
-                    const name = b.candidate_profiles?.profiles?.full_name ?? 'Candidate'
+                    const cp = b.candidate_profiles
+                    const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Candidate'
                     const time = formatTime(b.interview_slots?.start_time ?? '')
                     const color = STATUS_COLORS[b.status]
                     return (
@@ -249,7 +254,8 @@ export default function InterviewCalendarScreen() {
             </View>
           ) : (
             thisWeekList.map((b) => {
-              const name = b.candidate_profiles?.profiles?.full_name ?? 'Unknown'
+              const bcp = b.candidate_profiles
+              const name = bcp ? `${bcp.first_name} ${bcp.last_name}`.trim() : 'Unknown'
               const initials = name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
               const color = STATUS_COLORS[b.status]
               return (
@@ -258,8 +264,8 @@ export default function InterviewCalendarScreen() {
                   onPress={() => setSelected(b)}
                   style={{ backgroundColor: '#EDE7DB', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}
                 >
-                  {b.candidate_profiles?.profiles?.avatar_url ? (
-                    <Image source={{ uri: b.candidate_profiles.profiles.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                  {bcp?.avatar_url ? (
+                    <Image source={{ uri: bcp.avatar_url }} style={{ width: 40, height: 40, borderRadius: 20 }} />
                   ) : (
                     <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '700' }}>{initials}</Text>

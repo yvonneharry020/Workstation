@@ -70,10 +70,13 @@ export default function ResetPasswordScreen() {
       return
     }
 
+    const { data: { user: sessionUser } } = await supabase.auth.getUser()
+    const role = sessionUser?.user_metadata?.role ?? 'candidate'
+    const destination = role === 'company' ? '/(company)/' : '/(candidate)/'
     Alert.alert(
       'Password updated',
       'Your password has been changed. You are now signed in.',
-      [{ text: 'Continue', onPress: () => router.replace('/(auth)/welcome') }]
+      [{ text: 'Continue', onPress: () => router.replace(destination as Parameters<typeof router.replace>[0]) }]
     )
   }
 

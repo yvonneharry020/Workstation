@@ -39,7 +39,7 @@ interface Recipient {
 
 interface CandidateRow {
   candidate_id: string
-  profiles: { full_name: string; avatar_url: string | null; email: string | null } | null
+  cp: { first_name: string; last_name: string; avatar_url: string | null; profiles: { email: string | null } | null } | null
 }
 
 const SYSTEM_TEMPLATES: EmailTemplate[] = [
@@ -164,18 +164,17 @@ export default function ComposeEmailScreen() {
       if (searchQuery.length < 2) return []
       const { data } = await supabase
         .from('job_applications')
-        .select('candidate_id, profiles:candidate_id(full_name, avatar_url, email)')
-        .eq('company_id', user!.id)
+        .select('candidate_id, cp:candidate_id(first_name, last_name, avatar_url, profiles(email))')
         .limit(20)
       const rows = (data as unknown as CandidateRow[]) ?? []
       const unique = new Map<string, Recipient>()
       rows.forEach((r) => {
-        if (r.profiles && !unique.has(r.candidate_id)) {
+        if (r.cp && !unique.has(r.candidate_id)) {
           unique.set(r.candidate_id, {
             id: r.candidate_id,
-            full_name: r.profiles.full_name,
-            avatar_url: r.profiles.avatar_url,
-            email: r.profiles.email,
+            full_name: `${r.cp.first_name} ${r.cp.last_name}`.trim(),
+            avatar_url: r.cp.avatar_url,
+            email: r.cp.profiles?.email ?? null,
           })
         }
       })

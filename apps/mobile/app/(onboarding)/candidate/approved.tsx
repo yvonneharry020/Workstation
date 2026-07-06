@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView } from 'react-native'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, {
@@ -112,26 +112,42 @@ const ACTION_CARDS = [
     icon: '🔔',
     title: 'Set job alerts',
     desc: 'Get notified when roles matching your criteria are posted.',
-    route: '/(candidate)/settings/alerts',
+    route: '/(candidate)/push-notifications',
     primary: false,
   },
 ]
 
+const BASE_SCORE = 10   // phone verified on signup
+const NIN_SCORE = 20
+const LIVENESS_SCORE = 15
+const DOCS_SCORE = 20
+const COMPUTED_TRUST_SCORE = BASE_SCORE + NIN_SCORE + LIVENESS_SCORE + DOCS_SCORE
+
 export default function CandidateApproved() {
   const user = useAuthStore((s) => s.user)
   const setOnboardingComplete = useAuthStore((s) => s.setOnboardingComplete)
-
-  const TRUST_SCORE = 82
+  const [trustScore, setTrustScore] = useState(COMPUTED_TRUST_SCORE)
 
   useEffect(() => {
     setOnboardingComplete(true)
-    if (user?.id) {
-      supabase.from('candidate_profiles').update({
+    if (!user?.id) return
+
+    const saveAndFetch = async () => {
+      await supabase.from('candidate_profiles').update({
         verification_status: 'approved',
-        trust_score: TRUST_SCORE,
+        trust_score: COMPUTED_TRUST_SCORE,
         onboarding_complete: true,
       }).eq('id', user.id)
+
+      const { data } = await supabase
+        .from('candidate_profiles')
+        .select('trust_score')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (data?.trust_score) setTrustScore(data.trust_score)
     }
+
+    saveAndFetch()
   }, [user?.id, setOnboardingComplete])
 
   const confettiPositions = [20, 60, 110, 160, 220, 270, 310]
@@ -192,7 +208,7 @@ export default function CandidateApproved() {
           className="bg-surface-card border border-surface-border rounded-3xl px-5 py-6 items-center mb-6"
         >
           <Text className="text-slate-300 text-sm font-semibold mb-4">Trust score</Text>
-          <TrustScoreRing score={TRUST_SCORE} />
+          <TrustScoreRing score={trustScore} />
           <Text className="text-slate-400 text-xs text-center mt-4 leading-4 px-4">
             Your trust score reflects identity verification strength. Add more details to your
             profile to improve it.

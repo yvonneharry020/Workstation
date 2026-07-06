@@ -30,7 +30,9 @@ interface ApplicationRow {
   submitted_at: string
   job_postings: { title: string } | null
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
 }
 
@@ -93,8 +95,9 @@ function MailIcon({ color }: { color: string }) {
 }
 
 function ApplicationCard({ item, index }: { item: ApplicationRow; index: number }) {
-  const name = item.candidate_profiles?.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = item.candidate_profiles?.profiles?.avatar_url
+  const cp = item.candidate_profiles
+  const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown'
+  const avatarUrl = cp?.avatar_url
   const jobTitle = item.job_postings?.title ?? '—'
   const stage = STAGE_CONFIG[item.pipeline_stage]
   const emailSeen = !!item.email_opened_at
@@ -185,9 +188,7 @@ export default function ApplicantsScreen() {
           id, job_id, candidate_id, pipeline_stage, email_sent_at, email_opened_at,
           skills_match_pct, submitted_at,
           job_postings!inner ( title, company_id ),
-          candidate_profiles (
-            profiles ( full_name, avatar_url )
-          )
+          candidate_profiles ( first_name, last_name, avatar_url )
         `)
         .eq('job_postings.company_id', user!.id)
         .order('submitted_at', { ascending: false })
@@ -199,7 +200,8 @@ export default function ApplicantsScreen() {
 
   const filtered = (applications ?? []).filter((a) => {
     const matchesStage = activeFilter === 'all' || a.pipeline_stage === activeFilter
-    const name = a.candidate_profiles?.profiles?.full_name?.toLowerCase() ?? ''
+    const cp = a.candidate_profiles
+    const name = cp ? `${cp.first_name} ${cp.last_name}`.toLowerCase() : ''
     const matchesSearch = debouncedSearch === '' || name.includes(debouncedSearch.toLowerCase())
     return matchesStage && matchesSearch
   })

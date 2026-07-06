@@ -30,6 +30,7 @@ interface CACResult {
 }
 
 const STEPS_TOTAL = 7
+const IS_MOCK = process.env.EXPO_PUBLIC_MOCK_VERIFICATION === 'true'
 
 function PulsingRing({ color }: { color: string }) {
   const scale = useSharedValue(1)
@@ -163,18 +164,24 @@ export default function CompanyStep2() {
 
       await new Promise((res) => setTimeout(res, 2500))
 
-      const mockResult: CACResult = {
-        companyName: 'MOCK COMPANY LIMITED',
-        registrationStatus: 'active',
-        directors: ['SAMPLE DIRECTOR ONE', 'SAMPLE DIRECTOR TWO'],
-        rcNumber,
+      let cacResult: CACResult
+      if (IS_MOCK) {
+        cacResult = {
+          companyName: 'MOCK COMPANY LIMITED',
+          registrationStatus: 'active',
+          directors: ['SAMPLE DIRECTOR ONE', 'SAMPLE DIRECTOR TWO'],
+          rcNumber,
+        }
+      } else {
+        // Real CAC API call goes here when Dojah/CAC API key is available
+        throw new Error('CAC_API_NOT_CONFIGURED')
       }
 
       const { error } = await supabase.from('company_verification').upsert({
         company_id: currentUser.id,
         cac_status: 'approved',
         cac_verified_at: new Date().toISOString(),
-        cac_result: mockResult,
+        cac_result: cacResult,
         overall_status: 'pending',
       }, { onConflict: 'company_id' })
 
@@ -184,7 +191,7 @@ export default function CompanyStep2() {
         .from('company_profiles')
         .upsert({
           id: currentUser.id,
-          company_name: mockResult.companyName,
+          company_name: cacResult.companyName,
           rc_number: rcNumber,
           business_email: params.businessEmail || '',
           cac_verified: true,
@@ -195,11 +202,17 @@ export default function CompanyStep2() {
         await supabase.from('profiles').update({ phone: params.phone }).eq('id', currentUser.id)
       }
 
-      setCacResult(mockResult)
+      setCacResult(cacResult)
       setVerifyState('success')
-    } catch {
+    } catch (err) {
       setVerifyState('failed')
-      Alert.alert('Verification failed', 'We could not verify your RC number. Please check it and try again.')
+      const isUnconfigured = err instanceof Error && err.message === 'CAC_API_NOT_CONFIGURED'
+      Alert.alert(
+        'Verification failed',
+        isUnconfigured
+          ? 'CAC verification is not yet configured. Please contact support.'
+          : 'We could not verify your RC number. Please check it and try again.'
+      )
     }
   }
 

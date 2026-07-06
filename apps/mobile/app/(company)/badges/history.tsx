@@ -31,7 +31,9 @@ interface Badge {
   recipient_id: string
   badge_signatures: { badge_id: string }[] | null
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
 }
 
@@ -49,7 +51,9 @@ interface BadgeRow {
   recipient_id: string
   badge_signatures: { badge_id: string }[] | null
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
 }
 
@@ -108,7 +112,7 @@ export default function BadgesHistoryScreen() {
           id, role_held, start_date, end_date, is_current, performance_rating,
           status, issued_at, revoked_at, revocation_reason, recipient_id,
           badge_signatures(badge_id),
-          candidate_profiles:recipient_id(profiles:profile_id(full_name, avatar_url))
+          candidate_profiles:recipient_id(first_name, last_name, avatar_url)
         `)
         .eq('issuer_id', user!.id)
         .order('issued_at', { ascending: false })
@@ -133,7 +137,7 @@ export default function BadgesHistoryScreen() {
   const handleRevoke = (badge: Badge) => {
     Alert.alert(
       'Revoke badge?',
-      `Revoke the badge for ${badge.candidate_profiles?.profiles?.full_name ?? 'this candidate'}? This action cannot be undone after 72 hours.`,
+      `Revoke the badge for ${badge.candidate_profiles ? `${badge.candidate_profiles.first_name} ${badge.candidate_profiles.last_name}`.trim() : 'this candidate'}? This action cannot be undone after 72 hours.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Revoke', style: 'destructive', onPress: () => revokeMutation.mutate(badge.id) },
@@ -197,7 +201,8 @@ export default function BadgesHistoryScreen() {
             </View>
           }
           renderItem={({ item }) => {
-            const name = item.candidate_profiles?.profiles?.full_name ?? 'Unknown'
+            const icp = item.candidate_profiles
+            const name = icp ? `${icp.first_name} ${icp.last_name}`.trim() : 'Unknown'
             const initials = name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
             const statusColor = STATUS_COLORS[item.status]
             const hasSignature = (item.badge_signatures?.length ?? 0) > 0
@@ -207,8 +212,8 @@ export default function BadgesHistoryScreen() {
             return (
               <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                  {item.candidate_profiles?.profiles?.avatar_url ? (
-                    <Image source={{ uri: item.candidate_profiles.profiles.avatar_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
+                  {icp?.avatar_url ? (
+                    <Image source={{ uri: icp.avatar_url }} style={{ width: 44, height: 44, borderRadius: 22 }} />
                   ) : (
                     <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{initials}</Text>

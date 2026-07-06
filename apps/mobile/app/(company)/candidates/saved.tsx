@@ -27,8 +27,10 @@ interface SavedEntry {
 
 interface CandidateRow {
   id: string
+  first_name: string
+  last_name: string
+  avatar_url: string | null
   headline: string | null
-  profiles: { full_name: string; avatar_url: string | null } | null
   candidate_skills: { skills: { name: string } | null }[]
 }
 
@@ -86,8 +88,8 @@ function CandidateCard({
   onRemove: (id: string) => void
   onEditTag: (id: string, currentTag: string) => void
 }) {
-  const name = candidate?.profiles?.full_name ?? '…'
-  const avatarUrl = candidate?.profiles?.avatar_url
+  const name = candidate ? `${candidate.first_name} ${candidate.last_name}`.trim() : '…'
+  const avatarUrl = candidate?.avatar_url
   const headline = candidate?.headline
   const topSkills = candidate?.candidate_skills
     .map((s) => s.skills?.name)
@@ -197,8 +199,7 @@ export default function SavedCandidatesScreen() {
       const { data, error } = await supabase
         .from('candidate_profiles')
         .select(`
-          id, headline,
-          profiles ( full_name, avatar_url ),
+          id, first_name, last_name, avatar_url, headline,
           candidate_skills ( skills ( name ) )
         `)
         .in('id', savedIds)

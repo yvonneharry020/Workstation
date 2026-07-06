@@ -17,7 +17,9 @@ interface ApplicationRow {
   pipeline_stage: PipelineStage
   submitted_at: string
   candidate_profiles: {
-    profiles: { full_name: string; avatar_url: string | null } | null
+    first_name: string
+    last_name: string
+    avatar_url: string | null
   } | null
 }
 
@@ -60,8 +62,9 @@ function CandidateCard({
   availableStages: { stage: PipelineStage; label: string }[]
   onLongPress: (id: string, stages: { stage: PipelineStage; label: string }[]) => void
 }) {
-  const name = item.candidate_profiles?.profiles?.full_name ?? 'Unknown'
-  const avatarUrl = item.candidate_profiles?.profiles?.avatar_url
+  const cp = item.candidate_profiles
+  const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown'
+  const avatarUrl = cp?.avatar_url
 
   return (
     <Pressable
@@ -112,9 +115,7 @@ export default function KanbanScreen() {
         .from('job_applications')
         .select(`
           id, candidate_id, pipeline_stage, submitted_at,
-          candidate_profiles (
-            profiles ( full_name, avatar_url )
-          )
+          candidate_profiles ( first_name, last_name, avatar_url )
         `)
         .eq('job_id', jobId!)
         .order('submitted_at', { ascending: true })

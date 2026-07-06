@@ -126,6 +126,11 @@ export default function Tutorial3() {
     router.replace('/(auth)/welcome')
   }
 
+  const handleSignIn = () => {
+    Storage.markTutorialSeen()
+    router.replace('/(auth)/login')
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row justify-between items-center px-6 pt-4 pb-2">
@@ -183,7 +188,7 @@ export default function Tutorial3() {
             <Text className="text-[#1A1625] font-semibold text-base">Get started</Text>
           </Pressable>
           <Pressable
-            onPress={handleSkip}
+            onPress={handleSignIn}
             className="border border-surface-border rounded-2xl py-4 items-center active:opacity-80"
           >
             <Text className="text-[#1A1625] font-semibold text-base">Sign in</Text>

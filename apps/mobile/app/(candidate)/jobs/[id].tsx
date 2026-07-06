@@ -142,11 +142,7 @@ export default function JobDetailScreen() {
         .eq('id', id!)
         .eq('status', 'active')
         .maybeSingle()
-      if (error) {
-        console.error('[job-detail] Supabase error:', JSON.stringify(error))
-        throw error
-      }
-      if (!data) console.warn('[job-detail] No data returned for id:', id)
+      if (error) throw error
       return data as unknown as JobDetail | null
     },
     enabled: !!id,
