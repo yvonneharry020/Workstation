@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -438,6 +438,10 @@ function PipelinePicker({
               <Text style={{ fontSize: 16, fontWeight: '800', color: '#1A1625', marginBottom: 4 }}>Update Pipeline</Text>
               <Text style={{ fontSize: 12, color: '#9A8FA6', marginBottom: 20 }} numberOfLines={1}>{row.full_name}</Text>
 
+                <Text style={{ fontSize: 11, color: '#9A8FA6', marginBottom: 16, lineHeight: 17 }}>
+                Select a stage to move this candidate to.
+              </Text>
+
               {COMPANY_STAGES.map((stage) => {
                 const cfg      = PIPELINE_CONFIG[stage]
                 const isActive = stage === row.pipeline_stage
@@ -448,17 +452,31 @@ function PipelinePicker({
                     disabled={isPending}
                     style={({ pressed }) => ({
                       flexDirection: 'row', alignItems: 'center',
-                      paddingVertical: 14, paddingHorizontal: 16,
-                      borderRadius: 14, marginBottom: 8,
-                      backgroundColor: isActive ? cfg.bg : '#F9F7F4',
-                      borderWidth: 1.5, borderColor: isActive ? cfg.color : '#E5DFD3',
+                      paddingVertical: 16, paddingHorizontal: 18,
+                      borderRadius: 16, marginBottom: 10,
+                      backgroundColor: isActive ? cfg.bg : '#FFFFFF',
+                      borderWidth: 2, borderColor: isActive ? cfg.color : '#E5DFD3',
                       opacity: pressed ? 0.75 : 1,
+                      shadowColor: isActive ? cfg.color : 'transparent',
+                      shadowOpacity: 0.12,
+                      shadowRadius: 8,
+                      shadowOffset: { width: 0, height: 2 },
                     })}
                   >
-                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: cfg.color, marginRight: 14, flexShrink: 0 }} />
-                    <Text style={{ flex: 1, fontSize: 15, fontWeight: isActive ? '700' : '500', color: isActive ? cfg.color : '#1A1625' }}>
-                      {cfg.label}
-                    </Text>
+                    <View style={{
+                      width: 36, height: 36, borderRadius: 18,
+                      backgroundColor: cfg.bg,
+                      borderWidth: 2, borderColor: cfg.color + '50',
+                      alignItems: 'center', justifyContent: 'center',
+                      marginRight: 14, flexShrink: 0,
+                    }}>
+                      <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cfg.color }} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: isActive ? cfg.color : '#1A1625', letterSpacing: -0.2 }}>
+                        {cfg.label}
+                      </Text>
+                    </View>
                     {isActive && !isPending && <CheckIcon color={cfg.color} />}
                     {isActive &&  isPending && <ActivityIndicator size="small" color={cfg.color} />}
                   </Pressable>
@@ -673,17 +691,17 @@ function Cell({
         onPress={handlers.onPipelinePress}
         style={({ pressed }) => ([
           base,
-          { width: 135, minHeight: ROW_MIN_H, justifyContent: 'center', paddingHorizontal: 8, borderRightWidth: 1, opacity: pressed ? 0.75 : 1 },
+          { width: col.width, minHeight: ROW_MIN_H, justifyContent: 'center', paddingHorizontal: 10, borderRightWidth: 1, opacity: pressed ? 0.75 : 1 },
         ])}
       >
         <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 5,
-          backgroundColor: cfg.bg, borderRadius: 7,
-          paddingHorizontal: 8, paddingVertical: 5,
-          borderWidth: 1, borderColor: cfg.border, alignSelf: 'flex-start',
+          flexDirection: 'row', alignItems: 'center', gap: 7,
+          backgroundColor: cfg.bg, borderRadius: 10,
+          paddingHorizontal: 10, paddingVertical: 7,
+          borderWidth: 1.5, borderColor: cfg.color + '55',
         }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: cfg.color }} />
-          <Text style={{ fontSize: 10, fontWeight: '700', color: cfg.color }} numberOfLines={1}>{cfg.label}</Text>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
+          <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
           <ChevronDown />
         </View>
       </Pressable>
@@ -696,7 +714,7 @@ function Cell({
         onPress={handlers.onNotesPress}
         style={({ pressed }) => ([
           base,
-          { width: 155, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, borderRightWidth: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 6, opacity: pressed ? 0.75 : 1 },
+          { width: col.width, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, borderRightWidth: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 6, opacity: pressed ? 0.75 : 1 },
         ])}
       >
         <View style={{ flex: 1 }}>
@@ -795,8 +813,6 @@ export function DataTab({
   const { height } = useWindowDimensions()
   const gridBodyH  = Math.max(height - CHROME_H, 200)
 
-  const headerScrollRef = useRef<ScrollView>(null)
-
   const [coverModal,    setCoverModal]    = useState<AtsRowFull | null>(null)
   const [profileModal,  setProfileModal]  = useState<AtsRowFull | null>(null)
   const [screenModal,   setScreenModal]   = useState<AtsRowFull | null>(null)
@@ -830,59 +846,52 @@ export function DataTab({
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+    <View style={{ flex: 1, backgroundColor: '#F5F0E8', paddingTop: 8 }}>
 
-      {/* ── Frozen header ── */}
-      <ScrollView
-        ref={headerScrollRef}
-        horizontal
-        scrollEnabled={false}
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-      >
-        <GridHeader />
-      </ScrollView>
-
-      {/* ── Grid body ── */}
+      {/* ── Single horizontal scroll — header + body move together, no sync needed ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
         bounces={false}
-        onScroll={(e) =>
-          headerScrollRef.current?.scrollTo({ x: e.nativeEvent.contentOffset.x, animated: false })
-        }
-        scrollEventThrottle={16}
         indicatorStyle="black"
+        style={{ flex: 1 }}
       >
-        <ScrollView
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-          style={{ width: TOTAL_W, height: gridBodyH }}
-          contentContainerStyle={{ minHeight: gridBodyH }}
-        >
-          {rows.length === 0 ? (
-            <View style={{ width: TOTAL_W, height: 220, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1625' }}>No candidates yet</Text>
-              <Text style={{ fontSize: 12, color: '#9A8FA6' }}>Candidates auto-appear as they apply for this job</Text>
-            </View>
-          ) : (
-            rows.map((row, i) => (
-              <GridRow
-                key={row.id}
-                row={row}
-                index={i}
-                isEven={i % 2 === 0}
-                handlers={makeHandlers(row)}
-              />
-            ))
-          )}
-        </ScrollView>
+        <View>
+          {/* Header always on top, same parent as body rows — guaranteed alignment */}
+          <GridHeader />
+
+          {/* Vertical-scrollable body */}
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            style={{ width: TOTAL_W, height: gridBodyH }}
+            contentContainerStyle={{ minHeight: 80 }}
+          >
+            {rows.length === 0 ? (
+              <View style={{ width: TOTAL_W, height: 180, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1625' }}>No candidates yet</Text>
+                <Text style={{ fontSize: 12, color: '#9A8FA6' }}>Candidates auto-appear as they apply for this job</Text>
+              </View>
+            ) : (
+              rows.map((row, i) => (
+                <GridRow
+                  key={row.id}
+                  row={row}
+                  index={i}
+                  isEven={i % 2 === 0}
+                  handlers={makeHandlers(row)}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
       </ScrollView>
 
-      {/* ── Footer — record count only (no Add Row button) ── */}
+      {/* ── Footer ── */}
       <View style={{
         paddingHorizontal: 16,
-        paddingVertical: 10,
+        paddingVertical: 14,
+        paddingBottom: 24,
         borderTopWidth: 1,
         borderTopColor: '#DDD6C9',
         backgroundColor: '#F5F0E8',

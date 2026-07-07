@@ -52,8 +52,8 @@ function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
         flexDirection: 'row',
         backgroundColor: '#EDE7DB',
         borderRadius: 14,
-        padding: 3,
-        gap: 3,
+        padding: 4,
+        gap: 8,
       }}>
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key
@@ -67,6 +67,7 @@ function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
                 flex: 1,
                 borderRadius: 11,
                 paddingVertical: 8,
+                paddingHorizontal: 10,
                 backgroundColor: isActive ? '#FFFFFF' : 'transparent',
                 alignItems: 'center',
                 flexDirection: 'row',
