@@ -17,12 +17,11 @@ import Svg, { Path } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
-import { AtsRow, RowStage, STAGE_CONFIG, STAGE_ORDER } from '@/components/ats/types'
+import { AtsRow, AtsRowData, RowStage, STAGE_CONFIG, STAGE_ORDER } from '@/components/ats/types'
 import { OverviewTab }  from '@/components/ats/OverviewTab'
 import { DataTab }      from '@/components/ats/DataTab'
 import { AnalysisTab }  from '@/components/ats/AnalysisTab'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type TabKey = 'overview' | 'data' | 'analysis'
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -40,14 +39,6 @@ function ArrowLeft() {
   )
 }
 
-function PlusIcon() {
-  return (
-    <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M12 5v14M5 12h14" />
-    </Svg>
-  )
-}
-
 function CloseIcon() {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -58,29 +49,26 @@ function CloseIcon() {
 
 // ─── Add Row Modal ─────────────────────────────────────────────────────────────
 interface AddRowModalProps {
-  visible: boolean
-  onClose: () => void
-  onSubmit: (label: string, stage: RowStage, notes: string) => void
+  visible:   boolean
+  onClose:   () => void
+  onSubmit:  (label: string, stage: RowStage) => void
   isPending: boolean
 }
 
 function AddRowModal({ visible, onClose, onSubmit, isPending }: AddRowModalProps) {
-  const [label, setLabel]   = useState('')
-  const [stage, setStage]   = useState<RowStage>('prospect')
-  const [notes, setNotes]   = useState('')
+  const [label, setLabel] = useState('')
+  const [stage, setStage] = useState<RowStage>('prospect')
 
   const handleSubmit = useCallback(() => {
     if (!label.trim()) return
-    onSubmit(label.trim(), stage, notes.trim())
+    onSubmit(label.trim(), stage)
     setLabel('')
     setStage('prospect')
-    setNotes('')
-  }, [label, stage, notes, onSubmit])
+  }, [label, stage, onSubmit])
 
   const handleClose = useCallback(() => {
     setLabel('')
     setStage('prospect')
-    setNotes('')
     onClose()
   }, [onClose])
 
@@ -93,46 +81,52 @@ function AddRowModal({ visible, onClose, onSubmit, isPending }: AddRowModalProps
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
             paddingHorizontal: 20,
-            paddingTop: 20,
+            paddingTop: 16,
             paddingBottom: 44,
           }}>
+            {/* Handle */}
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#DDD6C9', alignSelf: 'center', marginBottom: 18 }} />
+
             {/* Header */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1625' }}>Add Candidate Row</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+              <View>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#1A1625' }}>Add Candidate</Text>
+                <Text style={{ fontSize: 12, color: '#9A8FA6', marginTop: 2 }}>Fill in details, edit more after adding</Text>
+              </View>
               <Pressable onPress={handleClose} hitSlop={12} style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
                 <CloseIcon />
               </Pressable>
             </View>
 
-            {/* Candidate name */}
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#5A4F6E', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
-              Candidate name *
+            {/* Name */}
+            <Text style={{ fontSize: 10, fontWeight: '700', color: '#9A8FA6', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 6 }}>
+              Full Name *
             </Text>
             <TextInput
               value={label}
               onChangeText={setLabel}
               placeholder="e.g. John Doe"
-              placeholderTextColor="#9A8FA6"
+              placeholderTextColor="#C8BFB0"
               autoFocus
               maxLength={100}
               style={{
-                backgroundColor: '#EDE7DB',
+                backgroundColor: '#FFFFFF',
                 borderRadius: 12,
                 paddingHorizontal: 14,
                 paddingVertical: 12,
-                fontSize: 14,
+                fontSize: 15,
                 color: '#1A1625',
                 borderWidth: 1,
-                borderColor: '#C8BFB0',
-                marginBottom: 16,
+                borderColor: '#DDD6C9',
+                marginBottom: 20,
               }}
             />
 
             {/* Stage */}
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#5A4F6E', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8 }}>
-              Stage
+            <Text style={{ fontSize: 10, fontWeight: '700', color: '#9A8FA6', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>
+              Initial Status
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', gap: 8, paddingBottom: 4 }}>
                 {STAGE_ORDER.map((s) => {
                   const cfg    = STAGE_CONFIG[s]
@@ -142,15 +136,19 @@ function AddRowModal({ visible, onClose, onSubmit, isPending }: AddRowModalProps
                       key={s}
                       onPress={() => setStage(s)}
                       style={({ pressed }) => ({
-                        backgroundColor: active ? cfg.bg : '#EDE7DB',
-                        borderRadius: 20,
-                        paddingHorizontal: 14,
-                        paddingVertical: 7,
-                        borderWidth: 1,
-                        borderColor: active ? cfg.color : '#C8BFB0',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        backgroundColor: active ? cfg.bg : '#FFFFFF',
+                        borderRadius: 10,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderWidth: 1.5,
+                        borderColor: active ? cfg.color : '#DDD6C9',
                         opacity: pressed ? 0.7 : 1,
                       })}
                     >
+                      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: cfg.color }} />
                       <Text style={{ color: active ? cfg.color : '#5A4F6E', fontSize: 12, fontWeight: active ? '700' : '500' }}>
                         {cfg.label}
                       </Text>
@@ -160,44 +158,13 @@ function AddRowModal({ visible, onClose, onSubmit, isPending }: AddRowModalProps
               </View>
             </ScrollView>
 
-            {/* Notes */}
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#5A4F6E', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 6 }}>
-              Notes (optional)
-            </Text>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Any notes about this candidate…"
-              placeholderTextColor="#9A8FA6"
-              multiline
-              maxLength={500}
-              style={{
-                backgroundColor: '#EDE7DB',
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                color: '#1A1625',
-                borderWidth: 1,
-                borderColor: '#C8BFB0',
-                height: 80,
-                textAlignVertical: 'top',
-                marginBottom: 20,
-              }}
-            />
-
-            {/* Action buttons */}
+            {/* Actions */}
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable
                 onPress={handleClose}
                 style={({ pressed }) => ({
-                  flex: 1,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: '#C8BFB0',
-                  paddingVertical: 13,
-                  alignItems: 'center',
-                  opacity: pressed ? 0.7 : 1,
+                  flex: 1, borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9',
+                  paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.7 : 1,
                 })}
               >
                 <Text style={{ color: '#5A4F6E', fontWeight: '600', fontSize: 14 }}>Cancel</Text>
@@ -206,25 +173,90 @@ function AddRowModal({ visible, onClose, onSubmit, isPending }: AddRowModalProps
                 onPress={handleSubmit}
                 disabled={isPending || !label.trim()}
                 style={({ pressed }) => ({
-                  flex: 1,
-                  borderRadius: 14,
+                  flex: 1, borderRadius: 14,
                   backgroundColor: label.trim() ? '#FF6240' : '#DDD6C9',
-                  paddingVertical: 13,
-                  alignItems: 'center',
-                  opacity: pressed ? 0.8 : 1,
+                  paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.8 : 1,
                 })}
               >
-                {isPending ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Add Row</Text>
-                )}
+                {isPending
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Add Candidate</Text>
+                }
               </Pressable>
             </View>
           </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  )
+}
+
+// ─── Segmented Tab Bar ────────────────────────────────────────────────────────
+interface TabBarProps {
+  activeTab:    TabKey
+  onTabChange:  (t: TabKey) => void
+  rowCount:     number
+}
+
+function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
+  return (
+    <View style={{ paddingHorizontal: 20, paddingBottom: 0 }}>
+      <View style={{
+        flexDirection: 'row',
+        backgroundColor: '#EDE7DB',
+        borderRadius: 14,
+        padding: 3,
+      }}>
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key
+          const badge    = tab.key === 'data' && rowCount > 0
+
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => onTabChange(tab.key)}
+              style={({ pressed }) => ({
+                flex: 1,
+                borderRadius: 11,
+                paddingVertical: 8,
+                backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 5,
+                opacity: pressed ? 0.85 : 1,
+                shadowColor: isActive ? '#1A1625' : 'transparent',
+                shadowOpacity: isActive ? 0.08 : 0,
+                shadowRadius: isActive ? 6 : 0,
+                shadowOffset: { width: 0, height: 2 },
+              })}
+            >
+              <Text style={{
+                fontSize: 13,
+                fontWeight: isActive ? '700' : '500',
+                color: isActive ? '#1A1625' : '#9A8FA6',
+                letterSpacing: -0.1,
+              }}>
+                {tab.label}
+              </Text>
+              {badge && (
+                <View style={{
+                  backgroundColor: isActive ? '#FF6240' : '#C8BFB0',
+                  borderRadius: 8,
+                  minWidth: 18,
+                  height: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingHorizontal: 5,
+                }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }}>{rowCount}</Text>
+                </View>
+              )}
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
   )
 }
 
@@ -256,7 +288,7 @@ export default function AtsTableDetailScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ats_rows')
-        .select('id, table_id, candidate_id, label, stage, notes, created_at')
+        .select('id, table_id, candidate_id, label, stage, notes, data, created_at')
         .eq('table_id', tableId!)
         .order('created_at', { ascending: true })
       if (error) throw error
@@ -266,12 +298,13 @@ export default function AtsTableDetailScreen() {
 
   // ── Add row ─────────────────────────────────────────────────────────────────
   const { mutate: addRow, isPending: isAdding } = useMutation({
-    mutationFn: async ({ label, stage, notes }: { label: string; stage: RowStage; notes: string }) => {
+    mutationFn: async ({ label, stage }: { label: string; stage: RowStage }) => {
       const { error } = await supabase.from('ats_rows').insert({
         table_id: tableId!,
         label,
         stage,
-        notes: notes || null,
+        notes: null,
+        data: null,
       })
       if (error) throw error
     },
@@ -280,7 +313,7 @@ export default function AtsTableDetailScreen() {
       void queryClient.invalidateQueries({ queryKey: ['ats-tables'] })
       setShowAddRow(false)
     },
-    onError: () => Alert.alert('Error', 'Could not add row. Please try again.'),
+    onError: () => Alert.alert('Error', 'Could not add candidate. Please try again.'),
   })
 
   // ── Update stage ─────────────────────────────────────────────────────────────
@@ -292,7 +325,6 @@ export default function AtsTableDetailScreen() {
         .eq('id', id)
       if (error) throw error
 
-      // If this row is linked to a real candidate, send them a notification
       if (candidateId) {
         const stageCfg = STAGE_CONFIG[stage]
         await supabase.from('notifications').insert({
@@ -305,25 +337,34 @@ export default function AtsTableDetailScreen() {
         })
       }
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] })
-    },
-    onError: () => Alert.alert('Error', 'Could not update stage. Please try again.'),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] }),
+    onError: ()  => Alert.alert('Error', 'Could not update status. Please try again.'),
   })
 
-  // ── Update notes ─────────────────────────────────────────────────────────────
-  const { mutate: updateNotes, isPending: isUpdatingNotes } = useMutation({
-    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
-      const { error } = await supabase
-        .from('ats_rows')
-        .update({ notes: notes || null, updated_at: new Date().toISOString() })
-        .eq('id', id)
+  // ── Update row (label + notes + extra data) ────────────────────────────────
+  const { mutate: updateRow, isPending: isSavingRow } = useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string
+      patch: Partial<{ label: string; notes: string; data: AtsRowData }>
+    }) => {
+      const existing = (rows ?? []).find((r) => r.id === id)
+      const mergedData = patch.data
+        ? { ...(existing?.data ?? {}), ...patch.data }
+        : undefined
+
+      const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      if (patch.label !== undefined) update.label = patch.label
+      if (patch.notes !== undefined) update.notes = patch.notes || null
+      if (mergedData !== undefined) update.data   = mergedData
+
+      const { error } = await supabase.from('ats_rows').update(update).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] })
-    },
-    onError: () => Alert.alert('Error', 'Could not save notes. Please try again.'),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] }),
+    onError: ()  => Alert.alert('Error', 'Could not save changes. Please try again.'),
   })
 
   // ── Delete row ───────────────────────────────────────────────────────────────
@@ -336,22 +377,24 @@ export default function AtsTableDetailScreen() {
       void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] })
       void queryClient.invalidateQueries({ queryKey: ['ats-tables'] })
     },
-    onError: () => Alert.alert('Error', 'Could not delete row. Please try again.'),
+    onError: () => Alert.alert('Error', 'Could not remove row. Please try again.'),
   })
 
-  // ── Callbacks for child tabs ─────────────────────────────────────────────────
-  const handleStageUpdate = useCallback((id: string, stage: RowStage) => {
-    const row = (rows ?? []).find((r) => r.id === id)
-    updateStage({ id, stage, candidateId: row?.candidate_id ?? null })
-  }, [rows, updateStage])
+  // ── Callbacks ─────────────────────────────────────────────────────────────────
+  const handleStatusUpdate = useCallback((id: string, stage: RowStage, candidateId: string | null) => {
+    updateStage({ id, stage, candidateId })
+  }, [updateStage])
 
-  const handleNotesUpdate = useCallback((id: string, notes: string) => {
-    updateNotes({ id, notes })
-  }, [updateNotes])
+  const handleRowUpdate = useCallback((
+    id: string,
+    patch: Partial<{ label: string; notes: string; data: AtsRowData }>,
+  ) => {
+    updateRow({ id, patch })
+  }, [updateRow])
 
   const handleDeleteRow = useCallback((id: string, label: string) => {
     Alert.alert(
-      'Remove row',
+      'Remove Candidate',
       `Remove "${label}" from this table?`,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -360,12 +403,10 @@ export default function AtsTableDetailScreen() {
     )
   }, [deleteRow])
 
-  const handleAddRow = useCallback(() => {
-    setShowAddRow(true)
-  }, [])
+  const handleAddRow = useCallback(() => setShowAddRow(true), [])
 
-  const handleAddRowSubmit = useCallback((label: string, stage: RowStage, notes: string) => {
-    addRow({ label, stage, notes })
+  const handleAddRowSubmit = useCallback((label: string, stage: RowStage) => {
+    addRow({ label, stage })
   }, [addRow])
 
   const safeRows = rows ?? []
@@ -373,112 +414,74 @@ export default function AtsTableDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
 
-      {/* ── Screen header ── */}
+      {/* ── Screen header — no Add Row button here ── */}
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 12,
-        paddingBottom: 12,
+        paddingTop: 10,
+        paddingBottom: 16,
         gap: 12,
       }}>
         <Pressable
           onPress={() => router.back()}
           hitSlop={12}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            backgroundColor: '#EDE7DB',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.6 : 1,
+          })}
         >
           <ArrowLeft />
         </Pressable>
 
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: '#1A1625', letterSpacing: -0.3 }} numberOfLines={1}>
+          <Text style={{ fontSize: 17, fontWeight: '800', color: '#1A1625', letterSpacing: -0.3 }} numberOfLines={1}>
             {tableName ?? '…'}
           </Text>
           <Text style={{ fontSize: 11, color: '#9A8FA6', marginTop: 1 }}>
             {safeRows.length} {safeRows.length === 1 ? 'candidate' : 'candidates'}
           </Text>
         </View>
-
-        {/* Add row CTA — always visible */}
-        <Pressable
-          onPress={handleAddRow}
-          style={({ pressed }) => ({
-            backgroundColor: '#FF6240',
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 7,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 5,
-            opacity: pressed ? 0.8 : 1,
-          })}
-        >
-          <PlusIcon />
-          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Add Row</Text>
-        </Pressable>
       </View>
 
-      {/* ── Tab bar ── */}
-      <View style={{
-        flexDirection: 'row',
-        paddingHorizontal: 20,
-        paddingBottom: 12,
-        gap: 8,
-      }}>
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key
-          const badge    = tab.key === 'data' && safeRows.length > 0 ? ` (${safeRows.length})` : ''
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key)}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingVertical: 9,
-                borderRadius: 12,
-                backgroundColor: isActive ? '#FF6240' : '#EDE7DB',
-                borderWidth: 1,
-                borderColor: isActive ? '#FF6240' : '#C8BFB0',
-                alignItems: 'center',
-                opacity: pressed ? 0.85 : 1,
-              })}
-            >
-              <Text style={{
-                color: isActive ? '#fff' : '#5A4F6E',
-                fontSize: 12,
-                fontWeight: isActive ? '700' : '500',
-              }}>
-                {tab.label}{badge}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </View>
+      {/* ── Segmented tab bar ── */}
+      <TabBar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        rowCount={safeRows.length}
+      />
 
-      {/* ── Divider ── */}
-      <View style={{ height: 1, backgroundColor: '#C8BFB0' }} />
+      {/* ── 12px gap below tab bar ── */}
+      <View style={{ height: 12 }} />
 
       {/* ── Active tab content ── */}
-      {activeTab === 'overview' && (
-        <OverviewTab rows={safeRows} />
-      )}
+      <View style={{ flex: 1 }}>
+        {activeTab === 'overview' && (
+          <OverviewTab rows={safeRows} />
+        )}
 
-      {activeTab === 'data' && (
-        <DataTab
-          rows={safeRows}
-          isLoading={isLoading}
-          onStageUpdate={handleStageUpdate}
-          onNotesUpdate={handleNotesUpdate}
-          onDeleteRow={handleDeleteRow}
-          onAddRow={handleAddRow}
-          isUpdatingStage={isUpdatingStage}
-          isUpdatingNotes={isUpdatingNotes}
-        />
-      )}
+        {activeTab === 'data' && (
+          <DataTab
+            rows={safeRows}
+            isLoading={isLoading}
+            onStatusUpdate={handleStatusUpdate}
+            onRowUpdate={handleRowUpdate}
+            onDeleteRow={handleDeleteRow}
+            onAddRow={handleAddRow}
+            isUpdatingStatus={isUpdatingStage}
+            isSavingRow={isSavingRow}
+          />
+        )}
 
-      {activeTab === 'analysis' && (
-        <AnalysisTab rows={safeRows} />
-      )}
+        {activeTab === 'analysis' && (
+          <AnalysisTab rows={safeRows} />
+        )}
+      </View>
 
       {/* ── Add Row Modal ── */}
       <AddRowModal
