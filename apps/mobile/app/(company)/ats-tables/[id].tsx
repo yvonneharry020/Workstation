@@ -47,65 +47,62 @@ interface TabBarProps {
 
 function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
   return (
-    <View style={{ paddingHorizontal: 20 }}>
-      <View style={{
-        flexDirection: 'row',
-        backgroundColor: '#EDE7DB',
-        borderRadius: 14,
-        padding: 4,
-        gap: 8,
-      }}>
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab.key
-          const hasBadge = tab.key === 'data' && rowCount > 0
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingVertical: 4,
+    }}>
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.key
+        const hasBadge = tab.key === 'data' && rowCount > 0
 
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => onTabChange(tab.key)}
-              style={({ pressed }) => ({
-                flex: 1,
-                borderRadius: 11,
-                paddingVertical: 10,
-                paddingLeft: 60,
-                paddingRight: 50,
-                backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+        return (
+          <Pressable
+            key={tab.key}
+            onPress={() => onTabChange(tab.key)}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingVertical: 12,
+              paddingHorizontal: 22,
+              borderRadius: 14,
+              backgroundColor: isActive ? '#FFFFFF' : '#EDE7DB',
+              opacity: pressed ? 0.8 : 1,
+              shadowColor: '#1A1625',
+              shadowOpacity: isActive ? 0.1 : 0,
+              shadowRadius: isActive ? 8 : 0,
+              shadowOffset: { width: 0, height: 3 },
+              borderWidth: isActive ? 1 : 0,
+              borderColor: '#E5DFD3',
+            })}
+          >
+            <Text style={{
+              fontSize: 17,
+              fontWeight: isActive ? '800' : '600',
+              color: isActive ? '#1A1625' : '#9A8FA6',
+              letterSpacing: -0.3,
+            }}>
+              {tab.label}
+            </Text>
+            {hasBadge && (
+              <View style={{
+                backgroundColor: isActive ? '#FF6240' : '#C8BFB0',
+                borderRadius: 8,
+                minWidth: 20,
+                height: 20,
                 alignItems: 'center',
-                flexDirection: 'row',
                 justifyContent: 'center',
-                gap: 5,
-                opacity: pressed ? 0.85 : 1,
-                shadowColor: isActive ? '#1A1625' : 'transparent',
-                shadowOpacity: isActive ? 0.08 : 0,
-                shadowRadius: isActive ? 6 : 0,
-                shadowOffset: { width: 0, height: 2 },
-              })}
-            >
-              <Text style={{
-                fontSize: 19,
-                fontWeight: isActive ? '800' : '600',
-                color: isActive ? '#1A1625' : '#9A8FA6',
-                letterSpacing: -0.3,
+                paddingHorizontal: 5,
               }}>
-                {tab.label}
-              </Text>
-              {hasBadge && (
-                <View style={{
-                  backgroundColor: isActive ? '#FF6240' : '#C8BFB0',
-                  borderRadius: 8,
-                  minWidth: 18,
-                  height: 18,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingHorizontal: 5,
-                }}>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }}>{rowCount}</Text>
-                </View>
-              )}
-            </Pressable>
-          )
-        })}
-      </View>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }}>{rowCount}</Text>
+              </View>
+            )}
+          </Pressable>
+        )
+      })}
     </View>
   )
 }
