@@ -41,8 +41,6 @@ const COLS = [
   { key: 'attendance', label: 'Attendance',   width: 100, align: 'center' as const },
 ] as const
 
-type ColKey = typeof COLS[number]['key']
-
 const TOTAL_W   = COLS.reduce((s, c) => s + c.width, 0)
 const ROW_MIN_H = 54
 const HEADER_H  = 44
@@ -431,8 +429,8 @@ function PipelinePicker({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={onClose}>
         <View style={{ flex: 1 }} />
-        <Pressable onPress={e => e.stopPropagation()}>
-          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, paddingBottom: 44 }}>
+        <Pressable onPress={e => e.stopPropagation()} style={{ alignSelf: 'stretch' }}>
+          <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, paddingBottom: 44, alignSelf: 'stretch' }}>
             <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#DDD6C9', alignSelf: 'center', marginBottom: 20 }} />
             <View style={{ paddingHorizontal: 20 }}>
               <Text style={{ fontSize: 16, fontWeight: '800', color: '#1A1625', marginBottom: 4 }}>Update Pipeline</Text>
@@ -472,8 +470,8 @@ function PipelinePicker({
                     }}>
                       <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cfg.color }} />
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: isActive ? cfg.color : '#1A1625', letterSpacing: -0.2 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ fontSize: 17, fontWeight: '800', color: cfg.color, letterSpacing: -0.2 }}>
                         {cfg.label}
                       </Text>
                     </View>
@@ -616,39 +614,28 @@ function GridHeader() {
   )
 }
 
-// ─── Cell renderer ────────────────────────────────────────────────────────────
-interface CellHandlers {
-  onCoverPress:     () => void
-  onProfilePress:   () => void
-  onPipelinePress:  () => void
-  onNotesPress:     () => void
-  onScreeningPress: () => void
-  onInterviewPress: () => void
-  screeningQuestions: { question: string; required: boolean }[] | null
+// ─── Explicit column cells — no dispatch, no key lookup ──────────────────────
+const C = { borderRightWidth: 1 as const, borderRightColor: '#E5DFD3', borderBottomWidth: 1 as const, borderBottomColor: '#E5DFD3' }
+
+function TxtCell({ v, w, bg, center }: { v: string | null | undefined; w: number; bg: string; center?: boolean }) {
+  return (
+    <View style={[C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: center ? 4 : 10, paddingVertical: 10, alignItems: center ? 'center' : 'flex-start', justifyContent: 'flex-start', backgroundColor: bg }]}>
+      {(v && v !== '—') ? (
+        <Text style={{ fontSize: 12, color: '#1A1625', lineHeight: 17 }} numberOfLines={2}>{v}</Text>
+      ) : (
+        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
+      )}
+    </View>
+  )
 }
 
-function Cell({
-  colKey, row, isEven, handlers,
-}: {
-  colKey: ColKey
-  row: AtsRowFull
-  isEven: boolean
-  handlers: CellHandlers
-}) {
-  const bg = isEven ? '#FFFFFF' : '#F9F7F4'
-  const base = { backgroundColor: bg, borderRightColor: '#E5DFD3', borderBottomColor: '#E5DFD3', borderBottomWidth: 1 as const }
-  const col  = COLS.find(c => c.key === colKey)!
-
-  // ── View button helper ──
-  const viewBtn = (onPress: () => void, hasData: boolean) => (
+function ViewCell({ onPress, has, w, bg }: { onPress: () => void; has: boolean; w: number; bg: string }) {
+  return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => ([
-        base,
-        { width: col.width, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, opacity: pressed ? 0.7 : 1 },
-      ])}
+      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1, backgroundColor: bg }]}
     >
-      {hasData ? (
+      {has ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FF624015', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5, borderWidth: 1, borderColor: '#FF624040' }}>
           <EyeIcon />
           <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6240' }}>View</Text>
@@ -658,134 +645,90 @@ function Cell({
       )}
     </Pressable>
   )
+}
 
-  if (colKey === 'cover') {
-    return viewBtn(handlers.onCoverPress, !!row.cover_note)
-  }
-
-  if (colKey === 'profile') {
-    return viewBtn(handlers.onProfilePress, true)
-  }
-
-  if (colKey === 'screening') {
-    const hasQ = !!(handlers.screeningQuestions && handlers.screeningQuestions.length > 0)
-    return viewBtn(handlers.onScreeningPress, hasQ)
-  }
-
-  if (colKey === 'interview') {
-    return viewBtn(handlers.onInterviewPress, true)
-  }
-
-  if (colKey === 'attendance') {
-    return (
-      <View style={[base, { width: col.width, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', borderRightWidth: 0 }]}>
-        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
-      </View>
-    )
-  }
-
-  if (colKey === 'pipeline') {
-    const cfg = PIPELINE_CONFIG[row.pipeline_stage]
-    return (
-      <Pressable
-        onPress={handlers.onPipelinePress}
-        style={({ pressed }) => ([
-          base,
-          { width: col.width, minHeight: ROW_MIN_H, justifyContent: 'center', paddingHorizontal: 10, borderRightWidth: 1, opacity: pressed ? 0.75 : 1 },
-        ])}
-      >
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', gap: 7,
-          backgroundColor: cfg.bg, borderRadius: 10,
-          paddingHorizontal: 10, paddingVertical: 7,
-          borderWidth: 1.5, borderColor: cfg.color + '55',
-        }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
-          <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
-          <ChevronDown />
-        </View>
-      </Pressable>
-    )
-  }
-
-  if (colKey === 'notes') {
-    return (
-      <Pressable
-        onPress={handlers.onNotesPress}
-        style={({ pressed }) => ([
-          base,
-          { width: col.width, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, borderRightWidth: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 6, opacity: pressed ? 0.75 : 1 },
-        ])}
-      >
-        <View style={{ flex: 1 }}>
-          {row.internal_notes ? (
-            <Text style={{ fontSize: 11, color: '#5A4F6E', lineHeight: 16 }} numberOfLines={2}>{row.internal_notes}</Text>
-          ) : (
-            <Text style={{ fontSize: 11, color: '#D4CCBE', fontStyle: 'italic' }}>Add note…</Text>
-          )}
-        </View>
-        <EditPencil />
-      </Pressable>
-    )
-  }
-
-  // Text columns
-  const textMap: Partial<Record<ColKey, string | null | undefined>> = {
-    full_name: row.full_name,
-    email:     row.email,
-    phone:     row.phone,
-    location:  row.location,
-    gender:    row.gender,
-    age:       calcAge(row.date_of_birth),
-  }
-  const value = textMap[colKey]
-  const isLast = colKey === 'attendance'
-
+function PipelineCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress: () => void; bg: string }) {
+  const cfg = PIPELINE_CONFIG[row.pipeline_stage]
   return (
-    <View style={[
-      base,
-      {
-        width: col.width,
-        minHeight: ROW_MIN_H,
-        paddingHorizontal: col.align === 'center' ? 4 : 10,
-        paddingVertical: 10,
-        justifyContent: 'flex-start',
-        alignItems: col.align === 'center' ? 'center' : 'flex-start',
-        borderRightWidth: isLast ? 0 : 1,
-      },
-    ]}>
-      {(value && value !== '—') ? (
-        <Text style={{ fontSize: 12, color: '#1A1625', lineHeight: 17 }} numberOfLines={2}>{value}</Text>
-      ) : (
-        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
-      )}
-    </View>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, justifyContent: 'center', paddingHorizontal: 8, opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: cfg.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6, borderWidth: 1.5, borderColor: cfg.color + '55' }}>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
+        <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
+        <ChevronDown />
+      </View>
+    </Pressable>
   )
 }
 
-// ─── Grid row ─────────────────────────────────────────────────────────────────
-function GridRow({
-  row, index, isEven, handlers,
-}: {
-  row: AtsRowFull; index: number; isEven: boolean; handlers: CellHandlers
-}) {
-  const bg = isEven ? '#FFFFFF' : '#F9F7F4'
+function NotesCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress: () => void; bg: string }) {
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: bg }}>
-      {/* Row number (frozen-left visual) */}
-      <View style={{ width: 36, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderRightWidth: 1, borderRightColor: '#E5DFD3', borderBottomWidth: 1, borderBottomColor: '#E5DFD3' }}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 6, opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
+    >
+      <View style={{ flex: 1 }}>
+        {row.internal_notes ? (
+          <Text style={{ fontSize: 11, color: '#5A4F6E', lineHeight: 16 }} numberOfLines={2}>{row.internal_notes}</Text>
+        ) : (
+          <Text style={{ fontSize: 11, color: '#D4CCBE', fontStyle: 'italic' }}>Add note…</Text>
+        )}
+      </View>
+      <EditPencil />
+    </Pressable>
+  )
+}
+
+interface CellHandlers {
+  onCoverPress:       () => void
+  onProfilePress:     () => void
+  onPipelinePress:    () => void
+  onNotesPress:       () => void
+  onScreeningPress:   () => void
+  onInterviewPress:   () => void
+  screeningQuestions: { question: string; required: boolean }[] | null
+}
+
+// ─── Grid row — every column explicit, zero dispatch ambiguity ────────────────
+function GridRow({ row, index, isEven, handlers }: { row: AtsRowFull; index: number; isEven: boolean; handlers: CellHandlers }) {
+  const bg  = isEven ? '#FFFFFF' : '#F9F7F4'
+  const hasQ = !!(handlers.screeningQuestions && handlers.screeningQuestions.length > 0)
+  return (
+    <View style={{ flexDirection: 'row' }}>
+      {/* #  36 */}
+      <View style={[C, { width: 36, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }]}>
         <Text style={{ fontSize: 11, color: '#C8BFB0', fontWeight: '600' }}>{index + 1}</Text>
       </View>
-
-      {COLS.slice(1).map((col) => (
-        <Cell
-          key={col.key}
-          colKey={col.key}
-          row={row}
-          isEven={isEven}
-          handlers={handlers}
-        />
-      ))}
+      {/* Full Name  145 */}
+      <TxtCell v={row.full_name}               w={145} bg={bg} />
+      {/* Email  165 */}
+      <TxtCell v={row.email}                   w={165} bg={bg} />
+      {/* Phone  120 */}
+      <TxtCell v={row.phone}                   w={120} bg={bg} />
+      {/* Location  115 */}
+      <TxtCell v={row.location}                w={115} bg={bg} />
+      {/* Gender  85 */}
+      <TxtCell v={row.gender}                  w={85}  bg={bg} />
+      {/* Age  65 */}
+      <TxtCell v={calcAge(row.date_of_birth)}  w={65}  bg={bg} center />
+      {/* Cover Letter  110 → opens cover letter modal */}
+      <ViewCell onPress={handlers.onCoverPress}     has={!!row.cover_note} w={110} bg={bg} />
+      {/* Profile  90 → opens profile modal */}
+      <ViewCell onPress={handlers.onProfilePress}   has={true}             w={90}  bg={bg} />
+      {/* Pipeline  135 → opens pipeline picker */}
+      <PipelineCel w={135} row={row} onPress={handlers.onPipelinePress} bg={bg} />
+      {/* Notes  155 → opens notes modal */}
+      <NotesCel    w={155} row={row} onPress={handlers.onNotesPress}    bg={bg} />
+      {/* Screening  110 → opens screening modal */}
+      <ViewCell onPress={handlers.onScreeningPress} has={hasQ}             w={110} bg={bg} />
+      {/* Interview  100 → opens interview modal */}
+      <ViewCell onPress={handlers.onInterviewPress} has={true}             w={100} bg={bg} />
+      {/* Attendance  100 — not yet tracked */}
+      <View style={{ width: 100, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderBottomWidth: 1, borderBottomColor: '#E5DFD3' }}>
+        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
+      </View>
     </View>
   )
 }

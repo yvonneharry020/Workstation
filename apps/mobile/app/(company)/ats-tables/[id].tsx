@@ -66,8 +66,8 @@ function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
               style={({ pressed }) => ({
                 flex: 1,
                 borderRadius: 11,
-                paddingVertical: 8,
-                paddingHorizontal: 10,
+                paddingVertical: 10,
+                paddingHorizontal: 50,
                 backgroundColor: isActive ? '#FFFFFF' : 'transparent',
                 alignItems: 'center',
                 flexDirection: 'row',
@@ -81,10 +81,10 @@ function TabBar({ activeTab, onTabChange, rowCount }: TabBarProps) {
               })}
             >
               <Text style={{
-                fontSize: 13,
-                fontWeight: isActive ? '700' : '500',
+                fontSize: 19,
+                fontWeight: isActive ? '800' : '600',
                 color: isActive ? '#1A1625' : '#9A8FA6',
-                letterSpacing: -0.1,
+                letterSpacing: -0.3,
               }}>
                 {tab.label}
               </Text>
