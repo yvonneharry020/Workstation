@@ -11,6 +11,7 @@ export type PipelineStage =
 // Stages a company user can manually set (system manages 'new'; candidates set 'withdrawn')
 export const COMPANY_STAGES: PipelineStage[] = [
   'shortlisted',
+  'interview_scheduled',
   'hired',
   'rejected',
 ]
