@@ -1,32 +1,21 @@
 import { View, Text, ScrollView } from 'react-native'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
-import { AtsRow, STAGE_CONFIG, STAGE_ORDER, RowStage } from './types'
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase()
-}
+import { AtsRowFull, PIPELINE_CONFIG, PIPELINE_ORDER, PipelineStage, calcAge } from './types'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-NG', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   })
 }
 
-// ─── Pipeline summary bar ──────────────────────────────────────────────────────
-function PipelineSummary({ rows }: { rows: AtsRow[] }) {
+// ─── Pipeline summary bar ─────────────────────────────────────────────────────
+function PipelineSummary({ rows }: { rows: AtsRowFull[] }) {
   const total = rows.length
   if (total === 0) return null
 
-  const counts = STAGE_ORDER.reduce<Record<RowStage, number>>(
-    (acc, s) => { acc[s] = rows.filter((r) => r.stage === s).length; return acc },
-    {} as Record<RowStage, number>,
+  const counts = PIPELINE_ORDER.reduce<Record<PipelineStage, number>>(
+    (acc, s) => { acc[s] = rows.filter((r) => r.pipeline_stage === s).length; return acc },
+    {} as Record<PipelineStage, number>,
   )
 
   return (
@@ -35,9 +24,8 @@ function PipelineSummary({ rows }: { rows: AtsRow[] }) {
         Pipeline Overview
       </Text>
 
-      {/* Stage progress bars */}
-      {STAGE_ORDER.filter((s) => counts[s] > 0).map((stage, i) => {
-        const cfg   = STAGE_CONFIG[stage]
+      {PIPELINE_ORDER.filter((s) => counts[s] > 0).map((stage, i) => {
+        const cfg   = PIPELINE_CONFIG[stage]
         const count = counts[stage]
         const pct   = (count / total) * 100
         return (
@@ -65,18 +53,18 @@ function PipelineSummary({ rows }: { rows: AtsRow[] }) {
   )
 }
 
-// ─── Stat chip row ─────────────────────────────────────────────────────────────
-function StatChips({ rows }: { rows: AtsRow[] }) {
+// ─── Stat chips ───────────────────────────────────────────────────────────────
+function StatChips({ rows }: { rows: AtsRowFull[] }) {
   const total      = rows.length
-  const hired      = rows.filter((r) => r.stage === 'hired').length
-  const rejected   = rows.filter((r) => r.stage === 'rejected').length
+  const hired      = rows.filter((r) => r.pipeline_stage === 'hired').length
+  const rejected   = rows.filter((r) => r.pipeline_stage === 'rejected').length
   const inPipeline = total - hired - rejected
 
   const chips = [
-    { label: 'Total',      value: total,      color: '#FF6240' },
-    { label: 'Pipeline',   value: inPipeline, color: '#6366F1' },
-    { label: 'Hired',      value: hired,      color: '#0DD4C3' },
-    { label: 'Rejected',   value: rejected,   color: '#EF4444' },
+    { label: 'Total',    value: total,      color: '#FF6240' },
+    { label: 'Pipeline', value: inPipeline, color: '#6366F1' },
+    { label: 'Hired',    value: hired,      color: '#0DD4C3' },
+    { label: 'Rejected', value: rejected,   color: '#EF4444' },
   ]
 
   return (
@@ -84,7 +72,7 @@ function StatChips({ rows }: { rows: AtsRow[] }) {
       entering={FadeInDown.duration(350)}
       style={{ flexDirection: 'row', gap: 8, marginBottom: 28 }}
     >
-      {chips.map((chip, i) => (
+      {chips.map((chip) => (
         <View
           key={chip.label}
           style={{
@@ -113,11 +101,11 @@ function StatChips({ rows }: { rows: AtsRow[] }) {
   )
 }
 
-// ─── Candidate card ────────────────────────────────────────────────────────────
-function CandidateCard({ row, index }: { row: AtsRow; index: number }) {
-  const cfg   = STAGE_CONFIG[row.stage]
-  const email = row.data?.email
-  const role  = row.data?.role
+// ─── Candidate card ───────────────────────────────────────────────────────────
+function CandidateCard({ row, index }: { row: AtsRowFull; index: number }) {
+  const cfg = PIPELINE_CONFIG[row.pipeline_stage]
+  const age = calcAge(row.date_of_birth)
+  const sub = [row.headline, row.location, age !== '—' ? `${age} yrs` : null].filter(Boolean).join(' · ')
 
   return (
     <Animated.View
@@ -135,60 +123,44 @@ function CandidateCard({ row, index }: { row: AtsRow; index: number }) {
         shadowOffset: { width: 0, height: 2 },
       }}
     >
-      {/* Left color accent bar */}
+      {/* Left accent bar */}
       <View style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 4,
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 4,
         backgroundColor: cfg.color,
-        borderTopLeftRadius: 16,
-        borderBottomLeftRadius: 16,
+        borderTopLeftRadius: 16, borderBottomLeftRadius: 16,
       }} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 20, paddingRight: 14, paddingVertical: 14, gap: 12 }}>
-        {/* Avatar */}
+        {/* Avatar initials */}
         <View style={{
-          width: 42,
-          height: 42,
-          borderRadius: 21,
+          width: 42, height: 42, borderRadius: 21,
           backgroundColor: cfg.bg,
-          borderWidth: 1.5,
-          borderColor: cfg.border,
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
+          borderWidth: 1.5, borderColor: cfg.border,
+          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
           <Text style={{ color: cfg.color, fontSize: 13, fontWeight: '800' }}>
-            {getInitials(row.label)}
+            {row.full_name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()}
           </Text>
         </View>
 
         {/* Info */}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1625', marginBottom: 2 }} numberOfLines={1}>
-            {row.label}
+            {row.full_name}
           </Text>
-          {(email || role) ? (
-            <Text style={{ fontSize: 11, color: '#5A4F6E', marginBottom: 3 }} numberOfLines={1}>
-              {[role, email].filter(Boolean).join(' · ')}
-            </Text>
+          {sub ? (
+            <Text style={{ fontSize: 11, color: '#5A4F6E', marginBottom: 3 }} numberOfLines={1}>{sub}</Text>
           ) : null}
           <Text style={{ fontSize: 10, color: '#9A8FA6' }}>
-            Added {formatDate(row.created_at)}
+            Applied {formatDate(row.created_at)}
           </Text>
         </View>
 
-        {/* Status badge */}
+        {/* Stage badge */}
         <View style={{
-          backgroundColor: cfg.bg,
-          borderRadius: 8,
-          paddingHorizontal: 10,
-          paddingVertical: 5,
-          borderWidth: 1,
-          borderColor: cfg.border,
-          flexShrink: 0,
+          backgroundColor: cfg.bg, borderRadius: 8,
+          paddingHorizontal: 10, paddingVertical: 5,
+          borderWidth: 1, borderColor: cfg.border, flexShrink: 0,
         }}>
           <Text style={{ fontSize: 10, fontWeight: '700', color: cfg.color }}>{cfg.label}</Text>
         </View>
@@ -197,18 +169,10 @@ function CandidateCard({ row, index }: { row: AtsRow; index: number }) {
   )
 }
 
-// ─── OverviewTab ───────────────────────────────────────────────────────────────
-interface Props { rows: AtsRow[] }
+// ─── OverviewTab ──────────────────────────────────────────────────────────────
+interface Props { rows: AtsRowFull[] }
 
 export function OverviewTab({ rows }: Props) {
-  const grouped = STAGE_ORDER.reduce<Record<RowStage, AtsRow[]>>(
-    (acc, stage) => {
-      acc[stage] = rows.filter((r) => r.stage === stage)
-      return acc
-    },
-    {} as Record<RowStage, AtsRow[]>,
-  )
-
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: '#F5F0E8' }}
@@ -225,7 +189,7 @@ export function OverviewTab({ rows }: Props) {
           </View>
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1625', marginBottom: 6 }}>No candidates yet</Text>
           <Text style={{ fontSize: 13, color: '#9A8FA6', textAlign: 'center' }}>
-            Switch to the Data tab to add candidates to track.
+            Candidates auto-appear here as they apply for this job.
           </Text>
         </Animated.View>
       ) : (
@@ -233,13 +197,9 @@ export function OverviewTab({ rows }: Props) {
           <Text style={{ fontSize: 11, fontWeight: '700', color: '#9A8FA6', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>
             All Candidates
           </Text>
-          {STAGE_ORDER.map((stage) => {
-            const stageRows = grouped[stage]
-            if (stageRows.length === 0) return null
-            return stageRows.map((row, i) => (
-              <CandidateCard key={row.id} row={row} index={i} />
-            ))
-          })}
+          {rows.map((row, i) => (
+            <CandidateCard key={row.id} row={row} index={i} />
+          ))}
         </>
       )}
     </ScrollView>

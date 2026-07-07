@@ -38,7 +38,9 @@ interface JobInfo {
 interface CandidateData {
   first_name: string
   last_name: string
-  state_of_origin: string | null
+  nigerian_states: { name: string } | null
+  gender: string | null
+  date_of_birth: string | null
 }
 
 function BackIcon() {
@@ -119,7 +121,7 @@ export default function ApplyStep1Screen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('candidate_profiles')
-        .select('first_name, last_name, state_of_origin')
+        .select('first_name, last_name, gender, date_of_birth, nigerian_states!state_of_origin_id(name)')
         .eq('id', user!.id)
         .single()
       if (error) throw error
@@ -166,7 +168,11 @@ export default function ApplyStep1Screen() {
     ? `${candidate.first_name} ${candidate.last_name}`.trim()
     : ''
   const email = user?.email ?? ''
-  const location = candidate?.state_of_origin ?? ''
+  const location = candidate?.nigerian_states?.name ?? ''
+  const gender   = candidate?.gender ?? ''
+  const age      = candidate?.date_of_birth
+    ? `${Math.floor((Date.now() - new Date(candidate.date_of_birth).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} yrs`
+    : ''
   const phone = profilePhone ?? (user?.phone ?? '')
   const hasScreening = (jobInfo.screening_questions?.length ?? 0) > 0
 
@@ -258,6 +264,8 @@ export default function ApplyStep1Screen() {
             <ReadOnlyField label="Email Address" value={email} />
             <ReadOnlyField label="Phone Number" value={phone} />
             <ReadOnlyField label="Location" value={location} />
+            <ReadOnlyField label="Gender" value={gender} />
+            <ReadOnlyField label="Age" value={age} />
             <ReadOnlyField label="Role Applying For" value={jobInfo.title} />
           </Animated.View>
 

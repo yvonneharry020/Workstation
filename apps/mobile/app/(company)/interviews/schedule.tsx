@@ -39,6 +39,7 @@ interface SlotCreated {
   duration_mins: number
   meeting_type: string
   meeting_link: string | null
+  company_message: string | null
 }
 
 type MeetingType = 'zoom' | 'google_meet' | 'in_person'
@@ -95,6 +96,7 @@ export default function InterviewScheduleScreen() {
   const [duration, setDuration] = useState(60)
   const [meetingType, setMeetingType] = useState<MeetingType>('zoom')
   const [meetingLink, setMeetingLink] = useState('')
+  const [companyMessage, setCompanyMessage] = useState('')
   const [slots, setSlots] = useState<SlotCreated[]>([])
   const [pairings, setPairings] = useState<Record<string, string>>({})
 
@@ -118,14 +120,14 @@ export default function InterviewScheduleScreen() {
     queryFn: async () => {
       const { data } = await supabase
         .from('job_applications')
-        .select('id, candidate_id, profiles:candidate_id(full_name, avatar_url)')
+        .select('id, candidate_id, candidate_profiles!candidate_id(first_name, last_name, avatar_url)')
         .eq('job_id', selectedJobId)
-        .eq('pipeline_stage', 'shortlisted')
-      const rows = (data as unknown as { id: string; candidate_id: string; profiles: { full_name: string; avatar_url: string | null } | null }[]) ?? []
+        .eq('pipeline_stage', 'interview_scheduled')
+      const rows = (data as unknown as { id: string; candidate_id: string; candidate_profiles: { first_name: string; last_name: string; avatar_url: string | null } | null }[]) ?? []
       return rows.map((r) => ({
         id: r.candidate_id,
-        full_name: r.profiles?.full_name ?? 'Unknown',
-        avatar_url: r.profiles?.avatar_url ?? null,
+        full_name: `${r.candidate_profiles?.first_name ?? ''} ${r.candidate_profiles?.last_name ?? ''}`.trim() || 'Unknown',
+        avatar_url: r.candidate_profiles?.avatar_url ?? null,
         application_id: r.id,
       })) as Candidate[]
     },
@@ -154,9 +156,10 @@ export default function InterviewScheduleScreen() {
           duration_mins: duration,
           meeting_type: meetingType,
           meeting_link: meetingType !== 'in_person' ? meetingLink || null : null,
+          company_message: companyMessage.trim() || null,
           is_booked: false,
         })
-        .select('id, slot_date, start_time, duration_mins, meeting_type, meeting_link')
+        .select('id, slot_date, start_time, duration_mins, meeting_type, meeting_link, company_message')
         .single()
       if (error) throw error
       return data as unknown as SlotCreated
@@ -178,7 +181,7 @@ export default function InterviewScheduleScreen() {
   })
 
   const assignMutation = useMutation({
-    mutationFn: async ({ slotId, candidateId, applicationId }: { slotId: string; candidateId: string; applicationId: string }) => {
+    mutationFn: async ({ slotId, candidateId, applicationId, slot }: { slotId: string; candidateId: string; applicationId: string; slot: SlotCreated }) => {
       const { error: bookErr } = await supabase.from('interview_bookings').insert({
         slot_id: slotId,
         application_id: applicationId,
@@ -189,6 +192,19 @@ export default function InterviewScheduleScreen() {
       if (bookErr) throw bookErr
       const { error: slotErr } = await supabase.from('interview_slots').update({ is_booked: true }).eq('id', slotId)
       if (slotErr) throw slotErr
+      const dateStr = new Date(slot.slot_date).toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long' })
+      const timeStr = slot.start_time.slice(0, 5)
+      const body = slot.company_message
+        ? `${slot.company_message} — ${dateStr} at ${timeStr} (${slot.duration_mins}min)`
+        : `Your interview is scheduled for ${dateStr} at ${timeStr} (${slot.duration_mins}min).`
+      await supabase.from('notifications').insert({
+        user_id:    candidateId,
+        type:       'interview_scheduled',
+        title:      'Interview invitation',
+        body,
+        data:       { slot_id: slotId, application_id: applicationId },
+        action_url: null,
+      })
     },
     onSuccess: (_, { slotId, candidateId }) => {
       setPairings((prev) => ({ ...prev, [slotId]: candidateId }))
@@ -322,6 +338,17 @@ export default function InterviewScheduleScreen() {
                 </>
               )}
 
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>MESSAGE TO CANDIDATE (OPTIONAL)</Text>
+              <TextInput
+                value={companyMessage}
+                onChangeText={setCompanyMessage}
+                placeholder="e.g. Please bring a copy of your CV and portfolio…"
+                placeholderTextColor="#475569"
+                multiline
+                textAlignVertical="top"
+                style={{ backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, minHeight: 80, marginBottom: 16 }}
+              />
+
               <Pressable
                 onPress={() => addSlotMutation.mutate()}
                 disabled={!startTime || addSlotMutation.isPending}
@@ -364,13 +391,13 @@ export default function InterviewScheduleScreen() {
           {step === 3 && (
             <Animated.View entering={FadeInDown.duration(300)}>
               <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>Assign Candidates</Text>
-              <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>Pair shortlisted candidates with your available slots.</Text>
+              <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 20 }}>Pair candidates in the interview stage with your available slots.</Text>
 
               {candidatesLoading ? (
                 <ActivityIndicator color="#FF6240" />
               ) : candidates.length === 0 ? (
                 <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                  <Text style={{ color: '#475569', fontSize: 14 }}>No shortlisted candidates for this job yet.</Text>
+                  <Text style={{ color: '#475569', fontSize: 14 }}>No candidates in the interview stage for this job yet.</Text>
                 </View>
               ) : (
                 slots.filter((s) => !pairings[s.id]).map((slot) => (
@@ -383,7 +410,7 @@ export default function InterviewScheduleScreen() {
                       return (
                         <Pressable
                           key={c.id}
-                          onPress={() => assignMutation.mutate({ slotId: slot.id, candidateId: c.id, applicationId: c.application_id })}
+                          onPress={() => assignMutation.mutate({ slotId: slot.id, candidateId: c.id, applicationId: c.application_id, slot })}
                           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
                         >
                           {c.avatar_url ? (
