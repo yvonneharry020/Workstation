@@ -43,9 +43,9 @@ export default function CompanyTabsLayout() {
       <Tabs.Screen
         name="applicants"
         options={{
-          title: 'Applicants',
+          title: 'Interviews',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
+            <Ionicons name="videocam-outline" size={size} color={color} />
           ),
         }}
       />
