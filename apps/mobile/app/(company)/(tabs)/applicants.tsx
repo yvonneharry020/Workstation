@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -10,17 +10,25 @@ import {
   Modal,
   TextInput,
   RefreshControl,
+  ScrollView,
   StatusBar,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Rect } from 'react-native-svg'
 import WebView from 'react-native-webview'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import * as Clipboard from 'expo-clipboard'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
 const DAILY_API_KEY = process.env.EXPO_PUBLIC_DAILY_API_KEY ?? ''
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type InterviewType = 'live' | 'scheduled'
 
 interface InterviewRoom {
   id: string
@@ -28,14 +36,37 @@ interface InterviewRoom {
   room_name: string
   room_url: string
   label: string
+  job_posting_id: string | null
+  job_title: string | null
+  interview_type: InterviewType
+  scheduled_at: string | null
   status: 'active' | 'ended'
   created_at: string
   ended_at: string | null
 }
 
+interface ActiveJob {
+  id: string
+  title: string
+}
+
 type ListItem =
   | { type: 'header'; title: string }
   | { type: 'room'; room: InterviewRoom }
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  })
+}
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString('en-GB', {
+    hour: '2-digit', minute: '2-digit',
+  })
+}
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -46,6 +77,53 @@ function formatTimeAgo(dateStr: string): string {
   if (hrs < 24) return `${hrs}h ago`
   return `${Math.floor(hrs / 24)}d ago`
 }
+
+function isJoinable(room: InterviewRoom): boolean {
+  if (room.status !== 'active') return false
+  if (room.interview_type === 'live') return true
+  if (!room.scheduled_at) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const scheduledDay = new Date(room.scheduled_at)
+  scheduledDay.setHours(0, 0, 0, 0)
+  return today >= scheduledDay
+}
+
+async function createDailyRoom(roomName: string): Promise<{ url: string; name: string }> {
+  const res = await fetch('https://api.daily.co/v1/rooms', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DAILY_API_KEY}`,
+    },
+    body: JSON.stringify({
+      name: roomName,
+      privacy: 'public',
+      properties: {
+        max_participants: 10,
+        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days for scheduled
+        enable_chat: true,
+        enable_people_ui: true,
+        start_video_off: false,
+        start_audio_off: false,
+      },
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json() as { error?: string }
+    throw new Error(err?.error ?? 'Failed to create room on Daily.co')
+  }
+  return res.json() as Promise<{ url: string; name: string }>
+}
+
+async function deleteDailyRoom(roomName: string): Promise<void> {
+  await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${DAILY_API_KEY}` },
+  })
+}
+
+// ─── Icons ───────────────────────────────────────────────────────────────────
 
 function VideoIcon({ color = '#FF6240', size = 22 }: { color?: string; size?: number }) {
   return (
@@ -64,10 +142,27 @@ function PlusIcon() {
   )
 }
 
+function CopyIcon({ color = '#5A4F6E' }: { color?: string }) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={9} y={9} width={13} height={13} rx={2} />
+      <Path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </Svg>
+  )
+}
+
 function ShareIcon() {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
+    </Svg>
+  )
+}
+
+function ChevronDown({ color = '#1A1625' }: { color?: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 9l6 6 6-6" />
     </Svg>
   )
 }
@@ -80,40 +175,16 @@ function XIcon({ color = '#1A1625' }: { color?: string }) {
   )
 }
 
-async function createDailyRoom(roomName: string): Promise<{ url: string; name: string }> {
-  const res = await fetch('https://api.daily.co/v1/rooms', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${DAILY_API_KEY}`,
-    },
-    body: JSON.stringify({
-      name: roomName,
-      privacy: 'public',
-      properties: {
-        max_participants: 10,
-        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
-        enable_chat: true,
-        enable_people_ui: true,
-        enable_pip_ui: true,
-        start_video_off: false,
-        start_audio_off: false,
-      },
-    }),
-  })
-  if (!res.ok) {
-    const err = await res.json() as { error?: string }
-    throw new Error(err?.error ?? 'Failed to create room')
-  }
-  return res.json() as Promise<{ url: string; name: string }>
+function CalendarIcon() {
+  return (
+    <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#5A4F6E" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={3} y={4} width={18} height={18} rx={2} />
+      <Path d="M16 2v4M8 2v4M3 10h18" />
+    </Svg>
+  )
 }
 
-async function deleteDailyRoom(roomName: string): Promise<void> {
-  await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${DAILY_API_KEY}` },
-  })
-}
+// ─── Video call full-screen modal ─────────────────────────────────────────────
 
 function VideoCallModal({ url, onClose }: { url: string; onClose: () => void }) {
   return (
@@ -131,12 +202,11 @@ function VideoCallModal({ url, onClose }: { url: string; onClose: () => void }) 
           <Pressable
             onPress={onClose}
             hitSlop={12}
-            style={{ backgroundColor: '#ffffff20', borderRadius: 20, padding: 6 }}
+            style={{ backgroundColor: '#ffffff25', borderRadius: 20, padding: 6 }}
           >
             <XIcon color="#fff" />
           </Pressable>
         </View>
-
         <WebView
           source={{ uri: url }}
           style={{ flex: 1 }}
@@ -155,65 +225,385 @@ function VideoCallModal({ url, onClose }: { url: string; onClose: () => void }) 
   )
 }
 
+// ─── Job dropdown modal ───────────────────────────────────────────────────────
+
+function JobDropdown({ jobs, selected, onSelect }: {
+  jobs: ActiveJob[]
+  selected: ActiveJob | null
+  onSelect: (job: ActiveJob) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={{
+          backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1,
+          borderColor: selected ? '#FF624060' : '#DDD6C9',
+          paddingHorizontal: 14, paddingVertical: 13,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        }}
+      >
+        <Text style={{ color: selected ? '#1A1625' : '#94A3B8', fontSize: 14, flex: 1 }} numberOfLines={1}>
+          {selected ? selected.title : 'Select active job post…'}
+        </Text>
+        <ChevronDown color={selected ? '#FF6240' : '#94A3B8'} />
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: '#00000060', justifyContent: 'center', paddingHorizontal: 24 }}
+          onPress={() => setOpen(false)}
+        >
+          <Pressable
+            style={{ backgroundColor: '#F5F0E8', borderRadius: 18, overflow: 'hidden', maxHeight: 360 }}
+            onPress={() => {}}
+          >
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Active Job Posts</Text>
+              <Pressable onPress={() => setOpen(false)} hitSlop={10}><XIcon /></Pressable>
+            </View>
+            <ScrollView>
+              {jobs.length === 0 ? (
+                <View style={{ padding: 24, alignItems: 'center' }}>
+                  <Text style={{ color: '#64748B', fontSize: 14 }}>No active jobs found</Text>
+                </View>
+              ) : (
+                jobs.map((job) => (
+                  <Pressable
+                    key={job.id}
+                    onPress={() => { onSelect(job); setOpen(false) }}
+                    style={{
+                      paddingHorizontal: 16, paddingVertical: 14,
+                      borderBottomWidth: 1, borderBottomColor: '#EDE7DB',
+                      backgroundColor: selected?.id === job.id ? '#FF624010' : 'transparent',
+                    }}
+                  >
+                    <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: selected?.id === job.id ? '600' : '400' }}>
+                      {job.title}
+                    </Text>
+                    {selected?.id === job.id && (
+                      <Text style={{ color: '#FF6240', fontSize: 11, marginTop: 2 }}>Selected</Text>
+                    )}
+                  </Pressable>
+                ))
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  )
+}
+
+// ─── New room form modal ──────────────────────────────────────────────────────
+
+function NewRoomModal({ visible, onClose, onCreate }: {
+  visible: boolean
+  onClose: () => void
+  onCreate: (params: { job: ActiveJob; type: InterviewType; scheduledAt: Date | null }) => void
+}) {
+  const user = useAuthStore((s) => s.user)
+  const [selectedJob, setSelectedJob] = useState<ActiveJob | null>(null)
+  const [interviewType, setInterviewType] = useState<InterviewType>('live')
+  const [scheduledDate, setScheduledDate] = useState<Date>(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
+
+  const { data: activeJobs = [] } = useQuery<ActiveJob[]>({
+    queryKey: ['active-jobs-for-interview', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_postings')
+        .select('id, title')
+        .eq('company_id', user!.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data as ActiveJob[]) ?? []
+    },
+    enabled: visible && !!user?.id,
+  })
+
+  const handleClose = () => {
+    setSelectedJob(null)
+    setInterviewType('live')
+    setScheduledDate(new Date())
+    onClose()
+  }
+
+  const handleCreate = () => {
+    if (!selectedJob) {
+      Alert.alert('Select a job', 'Please choose the job post this interview is for.')
+      return
+    }
+    if (interviewType === 'scheduled') {
+      const now = new Date()
+      now.setHours(0, 0, 0, 0)
+      const picked = new Date(scheduledDate)
+      picked.setHours(0, 0, 0, 0)
+      if (picked < now) {
+        Alert.alert('Invalid date', 'Please pick today or a future date for the interview.')
+        return
+      }
+    }
+    onCreate({ job: selectedJob, type: interviewType, scheduledAt: interviewType === 'scheduled' ? scheduledDate : null })
+    handleClose()
+  }
+
+  const minDate = new Date()
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: '#00000050', justifyContent: 'flex-end' }}
+        onPress={handleClose}
+      >
+        <Pressable
+          style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 36 }}
+          onPress={() => {}}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>New Interview Room</Text>
+            <Pressable onPress={handleClose} hitSlop={10}><XIcon /></Pressable>
+          </View>
+
+          {/* Job post dropdown */}
+          <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '600', marginBottom: 8 }}>Job Post</Text>
+          <JobDropdown jobs={activeJobs} selected={selectedJob} onSelect={setSelectedJob} />
+          <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 5, marginBottom: 20 }}>
+            Only your active job posts are shown
+          </Text>
+
+          {/* Live vs Scheduled toggle */}
+          <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '600', marginBottom: 10 }}>Interview Type</Text>
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+            <Pressable
+              onPress={() => setInterviewType('live')}
+              style={{
+                flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center',
+                backgroundColor: interviewType === 'live' ? '#FF6240' : '#EDE7DB',
+                borderWidth: 1.5,
+                borderColor: interviewType === 'live' ? '#FF6240' : '#DDD6C9',
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '700', color: interviewType === 'live' ? '#fff' : '#5A4F6E' }}>
+                Live (Now)
+              </Text>
+              <Text style={{ fontSize: 11, marginTop: 2, color: interviewType === 'live' ? '#ffffff99' : '#94A3B8' }}>
+                Start immediately
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setInterviewType('scheduled')}
+              style={{
+                flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center',
+                backgroundColor: interviewType === 'scheduled' ? '#FF6240' : '#EDE7DB',
+                borderWidth: 1.5,
+                borderColor: interviewType === 'scheduled' ? '#FF6240' : '#DDD6C9',
+              }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '700', color: interviewType === 'scheduled' ? '#fff' : '#5A4F6E' }}>
+                Scheduled
+              </Text>
+              <Text style={{ fontSize: 11, marginTop: 2, color: interviewType === 'scheduled' ? '#ffffff99' : '#94A3B8' }}>
+                Pick date & time
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Date & Time — only for scheduled */}
+          {interviewType === 'scheduled' && (
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ color: '#5A4F6E', fontSize: 13, fontWeight: '600', marginBottom: 10 }}>Date & Time</Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  onPress={() => setShowDatePicker(true)}
+                  style={{
+                    flex: 1, backgroundColor: '#EDE7DB', borderRadius: 12,
+                    borderWidth: 1, borderColor: '#DDD6C9',
+                    paddingHorizontal: 12, paddingVertical: 12,
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <CalendarIcon />
+                  <Text style={{ color: '#1A1625', fontSize: 13 }}>
+                    {scheduledDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowTimePicker(true)}
+                  style={{
+                    flex: 1, backgroundColor: '#EDE7DB', borderRadius: 12,
+                    borderWidth: 1, borderColor: '#DDD6C9',
+                    paddingHorizontal: 12, paddingVertical: 12,
+                    flexDirection: 'row', alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <CalendarIcon />
+                  <Text style={{ color: '#1A1625', fontSize: 13 }}>
+                    {scheduledDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={scheduledDate}
+                  mode="date"
+                  minimumDate={minDate}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(_e, date) => {
+                    setShowDatePicker(false)
+                    if (date) {
+                      const merged = new Date(date)
+                      merged.setHours(scheduledDate.getHours(), scheduledDate.getMinutes())
+                      setScheduledDate(merged)
+                    }
+                  }}
+                />
+              )}
+              {showTimePicker && (
+                <DateTimePicker
+                  value={scheduledDate}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(_e, time) => {
+                    setShowTimePicker(false)
+                    if (time) {
+                      const merged = new Date(scheduledDate)
+                      merged.setHours(time.getHours(), time.getMinutes())
+                      setScheduledDate(merged)
+                    }
+                  }}
+                />
+              )}
+            </View>
+          )}
+
+          {/* Info box */}
+          <View style={{
+            backgroundColor: '#FF624010', borderRadius: 12, padding: 12,
+            borderWidth: 1, borderColor: '#FF624020', marginBottom: 24,
+          }}>
+            <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18 }}>
+              {interviewType === 'live'
+                ? 'A video room will be created now. You will get a room code to share with the candidate. Up to 10 people can join.'
+                : `A room will be created and reserved for ${scheduledDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} at ${scheduledDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. The Join button will appear on that day.`}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={handleCreate}
+            style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}
+            className="active:opacity-80"
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Room</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+// ─── Room card ────────────────────────────────────────────────────────────────
+
 function RoomCard({ room, onJoin, onShare, onEnd }: {
   room: InterviewRoom
   onJoin: () => void
   onShare: () => void
   onEnd: () => void
 }) {
+  const [copied, setCopied] = useState(false)
+  const canJoin = isJoinable(room)
   const isActive = room.status === 'active'
+  const isScheduled = room.interview_type === 'scheduled'
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(room.room_url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <Animated.View entering={FadeInDown.duration(350)}>
       <View style={{
-        backgroundColor: '#EDE7DB',
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: '#DDD6C9',
-        padding: 16,
-        marginBottom: 12,
+        backgroundColor: '#EDE7DB', borderRadius: 18,
+        borderWidth: 1, borderColor: '#DDD6C9',
+        padding: 16, marginBottom: 12,
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        {/* Header row */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 }}>
           <View style={{
-            width: 42, height: 42, borderRadius: 12,
+            width: 40, height: 40, borderRadius: 11,
             backgroundColor: isActive ? '#FF624015' : '#64748B15',
-            alignItems: 'center', justifyContent: 'center', marginRight: 12,
+            alignItems: 'center', justifyContent: 'center', marginRight: 10,
           }}>
-            <VideoIcon color={isActive ? '#FF6240' : '#64748B'} />
+            <VideoIcon color={isActive ? '#FF6240' : '#64748B'} size={18} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700' }} numberOfLines={1}>
-              {room.label}
+            <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
+              {room.job_title ?? room.label}
             </Text>
-            <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>
-              {formatTimeAgo(room.created_at)}
+            <Text style={{ color: '#64748B', fontSize: 11, marginTop: 1 }}>
+              {isScheduled && room.scheduled_at
+                ? `Scheduled · ${formatDate(room.scheduled_at)} at ${formatTime(room.scheduled_at)}`
+                : `Created ${formatTimeAgo(room.created_at)}`}
             </Text>
           </View>
           <View style={{
-            backgroundColor: isActive ? '#22C55E15' : '#64748B15',
+            backgroundColor: isActive ? (room.interview_type === 'live' ? '#22C55E15' : '#818CF815') : '#64748B15',
             borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
           }}>
-            <Text style={{ color: isActive ? '#22C55E' : '#64748B', fontSize: 11, fontWeight: '600' }}>
-              {isActive ? 'Live' : 'Ended'}
+            <Text style={{
+              fontSize: 11, fontWeight: '600',
+              color: isActive ? (room.interview_type === 'live' ? '#22C55E' : '#818CF8') : '#64748B',
+            }}>
+              {isActive ? (room.interview_type === 'live' ? 'Live' : 'Scheduled') : 'Ended'}
             </Text>
           </View>
         </View>
 
-        <View style={{
-          backgroundColor: '#DDD6C9', borderRadius: 8,
-          paddingHorizontal: 10, paddingVertical: 7, marginBottom: 12,
-        }}>
-          <Text style={{ color: '#5A4F6E', fontSize: 11 }} numberOfLines={1}>
+        {/* Room code row */}
+        <Pressable
+          onPress={handleCopy}
+          style={{
+            backgroundColor: '#DDD6C9', borderRadius: 10,
+            paddingHorizontal: 12, paddingVertical: 9, marginBottom: 12,
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+          }}
+        >
+          <Text style={{ color: '#5A4F6E', fontSize: 11, flex: 1 }} numberOfLines={1}>
             {room.room_url}
           </Text>
-        </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
+            <CopyIcon color={copied ? '#22C55E' : '#5A4F6E'} />
+            <Text style={{ color: copied ? '#22C55E' : '#5A4F6E', fontSize: 11, fontWeight: '600' }}>
+              {copied ? 'Copied!' : 'Copy'}
+            </Text>
+          </View>
+        </Pressable>
 
+        {/* Scheduled info — show date/time reminder */}
+        {isScheduled && room.scheduled_at && isActive && !canJoin && (
+          <View style={{
+            backgroundColor: '#818CF810', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+            marginBottom: 12, borderWidth: 1, borderColor: '#818CF820',
+          }}>
+            <Text style={{ color: '#818CF8', fontSize: 12, fontWeight: '600' }}>
+              Join button appears on {formatDate(room.scheduled_at)} at {formatTime(room.scheduled_at)}
+            </Text>
+          </View>
+        )}
+
+        {/* Action buttons */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {isActive && (
+          {canJoin && (
             <Pressable
               onPress={onJoin}
               style={{
-                flex: 1, backgroundColor: '#FF6240', borderRadius: 10,
+                flex: 1, backgroundColor: '#22C55E', borderRadius: 10,
                 paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
               }}
               className="active:opacity-70"
@@ -222,18 +612,20 @@ function RoomCard({ room, onJoin, onShare, onEnd }: {
             </Pressable>
           )}
 
-          <Pressable
-            onPress={onShare}
-            style={{
-              flex: 1, backgroundColor: '#FF624010', borderRadius: 10,
-              paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
-              flexDirection: 'row', gap: 5, borderWidth: 1, borderColor: '#FF624025',
-            }}
-            className="active:opacity-70"
-          >
-            <ShareIcon />
-            <Text style={{ color: '#FF6240', fontWeight: '600', fontSize: 13 }}>Share Link</Text>
-          </Pressable>
+          {isActive && (
+            <Pressable
+              onPress={onShare}
+              style={{
+                flex: 1, backgroundColor: '#FF624010', borderRadius: 10,
+                paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'row', gap: 5, borderWidth: 1, borderColor: '#FF624025',
+              }}
+              className="active:opacity-70"
+            >
+              <ShareIcon />
+              <Text style={{ color: '#FF6240', fontWeight: '600', fontSize: 13 }}>Share Link</Text>
+            </Pressable>
+          )}
 
           {isActive && (
             <Pressable
@@ -254,70 +646,7 @@ function RoomCard({ room, onJoin, onShare, onEnd }: {
   )
 }
 
-function NewRoomModal({ visible, onClose, onCreate }: {
-  visible: boolean
-  onClose: () => void
-  onCreate: (label: string) => void
-}) {
-  const [label, setLabel] = useState('')
-
-  const handleCreate = () => {
-    onCreate(label.trim() || 'Interview Room')
-    setLabel('')
-  }
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={{ flex: 1, backgroundColor: '#00000050', justifyContent: 'flex-end' }}
-        onPress={onClose}
-      >
-        <Pressable
-          style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}
-          onPress={() => {}}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>New Interview Room</Text>
-            <Pressable onPress={onClose} hitSlop={10}><XIcon /></Pressable>
-          </View>
-
-          <Text style={{ color: '#5A4F6E', fontSize: 13, marginBottom: 8 }}>Room label (optional)</Text>
-          <TextInput
-            value={label}
-            onChangeText={setLabel}
-            placeholder="e.g. Senior Dev Interview — Ada"
-            placeholderTextColor="#94A3B8"
-            style={{
-              backgroundColor: '#EDE7DB', borderRadius: 12, borderWidth: 1,
-              borderColor: '#DDD6C9', paddingHorizontal: 14, paddingVertical: 13,
-              color: '#1A1625', fontSize: 14, marginBottom: 8,
-            }}
-          />
-          <Text style={{ color: '#94A3B8', fontSize: 11, marginBottom: 20 }}>
-            Leave blank to use "Interview Room"
-          </Text>
-
-          <View style={{
-            backgroundColor: '#FF624010', borderRadius: 12, padding: 12,
-            borderWidth: 1, borderColor: '#FF624020', marginBottom: 24,
-          }}>
-            <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18 }}>
-              A video room is created on Daily.co. Share the link with candidates — up to 10 people can join. The room expires after 24 hours.
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={handleCreate}
-            style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}
-            className="active:opacity-80"
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Create Room & Join</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  )
-}
+// ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function InterviewsScreen() {
   const user = useAuthStore((s) => s.user)
@@ -340,27 +669,33 @@ export default function InterviewsScreen() {
   })
 
   const createMutation = useMutation({
-    mutationFn: async (label: string) => {
+    mutationFn: async ({ job, type, scheduledAt }: {
+      job: ActiveJob
+      type: InterviewType
+      scheduledAt: Date | null
+    }) => {
       const roomName = `ivw-${user!.id.slice(0, 8)}-${Date.now()}`
       const daily = await createDailyRoom(roomName)
       const { error } = await supabase.from('interview_rooms').insert({
         company_id: user!.id,
         room_name: daily.name,
         room_url: daily.url,
-        label,
+        label: job.title,
+        job_posting_id: job.id,
+        job_title: job.title,
+        interview_type: type,
+        scheduled_at: scheduledAt?.toISOString() ?? null,
         status: 'active',
       })
       if (error) throw error
-      return daily.url
+      return { url: daily.url, type }
     },
-    onSuccess: (roomUrl) => {
+    onSuccess: ({ url, type }) => {
       void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] })
-      setShowNewModal(false)
-      setActiveRoomUrl(roomUrl)
+      if (type === 'live') setActiveRoomUrl(url)
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : 'Something went wrong'
-      Alert.alert('Failed to create room', msg)
+      Alert.alert('Failed to create room', err instanceof Error ? err.message : 'Something went wrong')
     },
   })
 
@@ -373,40 +708,40 @@ export default function InterviewsScreen() {
         .eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] })
-    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] }),
     onError: () => Alert.alert('Error', 'Could not end the room. Please try again.'),
   })
 
-  const handleShare = async (room: InterviewRoom) => {
+  const handleShare = useCallback(async (room: InterviewRoom) => {
+    const scheduledInfo = room.scheduled_at
+      ? `\nDate: ${formatDate(room.scheduled_at)} at ${formatTime(room.scheduled_at)}`
+      : ''
     await Share.share({
-      message: `You're invited to a video interview.\n\nJoin here: ${room.room_url}\n\nThe link is valid for 24 hours.`,
+      message: `You're invited to a video interview${room.job_title ? ` for ${room.job_title}` : ''}.${scheduledInfo}\n\nJoin here: ${room.room_url}`,
       url: room.room_url,
     })
-  }
+  }, [])
 
-  const handleEnd = (room: InterviewRoom) => {
+  const handleEnd = useCallback((room: InterviewRoom) => {
     Alert.alert(
       'End interview room?',
       'The room will be closed and the link will stop working.',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'End room',
-          style: 'destructive',
-          onPress: () => endMutation.mutate({ id: room.id, roomName: room.room_name }),
-        },
+        { text: 'End room', style: 'destructive', onPress: () => endMutation.mutate({ id: room.id, roomName: room.room_name }) },
       ],
     )
-  }
+  }, [endMutation])
 
-  const liveRooms = rooms.filter((r) => r.status === 'active')
+  const liveRooms = rooms.filter((r) => r.status === 'active' && r.interview_type === 'live')
+  const scheduledRooms = rooms.filter((r) => r.status === 'active' && r.interview_type === 'scheduled')
   const endedRooms = rooms.filter((r) => r.status === 'ended')
 
   const listData: ListItem[] = [
-    ...(liveRooms.length > 0 ? [{ type: 'header' as const, title: `Active (${liveRooms.length})` }] : []),
+    ...(liveRooms.length > 0 ? [{ type: 'header' as const, title: `Live (${liveRooms.length})` }] : []),
     ...liveRooms.map((r) => ({ type: 'room' as const, room: r })),
+    ...(scheduledRooms.length > 0 ? [{ type: 'header' as const, title: `Scheduled (${scheduledRooms.length})` }] : []),
+    ...scheduledRooms.map((r) => ({ type: 'room' as const, room: r })),
     ...(endedRooms.length > 0 ? [{ type: 'header' as const, title: 'Ended' }] : []),
     ...endedRooms.map((r) => ({ type: 'room' as const, room: r })),
   ]
@@ -419,7 +754,7 @@ export default function InterviewsScreen() {
       }}>
         <View>
           <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Interviews</Text>
-          <Text style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Live video rooms for candidates</Text>
+          <Text style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Live & scheduled video rooms</Text>
         </View>
         <Pressable
           onPress={() => setShowNewModal(true)}
@@ -450,7 +785,7 @@ export default function InterviewsScreen() {
             No interviews yet
           </Text>
           <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 28 }}>
-            Create a room and share the link with candidates. Up to 10 people can join each call.
+            Create a live room now or schedule one for a future date. Share the link with candidates.
           </Text>
           <Pressable
             onPress={() => setShowNewModal(true)}
@@ -469,8 +804,7 @@ export default function InterviewsScreen() {
               return (
                 <Text style={{
                   color: '#5A4F6E', fontSize: 12, fontWeight: '600',
-                  textTransform: 'uppercase', letterSpacing: 0.5,
-                  marginBottom: 10, marginTop: 4,
+                  textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 4,
                 }}>
                   {item.title}
                 </Text>
@@ -494,14 +828,11 @@ export default function InterviewsScreen() {
       <NewRoomModal
         visible={showNewModal}
         onClose={() => setShowNewModal(false)}
-        onCreate={(label) => createMutation.mutate(label)}
+        onCreate={(params) => createMutation.mutate(params)}
       />
 
       {activeRoomUrl && (
-        <VideoCallModal
-          url={activeRoomUrl}
-          onClose={() => setActiveRoomUrl(null)}
-        />
+        <VideoCallModal url={activeRoomUrl} onClose={() => setActiveRoomUrl(null)} />
       )}
 
       {createMutation.isPending && (
