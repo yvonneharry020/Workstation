@@ -15,7 +15,6 @@ import {
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
-import * as FileSystem from 'expo-file-system'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
@@ -181,7 +180,7 @@ export default function EditCompanyProfileScreen() {
         linkedin_url: p.linkedin_url ?? '',
         twitter_url: p.twitter_url ?? '',
         instagram_url: p.instagram_url ?? '',
-        headquarters_state: p.headquarters_state ?? '',
+        headquarters_state: (p as any).headquarters_state_text ?? '',
         headquarters_city: p.headquarters_city ?? '',
         headquarters_address: p.headquarters_address ?? '',
       })
@@ -212,6 +211,8 @@ export default function EditCompanyProfileScreen() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Not authenticated')
+      const stateIndex = NIGERIAN_STATES.indexOf(form.headquarters_state)
+      const stateId = stateIndex >= 0 ? stateIndex + 1 : null
       const [profileErr, profilesErr] = await Promise.all([
         supabase.from('company_profiles').upsert({
           id: user.id,
@@ -228,7 +229,8 @@ export default function EditCompanyProfileScreen() {
           linkedin_url: form.linkedin_url || null,
           twitter_url: form.twitter_url || null,
           instagram_url: form.instagram_url || null,
-          headquarters_state: form.headquarters_state || null,
+          headquarters_state: stateId,
+          headquarters_state_text: form.headquarters_state || null,
           headquarters_city: form.headquarters_city || null,
           headquarters_address: form.headquarters_address || null,
           logo_url: logoUri,
@@ -298,11 +300,9 @@ export default function EditCompanyProfileScreen() {
       const fileExt = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg'
       const contentType = fileExt === 'png' ? 'image/png' : fileExt === 'webp' ? 'image/webp' : 'image/jpeg'
       const filePath = `${user?.id}/gallery_${Date.now()}.${fileExt}`
-      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' })
-      const binaryStr = atob(base64)
-      const bytes = new Uint8Array(binaryStr.length)
-      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
-      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, bytes, { contentType, upsert: true })
+      const response = await fetch(asset.uri)
+      const arrayBuffer = await response.arrayBuffer()
+      const { error: uploadError } = await supabase.storage.from('company-gallery').upload(filePath, arrayBuffer, { contentType, upsert: true })
       if (uploadError) throw uploadError
       const { data } = supabase.storage.from('company-gallery').getPublicUrl(filePath)
       const { data: inserted, error: insertError } = await supabase

@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ScrollView, ActivityIndicator, Linking } from 'react-native'
+import { useState } from 'react'
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Linking, Modal, Dimensions } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -7,6 +8,8 @@ import { Image } from 'expo-image'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+
+const { width: SCREEN_W } = Dimensions.get('window')
 
 interface CompanyProfile {
   id: string
@@ -34,6 +37,12 @@ interface CompanyProfile {
   director_nin_verified: boolean
 }
 
+interface GalleryImage {
+  id: string
+  image_url: string
+  sort_order: number
+}
+
 function BackIcon() {
   return (
     <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -58,6 +67,14 @@ function LinkIcon() {
   )
 }
 
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>
+      {children}
+    </Text>
+  )
+}
+
 function InfoRow({ label, value }: { label: string; value: string | number | null }) {
   if (!value) return null
   return (
@@ -70,6 +87,7 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
 
 export default function CompanyProfileViewScreen() {
   const user = useAuthStore((s) => s.user)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['company-profile-view', user?.id],
@@ -85,17 +103,37 @@ export default function CompanyProfileViewScreen() {
     enabled: !!user?.id,
   })
 
+  const { data: gallery } = useQuery({
+    queryKey: ['company-gallery-view', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_gallery')
+        .select('id, image_url, sort_order')
+        .eq('company_id', user!.id)
+        .order('sort_order')
+      if (error) throw error
+      return data as unknown as GalleryImage[]
+    },
+    enabled: !!user?.id,
+  })
+
   const trustScore = profile?.trust_score ?? 0
   const trustColor = trustScore >= 80 ? '#22C55E' : trustScore >= 50 ? '#F59E0B' : '#EF4444'
   const trustLabel = trustScore >= 80 ? 'Verified' : trustScore >= 50 ? 'Partial' : 'Pending'
 
-  const location = [profile?.headquarters_city, profile?.headquarters_state_text].filter(Boolean).join(', ')
+  const locationLine = [profile?.headquarters_city, profile?.headquarters_state_text].filter(Boolean).join(', ')
 
   const openUrl = (url: string | null) => {
     if (!url) return
     const full = url.startsWith('http') ? url : `https://${url}`
     Linking.openURL(full).catch(() => {})
   }
+
+  const hasLocation = !!(profile?.headquarters_state_text || profile?.headquarters_city || profile?.headquarters_address)
+  const hasContact = !!(profile?.business_phone || profile?.business_email)
+  const hasLinks = !!(profile?.website_url || profile?.linkedin_url || profile?.twitter_url || profile?.instagram_url)
+
+  const tileSize = Math.floor((SCREEN_W - 40 - 16) / 3)
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
@@ -159,8 +197,8 @@ export default function CompanyProfileViewScreen() {
                   {profile?.industry && (
                     <Text style={{ color: '#64748B', fontSize: 14, marginTop: 4 }}>{profile.industry}</Text>
                   )}
-                  {location ? (
-                    <Text style={{ color: '#475569', fontSize: 13, marginTop: 2 }}>📍 {location}</Text>
+                  {locationLine ? (
+                    <Text style={{ color: '#475569', fontSize: 13, marginTop: 2 }}>📍 {locationLine}</Text>
                   ) : null}
                 </View>
                 <View style={{ backgroundColor: `${trustColor}20`, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: `${trustColor}30`, marginLeft: 12 }}>
@@ -171,33 +209,47 @@ export default function CompanyProfileViewScreen() {
             </Animated.View>
           </View>
 
+          {/* About */}
           {profile?.about && (
-            <Animated.View entering={FadeInDown.delay(100).duration(300)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
-              <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>About</Text>
+            <Animated.View entering={FadeInDown.delay(100).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+              <SectionTitle>About</SectionTitle>
               <Text style={{ color: '#2D2640', fontSize: 14, lineHeight: 22 }}>{profile.about}</Text>
             </Animated.View>
           )}
 
+          {/* Culture */}
           {profile?.culture_description && (
-            <Animated.View entering={FadeInDown.delay(130).duration(300)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
-              <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>Culture</Text>
+            <Animated.View entering={FadeInDown.delay(130).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+              <SectionTitle>Culture</SectionTitle>
               <Text style={{ color: '#2D2640', fontSize: 14, lineHeight: 22 }}>{profile.culture_description}</Text>
             </Animated.View>
           )}
 
-          <Animated.View entering={FadeInDown.delay(160).duration(300)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
-            <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>Details</Text>
+          {/* Company details */}
+          <Animated.View entering={FadeInDown.delay(160).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+            <SectionTitle>Details</SectionTitle>
             <InfoRow label="RC Number" value={profile?.rc_number ?? null} />
-            <InfoRow label="Business email" value={profile?.business_email ?? null} />
-            <InfoRow label="Phone" value={profile?.business_phone ?? null} />
+            <InfoRow label="Industry" value={profile?.industry ?? null} />
             <InfoRow label="Company size" value={profile?.company_size ?? null} />
             <InfoRow label="Founded" value={profile?.founded_year ?? null} />
-            <InfoRow label="Address" value={profile?.headquarters_address ?? null} />
           </Animated.View>
 
-          {(profile?.website_url || profile?.linkedin_url || profile?.twitter_url || profile?.instagram_url) && (
-            <Animated.View entering={FadeInDown.delay(200).duration(300)} style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
-              <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Links</Text>
+          {/* Location & Contact */}
+          {(hasLocation || hasContact) && (
+            <Animated.View entering={FadeInDown.delay(185).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+              <SectionTitle>Location & Contact</SectionTitle>
+              <InfoRow label="State" value={profile?.headquarters_state_text ?? null} />
+              <InfoRow label="City" value={profile?.headquarters_city ?? null} />
+              <InfoRow label="Address" value={profile?.headquarters_address ?? null} />
+              <InfoRow label="Phone" value={profile?.business_phone ?? null} />
+              <InfoRow label="Email" value={profile?.business_email ?? null} />
+            </Animated.View>
+          )}
+
+          {/* Links */}
+          {hasLinks && (
+            <Animated.View entering={FadeInDown.delay(200).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+              <SectionTitle>Links</SectionTitle>
               <View style={{ gap: 10 }}>
                 {profile?.website_url && (
                   <Pressable onPress={() => openUrl(profile.website_url)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }} className="active:opacity-70">
@@ -227,8 +279,33 @@ export default function CompanyProfileViewScreen() {
             </Animated.View>
           )}
 
-          <Animated.View entering={FadeInDown.delay(240).duration(300)} style={{ marginHorizontal: 20, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
-            <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>Verification</Text>
+          {/* Gallery */}
+          {gallery && gallery.length > 0 && (
+            <Animated.View entering={FadeInDown.delay(215).duration(300)} style={{ marginHorizontal: 20, marginBottom: 16, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <SectionTitle>Gallery</SectionTitle>
+                <Text style={{ color: '#94A3B8', fontSize: 12 }}>{gallery.length} photo{gallery.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {gallery.map((img) => (
+                  <Pressable
+                    key={img.id}
+                    onPress={() => setLightboxUrl(img.image_url)}
+                    style={({ pressed }) => ({
+                      width: tileSize, height: tileSize, borderRadius: 12,
+                      overflow: 'hidden', opacity: pressed ? 0.85 : 1,
+                    })}
+                  >
+                    <Image source={{ uri: img.image_url }} style={{ width: tileSize, height: tileSize }} contentFit="cover" />
+                  </Pressable>
+                ))}
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Verification */}
+          <Animated.View entering={FadeInDown.delay(230).duration(300)} style={{ marginHorizontal: 20, marginBottom: 4, backgroundColor: '#EDE7DB', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#DDD6C9' }}>
+            <SectionTitle>Verification</SectionTitle>
             <View style={{ gap: 10 }}>
               {[
                 { label: 'CAC Registration', done: profile?.cac_verified ?? false },
@@ -252,6 +329,26 @@ export default function CompanyProfileViewScreen() {
           </Animated.View>
         </ScrollView>
       )}
+
+      {/* Gallery lightbox */}
+      <Modal visible={!!lightboxUrl} transparent animationType="fade" onRequestClose={() => setLightboxUrl(null)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}
+          onPress={() => setLightboxUrl(null)}
+        >
+          {lightboxUrl && (
+            <Image
+              source={{ uri: lightboxUrl }}
+              style={{ width: SCREEN_W, height: SCREEN_W, maxHeight: SCREEN_W * 1.2 }}
+              contentFit="contain"
+            />
+          )}
+          <View style={{ position: 'absolute', top: 56, right: 20, width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600', lineHeight: 20 }}>×</Text>
+          </View>
+          <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 20 }}>Tap anywhere to close</Text>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   )
 }
