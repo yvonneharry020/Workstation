@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   Linking,
+  Alert,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
@@ -41,10 +42,22 @@ const COLS = [
   { key: 'attendance', label: 'Attendance',   width: 100, align: 'center' as const },
 ] as const
 
-const TOTAL_W   = COLS.reduce((s, c) => s + c.width, 0)
-const ROW_MIN_H = 54
-const HEADER_H  = 44
-const CHROME_H  = 44 + 62 + 52 + HEADER_H + 46
+const TOTAL_W  = COLS.reduce((s, c) => s + c.width, 0)
+const ROW_H    = 54
+const HEADER_H = 44
+const CHROME_H = 44 + 62 + 52 + HEADER_H + 46
+
+// Pre-compute each column's left offset from COLS so header and body
+// both use the exact same x-coordinates — alignment is guaranteed.
+const COL_OFFSETS: number[] = (() => {
+  const offsets: number[] = []
+  let x = 0
+  for (const col of COLS) {
+    offsets.push(x)
+    x += col.width
+  }
+  return offsets
+})()
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 function ChevronDown() {
@@ -564,14 +577,17 @@ function NotesModal({
               </Pressable>
               <Pressable
                 onPress={() => {
-                  if (!row.application_id) return
+                  if (!row.application_id) {
+                    Alert.alert('Cannot Save', 'No linked application found for this candidate.')
+                    return
+                  }
                   onSave(row.application_id, text)
                   onClose()
                 }}
                 disabled={isSaving}
                 style={({ pressed }) => ({
                   flex: 1, borderRadius: 14,
-                  backgroundColor: '#FF6240',
+                  backgroundColor: isSaving ? '#FFA994' : '#FF6240',
                   paddingVertical: 14, alignItems: 'center', opacity: pressed ? 0.8 : 1,
                 })}
               >
@@ -588,14 +604,17 @@ function NotesModal({
   )
 }
 
-// ─── Grid header ──────────────────────────────────────────────────────────────
+// ─── Grid header — absolute positioning from COL_OFFSETS ─────────────────────
 function GridHeader() {
   return (
-    <View style={{ flexDirection: 'row', height: HEADER_H, backgroundColor: '#1A1625' }}>
+    <View style={{ width: TOTAL_W, height: HEADER_H, backgroundColor: '#1A1625' }}>
       {COLS.map((col, i) => (
         <View
           key={col.key}
           style={{
+            position: 'absolute',
+            left: COL_OFFSETS[i],
+            top: 0,
             width: col.width,
             height: HEADER_H,
             justifyContent: 'center',
@@ -614,14 +633,23 @@ function GridHeader() {
   )
 }
 
-// ─── Explicit column cells — no dispatch, no key lookup ──────────────────────
-const C = { borderRightWidth: 1 as const, borderRightColor: '#E5DFD3', borderBottomWidth: 1 as const, borderBottomColor: '#E5DFD3' }
+// ─── Absolute-positioned cell helpers ────────────────────────────────────────
+const CELL_BORDER = { borderRightWidth: 1 as const, borderRightColor: '#E5DFD3' as const }
 
-function TxtCell({ v, w, bg, center }: { v: string | null | undefined; w: number; bg: string; center?: boolean }) {
+type CellPos = { left: number; width: number }
+
+function AbsTxt({ left, width, value, center, bg }: CellPos & { value: string | null | undefined; center?: boolean; bg: string }) {
   return (
-    <View style={[C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: center ? 4 : 10, paddingVertical: 10, alignItems: center ? 'center' : 'flex-start', justifyContent: 'flex-start', backgroundColor: bg }]}>
-      {(v && v !== '—') ? (
-        <Text style={{ fontSize: 12, color: '#1A1625', lineHeight: 17 }} numberOfLines={2}>{v}</Text>
+    <View style={[CELL_BORDER, {
+      position: 'absolute', left, top: 0, width, height: ROW_H,
+      paddingHorizontal: center ? 4 : 10,
+      paddingVertical: 10,
+      alignItems: center ? 'center' : 'flex-start',
+      justifyContent: 'flex-start',
+      backgroundColor: bg,
+    }]}>
+      {(value && value !== '—') ? (
+        <Text style={{ fontSize: 12, color: '#1A1625', lineHeight: 17 }} numberOfLines={2}>{value}</Text>
       ) : (
         <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
       )}
@@ -629,32 +657,48 @@ function TxtCell({ v, w, bg, center }: { v: string | null | undefined; w: number
   )
 }
 
-function ViewCell({ onPress, has, w, bg }: { onPress: () => void; has: boolean; w: number; bg: string }) {
+function AbsView({ left, width, onPress, bg }: CellPos & { onPress: () => void; bg: string }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1, backgroundColor: bg }]}
+      style={({ pressed }) => [CELL_BORDER, {
+        position: 'absolute', left, top: 0, width, height: ROW_H,
+        alignItems: 'center', justifyContent: 'center',
+        opacity: pressed ? 0.7 : 1,
+        backgroundColor: bg,
+      }]}
     >
-      {has ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FF624015', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5, borderWidth: 1, borderColor: '#FF624040' }}>
-          <EyeIcon />
-          <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6240' }}>View</Text>
-        </View>
-      ) : (
-        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
-      )}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: '#FF624015', borderRadius: 8,
+        paddingHorizontal: 8, paddingVertical: 5,
+        borderWidth: 1, borderColor: '#FF624040',
+      }}>
+        <EyeIcon />
+        <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6240' }}>View</Text>
+      </View>
     </Pressable>
   )
 }
 
-function PipelineCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress: () => void; bg: string }) {
+function AbsPipeline({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
   const cfg = PIPELINE_CONFIG[row.pipeline_stage]
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, justifyContent: 'center', paddingHorizontal: 8, opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
+      style={({ pressed }) => [CELL_BORDER, {
+        position: 'absolute', left, top: 0, width, height: ROW_H,
+        justifyContent: 'center', paddingHorizontal: 8,
+        opacity: pressed ? 0.75 : 1,
+        backgroundColor: bg,
+      }]}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: cfg.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6, borderWidth: 1.5, borderColor: cfg.color + '55' }}>
+      <View style={{
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: cfg.bg, borderRadius: 10,
+        paddingHorizontal: 8, paddingVertical: 6,
+        borderWidth: 1.5, borderColor: cfg.color + '55',
+      }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
         <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
         <ChevronDown />
@@ -663,11 +707,17 @@ function PipelineCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPr
   )
 }
 
-function NotesCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress: () => void; bg: string }) {
+function AbsNotes({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
+      style={({ pressed }) => [CELL_BORDER, {
+        position: 'absolute', left, top: 0, width, height: ROW_H,
+        paddingHorizontal: 10, paddingVertical: 10,
+        flexDirection: 'row', alignItems: 'center',
+        opacity: pressed ? 0.75 : 1,
+        backgroundColor: bg,
+      }]}
     >
       <EditPencil />
       <View style={{ flex: 1, marginLeft: 6 }}>
@@ -681,6 +731,7 @@ function NotesCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress
   )
 }
 
+// ─── Grid row — every column pinned by absolute position from COL_OFFSETS ────
 interface CellHandlers {
   onCoverPress:       () => void
   onProfilePress:     () => void
@@ -691,44 +742,58 @@ interface CellHandlers {
   screeningQuestions: { question: string; required: boolean }[] | null
 }
 
-// ─── Grid row — every column explicit, zero dispatch ambiguity ────────────────
 function GridRow({ row, index, isEven, handlers }: { row: AtsRowFull; index: number; isEven: boolean; handlers: CellHandlers }) {
-  const bg  = isEven ? '#FFFFFF' : '#F9F7F4'
-  const hasQ = !!(handlers.screeningQuestions && handlers.screeningQuestions.length > 0)
+  const bg = isEven ? '#FFFFFF' : '#F9F7F4'
+
   return (
-    <View style={{ flexDirection: 'row' }}>
-      {/* #  36 */}
-      <View style={[C, { width: 36, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }]}>
+    <View style={{ width: TOTAL_W, height: ROW_H, backgroundColor: bg, borderBottomWidth: 1, borderBottomColor: '#E5DFD3' }}>
+
+      {/* col[0]  #  left=0  w=36 */}
+      <View style={[CELL_BORDER, { position: 'absolute', left: COL_OFFSETS[0], top: 0, width: COLS[0].width, height: ROW_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }]}>
         <Text style={{ fontSize: 11, color: '#C8BFB0', fontWeight: '600' }}>{index + 1}</Text>
       </View>
-      {/* Full Name  145 */}
-      <TxtCell v={row.full_name}               w={145} bg={bg} />
-      {/* Email  165 */}
-      <TxtCell v={row.email}                   w={165} bg={bg} />
-      {/* Phone  120 */}
-      <TxtCell v={row.phone}                   w={120} bg={bg} />
-      {/* Location  115 */}
-      <TxtCell v={row.location}                w={115} bg={bg} />
-      {/* Gender  85 */}
-      <TxtCell v={row.gender}                  w={85}  bg={bg} />
-      {/* Age  65 */}
-      <TxtCell v={calcAge(row.date_of_birth)}  w={65}  bg={bg} center />
-      {/* Cover Letter  110 → opens cover letter modal */}
-      <ViewCell onPress={handlers.onCoverPress}     has={!!row.cover_note} w={110} bg={bg} />
-      {/* Profile  90 → opens profile modal */}
-      <ViewCell onPress={handlers.onProfilePress}   has={true}             w={90}  bg={bg} />
-      {/* Pipeline  135 → opens pipeline picker */}
-      <PipelineCel w={135} row={row} onPress={handlers.onPipelinePress} bg={bg} />
-      {/* Notes  155 → opens notes modal */}
-      <NotesCel    w={155} row={row} onPress={handlers.onNotesPress}    bg={bg} />
-      {/* Screening  110 → opens screening modal */}
-      <ViewCell onPress={handlers.onScreeningPress} has={hasQ}             w={110} bg={bg} />
-      {/* Interview  100 → opens interview modal */}
-      <ViewCell onPress={handlers.onInterviewPress} has={true}             w={100} bg={bg} />
-      {/* Attendance  100 — not yet tracked */}
-      <View style={{ width: 100, minHeight: ROW_MIN_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg, borderBottomWidth: 1, borderBottomColor: '#E5DFD3' }}>
+
+      {/* col[1]  Full Name  left=36  w=145 */}
+      <AbsTxt left={COL_OFFSETS[1]} width={COLS[1].width} value={row.full_name}              bg={bg} />
+
+      {/* col[2]  Email  left=181  w=165 */}
+      <AbsTxt left={COL_OFFSETS[2]} width={COLS[2].width} value={row.email}                  bg={bg} />
+
+      {/* col[3]  Phone  left=346  w=120 */}
+      <AbsTxt left={COL_OFFSETS[3]} width={COLS[3].width} value={row.phone}                  bg={bg} />
+
+      {/* col[4]  Location  left=466  w=115 */}
+      <AbsTxt left={COL_OFFSETS[4]} width={COLS[4].width} value={row.location}               bg={bg} />
+
+      {/* col[5]  Gender  left=581  w=85 */}
+      <AbsTxt left={COL_OFFSETS[5]} width={COLS[5].width} value={row.gender}                 bg={bg} />
+
+      {/* col[6]  Age  left=666  w=65 */}
+      <AbsTxt left={COL_OFFSETS[6]} width={COLS[6].width} value={calcAge(row.date_of_birth)} bg={bg} center />
+
+      {/* col[7]  Cover Letter  left=731  w=110 — always shows View, modal handles empty state */}
+      <AbsView left={COL_OFFSETS[7]} width={COLS[7].width} onPress={handlers.onCoverPress}    bg={bg} />
+
+      {/* col[8]  Profile  left=841  w=90 */}
+      <AbsView left={COL_OFFSETS[8]} width={COLS[8].width} onPress={handlers.onProfilePress}  bg={bg} />
+
+      {/* col[9]  Pipeline  left=931  w=135 */}
+      <AbsPipeline left={COL_OFFSETS[9]} width={COLS[9].width} row={row} onPress={handlers.onPipelinePress} bg={bg} />
+
+      {/* col[10]  Notes  left=1066  w=155 */}
+      <AbsNotes left={COL_OFFSETS[10]} width={COLS[10].width} row={row} onPress={handlers.onNotesPress} bg={bg} />
+
+      {/* col[11]  Screening  left=1221  w=110 */}
+      <AbsView left={COL_OFFSETS[11]} width={COLS[11].width} onPress={handlers.onScreeningPress} bg={bg} />
+
+      {/* col[12]  Interview  left=1331  w=100 */}
+      <AbsView left={COL_OFFSETS[12]} width={COLS[12].width} onPress={handlers.onInterviewPress} bg={bg} />
+
+      {/* col[13]  Attendance  left=1431  w=100 — not yet tracked */}
+      <View style={{ position: 'absolute', left: COL_OFFSETS[13], top: 0, width: COLS[13].width, height: ROW_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>
         <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
       </View>
+
     </View>
   )
 }
@@ -791,7 +856,7 @@ export function DataTab({
   return (
     <View style={{ flex: 1, backgroundColor: '#F5F0E8', paddingTop: 8 }}>
 
-      {/* ── Single horizontal scroll — header + body move together, no sync needed ── */}
+      {/* Single horizontal scroll — header + body share the same TOTAL_W container */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator
@@ -799,14 +864,13 @@ export function DataTab({
         indicatorStyle="black"
         style={{ flex: 1 }}
       >
-        {/* width: TOTAL_W pins header and body to the exact same coordinate space */}
         <View style={{ width: TOTAL_W }}>
           <GridHeader />
 
           <ScrollView
             nestedScrollEnabled
             showsVerticalScrollIndicator={false}
-            style={{ height: gridBodyH }}
+            style={{ width: TOTAL_W, height: gridBodyH }}
             contentContainerStyle={{ minHeight: 80 }}
           >
             {rows.length === 0 ? (
@@ -829,7 +893,7 @@ export function DataTab({
         </View>
       </ScrollView>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <View style={{
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -843,7 +907,7 @@ export function DataTab({
         </Text>
       </View>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       <CoverModal   row={coverModal}    onClose={() => setCoverModal(null)} />
       <ProfileModal row={profileModal}  onClose={() => setProfileModal(null)} />
       <ScreeningModal
