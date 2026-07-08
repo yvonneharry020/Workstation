@@ -6,7 +6,6 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
-  Share,
   Modal,
   TextInput,
   RefreshControl,
@@ -151,13 +150,6 @@ function CopyIcon({ color = '#5A4F6E' }: { color?: string }) {
   )
 }
 
-function ShareIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
-    </Svg>
-  )
-}
 
 function ChevronDown({ color = '#1A1625' }: { color?: string }) {
   return (
@@ -509,10 +501,9 @@ function NewRoomModal({ visible, onClose, onCreate }: {
 
 // ─── Room card ────────────────────────────────────────────────────────────────
 
-function RoomCard({ room, onJoin, onShare, onEnd }: {
+function RoomCard({ room, onJoin, onEnd }: {
   room: InterviewRoom
   onJoin: () => void
-  onShare: () => void
   onEnd: () => void
 }) {
   const [copied, setCopied] = useState(false)
@@ -612,20 +603,6 @@ function RoomCard({ room, onJoin, onShare, onEnd }: {
             </Pressable>
           )}
 
-          {isActive && (
-            <Pressable
-              onPress={onShare}
-              style={{
-                flex: 1, backgroundColor: '#FF624010', borderRadius: 10,
-                paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'row', gap: 5, borderWidth: 1, borderColor: '#FF624025',
-              }}
-              className="active:opacity-70"
-            >
-              <ShareIcon />
-              <Text style={{ color: '#FF6240', fontWeight: '600', fontSize: 13 }}>Share Link</Text>
-            </Pressable>
-          )}
 
           {isActive && (
             <Pressable
@@ -688,11 +665,9 @@ export default function InterviewsScreen() {
         status: 'active',
       })
       if (error) throw error
-      return { url: daily.url, type }
     },
-    onSuccess: ({ url, type }) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] })
-      if (type === 'live') setActiveRoomUrl(url)
     },
     onError: (err) => {
       Alert.alert('Failed to create room', err instanceof Error ? err.message : 'Something went wrong')
@@ -711,16 +686,6 @@ export default function InterviewsScreen() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] }),
     onError: () => Alert.alert('Error', 'Could not end the room. Please try again.'),
   })
-
-  const handleShare = useCallback(async (room: InterviewRoom) => {
-    const scheduledInfo = room.scheduled_at
-      ? `\nDate: ${formatDate(room.scheduled_at)} at ${formatTime(room.scheduled_at)}`
-      : ''
-    await Share.share({
-      message: `You're invited to a video interview${room.job_title ? ` for ${room.job_title}` : ''}.${scheduledInfo}\n\nJoin here: ${room.room_url}`,
-      url: room.room_url,
-    })
-  }, [])
 
   const handleEnd = useCallback((room: InterviewRoom) => {
     Alert.alert(
@@ -814,7 +779,6 @@ export default function InterviewsScreen() {
               <RoomCard
                 room={item.room}
                 onJoin={() => setActiveRoomUrl(item.room.room_url)}
-                onShare={() => handleShare(item.room)}
                 onEnd={() => handleEnd(item.room)}
               />
             )
