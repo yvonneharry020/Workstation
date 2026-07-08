@@ -247,6 +247,8 @@ export default function EditCompanyProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ['company-profile-view', user?.id] })
       queryClient.invalidateQueries({ queryKey: ['company-profile-edit', user?.id] })
       queryClient.invalidateQueries({ queryKey: ['company-dashboard', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['company-gallery', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['company-gallery-view', user?.id] })
       Alert.alert('Saved', 'Your company profile has been updated.')
       router.back()
     },
@@ -312,6 +314,8 @@ export default function EditCompanyProfileScreen() {
         .single()
       if (insertError) throw insertError
       setGallery((prev) => [...prev, inserted as unknown as GalleryImage])
+      queryClient.invalidateQueries({ queryKey: ['company-gallery', user?.id] })
+      queryClient.invalidateQueries({ queryKey: ['company-gallery-view', user?.id] })
     } catch {
       Alert.alert('Upload failed', 'Could not add the gallery image.')
     } finally {
