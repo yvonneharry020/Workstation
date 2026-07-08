@@ -209,6 +209,18 @@ function EmptyJobsState() {
   )
 }
 
+function timeAgoShort(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return `${Math.floor(days / 7)}w ago`
+}
+
 function ApplicationRow({ item, index }: { item: RecentApplication; index: number }) {
   const stageColor = STAGE_COLORS[item.pipeline_stage] ?? '#475569'
   const stageLabel = STAGE_LABELS[item.pipeline_stage] ?? item.pipeline_stage
@@ -220,11 +232,7 @@ function ApplicationRow({ item, index }: { item: RecentApplication; index: numbe
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 60).duration(350)}>
-      <Pressable
-        onPress={() => router.push(`/(company)/candidates/${item.candidate_profiles?.id ?? item.id}` as any)}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
-        className="active:opacity-70"
-      >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={{ width: 42, height: 42, borderRadius: 21 }} contentFit="cover" />
         ) : (
@@ -240,9 +248,9 @@ function ApplicationRow({ item, index }: { item: RecentApplication; index: numbe
           <View style={{ backgroundColor: `${stageColor}20`, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
             <Text style={{ color: stageColor, fontSize: 10, fontWeight: '600' }}>{stageLabel}</Text>
           </View>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.email_opened_at ? '#22C55E' : '#475569' }} />
+          <Text style={{ color: '#94A3B8', fontSize: 10 }}>{timeAgoShort(item.submitted_at)}</Text>
         </View>
-      </Pressable>
+      </View>
     </Animated.View>
   )
 }
@@ -303,10 +311,9 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: '#00000070', justifyContent: 'flex-end' }}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} />
-        <View style={{ backgroundColor: '#F5F0E8', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: '#DDD6C9', maxHeight: '80%', paddingBottom: insets.bottom + 8 }}>
+    <Modal visible={visible} animationType="fade" transparent presentationStyle="overFullScreen" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: '#00000060', justifyContent: 'flex-start' }}>
+        <View style={{ backgroundColor: '#F5F0E8', borderBottomLeftRadius: 28, borderBottomRightRadius: 28, borderBottomWidth: 1, borderColor: '#DDD6C9', maxHeight: '82%', paddingTop: insets.top }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
             <View>
               <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Notifications</Text>
@@ -376,6 +383,7 @@ function NotificationsModal({ visible, onClose, userId }: { visible: boolean; on
             />
           )}
         </View>
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
       </View>
     </Modal>
   )
@@ -545,13 +553,6 @@ export default function CompanyDashboard() {
               {stats.recentApplications.map((item, index) => (
                 <ApplicationRow key={item.id} item={item} index={index} />
               ))}
-              <Pressable
-                onPress={() => router.push('/(company)/applicants' as any)}
-                style={{ paddingVertical: 14, alignItems: 'center' }}
-                className="active:opacity-70"
-              >
-                <Text style={{ color: '#FF6240', fontSize: 13, fontWeight: '600' }}>View all applicants</Text>
-              </Pressable>
             </View>
           )}
         </Animated.View>
