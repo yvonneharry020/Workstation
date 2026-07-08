@@ -12,7 +12,7 @@ import {
   FlatList,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Rect } from 'react-native-svg'
 import { Image } from 'expo-image'
@@ -239,6 +239,7 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
   visible: boolean
   onClose: () => void
 }) {
+  const insets = useSafeAreaInsets()
   const [galleryLightbox, setGalleryLightbox] = useState<string | null>(null)
 
   const { data: profile, isLoading } = useQuery({
@@ -280,10 +281,29 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <StatusBar barStyle="dark-content" backgroundColor="#F5F0E8" />
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
-        {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
-          <Pressable onPress={onClose} hitSlop={10} style={{ marginRight: 12 }}>
+      <View style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
+        {/* Header — insets.top guarantees it clears the status bar on every device */}
+        <View style={{
+          paddingTop: insets.top + 10,
+          paddingBottom: 14,
+          paddingHorizontal: 20,
+          borderBottomWidth: 1,
+          borderBottomColor: '#DDD6C9',
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: '#F5F0E8',
+        }}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={({ pressed }) => ({
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: pressed ? '#DDD6C9' : '#EDE7DB',
+              borderWidth: 1, borderColor: '#DDD6C9',
+              alignItems: 'center', justifyContent: 'center',
+              marginRight: 12,
+            })}
+          >
             <XIcon />
           </Pressable>
           <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', flex: 1 }} numberOfLines={1}>
@@ -447,7 +467,7 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
             )}
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
 
       {galleryLightbox && (
         <GalleryLightbox uri={galleryLightbox} onClose={() => setGalleryLightbox(null)} />
