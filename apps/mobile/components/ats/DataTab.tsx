@@ -667,16 +667,16 @@ function NotesCel({ w, row, onPress, bg }: { w: number; row: AtsRowFull; onPress
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'flex-start', gap: 6, opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
+      style={({ pressed }) => [C, { width: w, minHeight: ROW_MIN_H, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', opacity: pressed ? 0.75 : 1, backgroundColor: bg }]}
     >
-      <View style={{ flex: 1 }}>
+      <EditPencil />
+      <View style={{ flex: 1, marginLeft: 6 }}>
         {row.internal_notes ? (
           <Text style={{ fontSize: 11, color: '#5A4F6E', lineHeight: 16 }} numberOfLines={2}>{row.internal_notes}</Text>
         ) : (
           <Text style={{ fontSize: 11, color: '#D4CCBE', fontStyle: 'italic' }}>Add note…</Text>
         )}
       </View>
-      <EditPencil />
     </Pressable>
   )
 }
@@ -799,15 +799,14 @@ export function DataTab({
         indicatorStyle="black"
         style={{ flex: 1 }}
       >
-        <View>
-          {/* Header always on top, same parent as body rows — guaranteed alignment */}
+        {/* width: TOTAL_W pins header and body to the exact same coordinate space */}
+        <View style={{ width: TOTAL_W }}>
           <GridHeader />
 
-          {/* Vertical-scrollable body */}
           <ScrollView
             nestedScrollEnabled
             showsVerticalScrollIndicator={false}
-            style={{ width: TOTAL_W, height: gridBodyH }}
+            style={{ height: gridBodyH }}
             contentContainerStyle={{ minHeight: 80 }}
           >
             {rows.length === 0 ? (
