@@ -187,13 +187,15 @@ function LegendRow({ slice, index }: { slice: SliceData; index: number }) {
 interface Props { rows: AtsRowFull[] }
 
 export function AnalysisTab({ rows }: Props) {
-  const total      = rows.length
-  const hired      = rows.filter((r) => r.pipeline_stage === 'hired').length
-  const rejected   = rows.filter((r) => r.pipeline_stage === 'rejected').length
-  const inPipeline = total - hired - rejected
+  const total       = rows.length
+  const hired       = rows.filter((r) => r.pipeline_stage === 'hired').length
+  const rejected    = rows.filter((r) => r.pipeline_stage === 'rejected').length
+  const interviewed = rows.filter((r) => r.pipeline_stage === 'interview_scheduled').length
+  const inPipeline  = total - hired - rejected
 
-  const conversionRate = total > 0 ? Math.round((hired    / total) * 100) : 0
-  const rejectionRate  = total > 0 ? Math.round((rejected / total) * 100) : 0
+  const conversionRate = total > 0 ? Math.round((hired       / total) * 100) : 0
+  const rejectionRate  = total > 0 ? Math.round((rejected    / total) * 100) : 0
+  const interviewRate  = total > 0 ? Math.round((interviewed / total) * 100) : 0
 
   const slices = buildSlices(rows)
 
@@ -213,7 +215,7 @@ export function AnalysisTab({ rows }: Props) {
       <Animated.View
         entering={FadeInDown.duration(350)}
         style={{
-          backgroundColor: '#FFFFFF', borderRadius: 22, padding: 24, alignItems: 'center',
+          backgroundColor: '#FFFFFF', borderRadius: 22, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, alignItems: 'center',
           borderWidth: 1, borderColor: '#E5DFD3', marginBottom: 20,
           shadowColor: '#1A1625', shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: 3 },
         }}
@@ -254,9 +256,26 @@ export function AnalysisTab({ rows }: Props) {
       </Animated.View>
 
       {/* ── KPI cards ── */}
+      <Animated.View
+        entering={FadeInDown.delay(380).duration(300)}
+        style={{
+          backgroundColor: '#FFFFFF', borderRadius: 18, padding: 18,
+          borderWidth: 1, borderColor: '#E5DFD3', marginBottom: 12,
+          shadowColor: '#1A1625', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 },
+        }}
+      >
+        <Text style={{ fontSize: 10, fontWeight: '700', color: '#9A8FA6', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>
+          Interview Rate
+        </Text>
+        <Text style={{ fontSize: 30, fontWeight: '800', color: '#6366F1', letterSpacing: -0.8, marginBottom: 4 }}>
+          {interviewRate}%
+        </Text>
+        <Text style={{ fontSize: 11, color: '#9A8FA6', lineHeight: 15 }}>{interviewed} of {total} selected for interview</Text>
+      </Animated.View>
+
       <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-        <KpiCard label="Hire Rate"       value={`${conversionRate}%`} sub={`${hired} of ${total} hired`}    color="#0DD4C3" index={0} />
-        <KpiCard label="Rejection Rate"  value={`${rejectionRate}%`}  sub={`${rejected} of ${total} rejected`} color="#EF4444" index={1} />
+        <KpiCard label="Hire Rate"      value={`${conversionRate}%`} sub={`${hired} of ${total} hired`}       color="#0DD4C3" index={1} />
+        <KpiCard label="Rejection Rate" value={`${rejectionRate}%`}  sub={`${rejected} of ${total} rejected`}  color="#EF4444" index={2} />
       </View>
 
       {/* ── In pipeline card ── */}

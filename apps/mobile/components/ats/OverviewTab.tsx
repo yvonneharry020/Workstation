@@ -55,16 +55,16 @@ function PipelineSummary({ rows }: { rows: AtsRowFull[] }) {
 
 // ─── Stat chips ───────────────────────────────────────────────────────────────
 function StatChips({ rows }: { rows: AtsRowFull[] }) {
-  const total      = rows.length
-  const hired      = rows.filter((r) => r.pipeline_stage === 'hired').length
-  const rejected   = rows.filter((r) => r.pipeline_stage === 'rejected').length
-  const inPipeline = total - hired - rejected
+  const total       = rows.length
+  const hired       = rows.filter((r) => r.pipeline_stage === 'hired').length
+  const rejected    = rows.filter((r) => r.pipeline_stage === 'rejected').length
+  const interviewed = rows.filter((r) => r.pipeline_stage === 'interview_scheduled').length
 
   const chips = [
-    { label: 'Total',    value: total,      color: '#FF6240' },
-    { label: 'Pipeline', value: inPipeline, color: '#6366F1' },
-    { label: 'Hired',    value: hired,      color: '#0DD4C3' },
-    { label: 'Rejected', value: rejected,   color: '#EF4444' },
+    { label: 'Total',     value: total,       color: '#FF6240' },
+    { label: 'Interview', value: interviewed,  color: '#6366F1' },
+    { label: 'Hired',     value: hired,        color: '#0DD4C3' },
+    { label: 'Rejected',  value: rejected,     color: '#EF4444' },
   ]
 
   return (
