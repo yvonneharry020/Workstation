@@ -659,75 +659,81 @@ function AbsTxt({ left, width, value, center, bg }: CellPos & { value: string | 
 
 function AbsView({ left, width, onPress, bg }: CellPos & { onPress: () => void; bg: string }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [CELL_BORDER, {
-        position: 'absolute', left, top: 0, width, height: ROW_H,
-        alignItems: 'center', justifyContent: 'center',
-        opacity: pressed ? 0.7 : 1,
-        backgroundColor: bg,
-      }]}
-    >
-      <View style={{
-        flexDirection: 'row', alignItems: 'center', gap: 4,
-        backgroundColor: '#FF624015', borderRadius: 8,
-        paddingHorizontal: 8, paddingVertical: 5,
-        borderWidth: 1, borderColor: '#FF624040',
-      }}>
-        <EyeIcon />
-        <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6240' }}>View</Text>
-      </View>
-    </Pressable>
+    <View style={{
+      position: 'absolute', left, top: 0, width, height: ROW_H,
+      backgroundColor: bg,
+      borderRightWidth: 1, borderRightColor: '#E5DFD3',
+      alignItems: 'center', justifyContent: 'center',
+    }}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+      >
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          backgroundColor: '#FF624015', borderRadius: 8,
+          paddingHorizontal: 8, paddingVertical: 5,
+          borderWidth: 1, borderColor: '#FF624040',
+        }}>
+          <EyeIcon />
+          <Text style={{ fontSize: 11, fontWeight: '700', color: '#FF6240' }}>View</Text>
+        </View>
+      </Pressable>
+    </View>
   )
 }
 
 function AbsPipeline({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
   const cfg = PIPELINE_CONFIG[row.pipeline_stage]
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [CELL_BORDER, {
-        position: 'absolute', left, top: 0, width, height: ROW_H,
-        justifyContent: 'center', paddingHorizontal: 8,
-        opacity: pressed ? 0.75 : 1,
-        backgroundColor: bg,
-      }]}
-    >
-      <View style={{
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: cfg.bg, borderRadius: 10,
-        paddingHorizontal: 8, paddingVertical: 6,
-        borderWidth: 1.5, borderColor: cfg.color + '55',
-      }}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
-        <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
-        <ChevronDown />
-      </View>
-    </Pressable>
+    <View style={{
+      position: 'absolute', left, top: 0, width, height: ROW_H,
+      backgroundColor: bg,
+      borderRightWidth: 1, borderRightColor: '#E5DFD3',
+      justifyContent: 'center', paddingHorizontal: 8,
+    }}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+      >
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 6,
+          backgroundColor: cfg.bg, borderRadius: 10,
+          paddingHorizontal: 8, paddingVertical: 6,
+          borderWidth: 1.5, borderColor: cfg.color + '55',
+        }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: cfg.color, flexShrink: 0 }} />
+          <Text style={{ fontSize: 11, fontWeight: '700', color: cfg.color, flex: 1 }} numberOfLines={1}>{cfg.label}</Text>
+          <ChevronDown />
+        </View>
+      </Pressable>
+    </View>
   )
 }
 
 function AbsNotes({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [CELL_BORDER, {
-        position: 'absolute', left, top: 0, width, height: ROW_H,
-        paddingHorizontal: 10, paddingVertical: 10,
-        flexDirection: 'row', alignItems: 'center',
-        opacity: pressed ? 0.75 : 1,
-        backgroundColor: bg,
-      }]}
-    >
-      <EditPencil />
-      <View style={{ flex: 1, marginLeft: 6 }}>
-        {row.internal_notes ? (
-          <Text style={{ fontSize: 11, color: '#5A4F6E', lineHeight: 16 }} numberOfLines={2}>{row.internal_notes}</Text>
-        ) : (
-          <Text style={{ fontSize: 11, color: '#D4CCBE', fontStyle: 'italic' }}>Add note…</Text>
-        )}
-      </View>
-    </Pressable>
+    <View style={{
+      position: 'absolute', left, top: 0, width, height: ROW_H,
+      backgroundColor: bg,
+      borderRightWidth: 1, borderRightColor: '#E5DFD3',
+      paddingHorizontal: 10, paddingVertical: 10,
+      flexDirection: 'row', alignItems: 'center',
+    }}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1, flexDirection: 'row', alignItems: 'center', flex: 1 })}
+      >
+        <EditPencil />
+        <View style={{ flex: 1, marginLeft: 6 }}>
+          {row.internal_notes ? (
+            <Text style={{ fontSize: 11, color: '#5A4F6E', lineHeight: 16 }} numberOfLines={2}>{row.internal_notes}</Text>
+          ) : (
+            <Text style={{ fontSize: 11, color: '#D4CCBE', fontStyle: 'italic' }}>Add note…</Text>
+          )}
+        </View>
+      </Pressable>
+    </View>
   )
 }
 
