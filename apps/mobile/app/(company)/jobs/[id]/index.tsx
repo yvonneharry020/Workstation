@@ -7,7 +7,7 @@ import Svg, { Path } from 'react-native-svg'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
-type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
+type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'hired' | 'rejected' | 'withdrawn'
 type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired'
 
 interface JobDetail {
@@ -51,7 +51,7 @@ const STAGE_CONFIG: { stage: PipelineStage; label: string; color: string }[] = [
   { stage: 'reviewed',             label: 'Reviewed',   color: '#A78BFA' },
   { stage: 'shortlisted',          label: 'Shortlisted', color: '#34D399' },
   { stage: 'interview_scheduled',  label: 'Interview',  color: '#F59E0B' },
-  { stage: 'offer_made',           label: 'Hired',      color: '#22C55E' },
+  { stage: 'hired',                 label: 'Hired',      color: '#22C55E' },
   { stage: 'rejected',             label: 'Rejected',   color: '#EF4444' },
 ]
 
@@ -70,7 +70,7 @@ const EMPLOYMENT_LABELS: Record<string, string> = {
 
 function BackIcon() {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 12H5M12 19l-7-7 7-7" />
     </Svg>
   )
@@ -122,7 +122,6 @@ export default function JobApplicantsOverview() {
         .select('id, pipeline_stage, email_opened_at, submitted_at, candidate_id, candidate_profiles(first_name, last_name, avatar_url, headline, gender, date_of_birth)')
         .eq('job_id', jobId)
         .order('submitted_at', { ascending: false })
-        .limit(10)
       if (error) throw error
       return (data as unknown as ApplicationSummary[]) ?? []
     },
@@ -191,7 +190,7 @@ export default function JobApplicantsOverview() {
 
             <View style={{ flexDirection: 'row', gap: 0 }}>
               {[
-                { label: 'Applications', value: job.applications_count },
+                { label: 'Applications', value: applications.length },
                 { label: 'Views', value: job.views_count },
                 { label: 'Days live', value: daysPosted ?? '—' },
               ].map((stat, i) => (
@@ -230,7 +229,7 @@ export default function JobApplicantsOverview() {
               className="active:opacity-70"
             >
               <Text style={{ color: '#A78BFA', fontSize: 13, fontWeight: '700', marginBottom: 3 }}>Kanban</Text>
-              <Text style={{ color: '#A78BFA80', fontSize: 11 }}>Drag & drop</Text>
+              <Text style={{ color: '#A78BFA80', fontSize: 11 }}>Pipeline view</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push(`/(company)/interviews/schedule?jobId=${jobId}` as any)}

@@ -68,7 +68,7 @@ function StepDot({ step, active, done }: { step: number; active: boolean; done: 
       alignItems: 'center', justifyContent: 'center',
     }}>
       {done ? (
-        <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
           <Path d="M20 6L9 17l-5-5" />
         </Svg>
       ) : (

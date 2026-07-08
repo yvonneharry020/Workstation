@@ -12,8 +12,10 @@ import {
   useWindowDimensions,
   Linking,
   Alert,
+  FlatList,
 } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+import { Image } from 'expo-image'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import {
@@ -166,18 +168,29 @@ function CoverModal({ row, onClose }: { row: AtsRowFull | null; onClose: () => v
 
 // ─── Profile Modal ────────────────────────────────────────────────────────────
 interface ProfileDetails {
+  tools: string[] | null
   candidate_work_history: { company_name: string; role_title: string; start_date: string; end_date: string | null; is_current: boolean; sort_order: number }[]
   candidate_education:    { institution: string; degree: string; field_of_study: string | null; end_year: number | null; sort_order: number }[]
+  candidate_skills:       { skills: { name: string } | null }[]
+  candidate_gallery:      { image_url: string; sort_order: number }[]
 }
 
 function ProfileModal({ row, onClose }: { row: AtsRowFull | null; onClose: () => void }) {
+  const [galleryLightbox, setGalleryLightbox] = useState<string | null>(null)
+
   const { data: details } = useQuery({
     queryKey: ['candidate-profile-details', row?.candidate_id],
     enabled: !!row?.candidate_id,
     queryFn: async () => {
       const { data } = await supabase
         .from('candidate_profiles')
-        .select('candidate_work_history(company_name, role_title, start_date, end_date, is_current, sort_order), candidate_education(institution, degree, field_of_study, end_year, sort_order)')
+        .select(`
+          tools,
+          candidate_work_history(company_name, role_title, start_date, end_date, is_current, sort_order),
+          candidate_education(institution, degree, field_of_study, end_year, sort_order),
+          candidate_skills(skills(name)),
+          candidate_gallery(image_url, sort_order)
+        `)
         .eq('id', row!.candidate_id!)
         .maybeSingle()
       return data as unknown as ProfileDetails | null
@@ -186,29 +199,38 @@ function ProfileModal({ row, onClose }: { row: AtsRowFull | null; onClose: () =>
 
   if (!row) return null
 
-  const age  = calcAge(row.date_of_birth)
-  const work = [...(details?.candidate_work_history ?? [])].sort((a, b) => a.sort_order - b.sort_order)
-  const edu  = [...(details?.candidate_education ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  const age     = calcAge(row.date_of_birth)
+  const work    = [...(details?.candidate_work_history ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  const edu     = [...(details?.candidate_education ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  const skills  = (details?.candidate_skills ?? []).map((s) => s.skills?.name).filter(Boolean) as string[]
+  const tools   = (details?.tools ?? []).filter(Boolean) as string[]
+  const gallery = [...(details?.candidate_gallery ?? [])].sort((a, b) => a.sort_order - b.sort_order)
 
   const initials = row.full_name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()
-  const cfg = PIPELINE_CONFIG[row.pipeline_stage]
+
+  const gLetter = row.gender === 'male' ? 'M' : row.gender === 'female' ? 'F' : null
+  const ageNum  = age !== '—' ? age : null
+  const nameTag = gLetter && ageNum ? `(${gLetter}|${ageNum})` : gLetter ? `(${gLetter})` : ageNum ? `(${ageNum})` : null
 
   return (
     <ModalShell visible title="Candidate Profile" subtitle={row.full_name} onClose={onClose}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Avatar + basic info */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 18, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E5DFD3' }}>
-          <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: cfg.bg, borderWidth: 1.5, borderColor: cfg.border, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Text style={{ color: cfg.color, fontSize: 16, fontWeight: '800' }}>{initials}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#1A1625' }}>{row.full_name}</Text>
-            {row.headline ? <Text style={{ fontSize: 12, color: '#5A4F6E', marginTop: 2 }} numberOfLines={1}>{row.headline}</Text> : null}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-              {row.location ? <InfoChip label={row.location} /> : null}
-              {row.gender   ? <InfoChip label={row.gender}   /> : null}
-              {age !== '—'  ? <InfoChip label={`${age} yrs`} /> : null}
+        <View style={{ alignItems: 'center', marginBottom: 18 }}>
+          {row.avatar_url ? (
+            <Image source={{ uri: row.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#FF624040', marginBottom: 10 }} contentFit="cover" />
+          ) : (
+            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#FF624020', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+              <Text style={{ color: '#FF6240', fontSize: 24, fontWeight: '800' }}>{initials}</Text>
             </View>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: '#1A1625' }}>{row.full_name}</Text>
+            {nameTag ? <Text style={{ fontSize: 13, color: '#64748B' }}>{nameTag}</Text> : null}
+          </View>
+          {row.headline ? <Text style={{ fontSize: 12, color: '#64748B', marginTop: 3, textAlign: 'center' }} numberOfLines={2}>{row.headline}</Text> : null}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, justifyContent: 'center' }}>
+            {row.location ? <InfoChip label={row.location} /> : null}
           </View>
         </View>
 
@@ -223,6 +245,53 @@ function ProfileModal({ row, onClose }: { row: AtsRowFull | null; onClose: () =>
             <SectionTitle>About</SectionTitle>
             <View style={{ backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#E5DFD3', marginBottom: 16 }}>
               <Text style={{ color: '#1A1625', fontSize: 13, lineHeight: 20 }}>{row.bio}</Text>
+            </View>
+          </>
+        ) : null}
+
+        {/* Gallery */}
+        {gallery.length > 0 ? (
+          <>
+            <SectionTitle>Gallery</SectionTitle>
+            <FlatList
+              data={gallery}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(_, i) => String(i)}
+              contentContainerStyle={{ gap: 10, marginBottom: 16 }}
+              renderItem={({ item }) => (
+                <Pressable onPress={() => setGalleryLightbox(item.image_url)} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
+                  <Image source={{ uri: item.image_url }} style={{ width: 130, height: 100, borderRadius: 12, borderWidth: 1, borderColor: '#E5DFD3' }} contentFit="cover" />
+                </Pressable>
+              )}
+            />
+          </>
+        ) : null}
+
+        {/* Skills */}
+        {skills.length > 0 ? (
+          <>
+            <SectionTitle>Skills</SectionTitle>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 16 }}>
+              {skills.map((s) => (
+                <View key={s} style={{ backgroundColor: '#10B98110', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#10B98130' }}>
+                  <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '500' }}>{s}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        {/* Tools */}
+        {tools.length > 0 ? (
+          <>
+            <SectionTitle>Tools</SectionTitle>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 16 }}>
+              {tools.map((t) => (
+                <View key={t} style={{ backgroundColor: '#8B5CF610', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#8B5CF630' }}>
+                  <Text style={{ color: '#8B5CF6', fontSize: 12, fontWeight: '500' }}>{t}</Text>
+                </View>
+              ))}
             </View>
           </>
         ) : null}
@@ -269,6 +338,22 @@ function ProfileModal({ row, onClose }: { row: AtsRowFull | null; onClose: () =>
           </>
         ) : null}
       </ScrollView>
+
+      {/* Gallery lightbox */}
+      {galleryLightbox ? (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setGalleryLightbox(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: '#000000F0', alignItems: 'center', justifyContent: 'center' }} onPress={() => setGalleryLightbox(null)}>
+            <Image source={{ uri: galleryLightbox }} style={{ width: '100%', height: '60%' }} contentFit="contain" />
+            <Pressable
+              onPress={() => setGalleryLightbox(null)}
+              style={{ position: 'absolute', top: 52, right: 20, width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff30', alignItems: 'center', justifyContent: 'center' }}
+              hitSlop={12}
+            >
+              <CloseIcon />
+            </Pressable>
+          </Pressable>
+        </Modal>
+      ) : null}
     </ModalShell>
   )
 }
@@ -336,7 +421,7 @@ function ScreeningModal({
           </Text>
         ) : (
           questions.map((q, i) => {
-            const answer = (answers[i] ?? answers[String(i)] ?? '') as string
+            const answer = (answers[`q${i}`] ?? answers[i] ?? answers[String(i)] ?? '') as string
             return (
               <View key={i} style={{ marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 6 }}>

@@ -14,10 +14,21 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { Image } from 'expo-image'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { PipelineStage, PIPELINE_CONFIG } from '@/components/ats/types'
 
-type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
+const NIGERIAN_STATES: Record<number, string> = {
+  1: 'Abia', 2: 'Adamawa', 3: 'Akwa Ibom', 4: 'Anambra', 5: 'Bauchi',
+  6: 'Bayelsa', 7: 'Benue', 8: 'Borno', 9: 'Cross River', 10: 'Delta',
+  11: 'Ebonyi', 12: 'Edo', 13: 'Ekiti', 14: 'Enugu', 15: 'FCT',
+  16: 'Gombe', 17: 'Imo', 18: 'Jigawa', 19: 'Kaduna', 20: 'Kano',
+  21: 'Katsina', 22: 'Kebbi', 23: 'Kogi', 24: 'Kwara', 25: 'Lagos',
+  26: 'Nasarawa', 27: 'Niger', 28: 'Ogun', 29: 'Ondo', 30: 'Osun',
+  31: 'Oyo', 32: 'Plateau', 33: 'Rivers', 34: 'Sokoto', 35: 'Taraba',
+  36: 'Yobe', 37: 'Zamfara',
+}
+
 type SortKey = 'submitted_at' | 'skills_match_pct' | 'full_name'
 
 interface ApplicationRow {
@@ -33,30 +44,21 @@ interface ApplicationRow {
     last_name: string
     avatar_url: string | null
     headline: string | null
+    gender: string | null
+    date_of_birth: string | null
+    state_of_origin_id: number | null
   } | null
 }
 
-const STAGE_CONFIG: Record<PipelineStage, { label: string; color: string; bg: string }> = {
-  new:                  { label: 'New',        color: '#818CF8', bg: '#1E293B' },
-  reviewed:             { label: 'Reviewed',   color: '#38BDF8', bg: '#082F49' },
-  shortlisted:          { label: 'Shortlisted',color: '#0DD4C3', bg: '#042F2E' },
-  interview_scheduled:  { label: 'Interview',  color: '#F59E0B', bg: '#451A03' },
-  offer_made:           { label: 'Offer Made', color: '#22C55E', bg: '#052E16' },
-  rejected:             { label: 'Rejected',   color: '#EF4444', bg: '#450A0A' },
-  withdrawn:            { label: 'Withdrawn',  color: '#64748B', bg: '#1E293B' },
-}
-
 const STAGE_TABS: { label: string; value: PipelineStage | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'New', value: 'new' },
-  { label: 'Reviewed', value: 'reviewed' },
+  { label: 'All',         value: 'all' },
+  { label: 'New',         value: 'new' },
+  { label: 'Reviewing',   value: 'reviewed' },
   { label: 'Shortlisted', value: 'shortlisted' },
-  { label: 'Interview', value: 'interview_scheduled' },
-  { label: 'Offer', value: 'offer_made' },
-  { label: 'Rejected', value: 'rejected' },
+  { label: 'Interview',   value: 'interview_scheduled' },
+  { label: 'Hired',       value: 'hired' },
+  { label: 'Rejected',    value: 'rejected' },
 ]
-
-const MOVABLE_STAGES: PipelineStage[] = ['new', 'reviewed', 'shortlisted', 'interview_scheduled', 'offer_made', 'rejected']
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -73,115 +75,88 @@ function getInitials(name: string): string {
 
 function ArrowLeftIcon() {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 12H5M12 19l-7-7 7-7" />
     </Svg>
   )
 }
 
-function MailIcon({ color }: { color: string }) {
-  return (
-    <Svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-      <Path d="M22 6l-10 7L2 6" />
-    </Svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M6 9l6 6 6-6" />
-    </Svg>
-  )
-}
-
-function ApplicationCard({
-  item,
-  index,
-  onMoveStage,
-  isMoving,
-}: {
-  item: ApplicationRow
-  index: number
-  onMoveStage: (id: string, currentStage: PipelineStage) => void
-  isMoving: boolean
-}) {
+function ApplicationCard({ item, index }: { item: ApplicationRow; index: number }) {
   const cp = item.candidate_profiles
   const name = cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown'
   const avatarUrl = cp?.avatar_url
-  const headline = item.candidate_profiles?.headline
-  const stage = STAGE_CONFIG[item.pipeline_stage]
-  const emailSeen = !!item.email_opened_at
-  const emailSent = !!item.email_sent_at
+  const headline = cp?.headline
+  const gender = cp?.gender
+  const dob = cp?.date_of_birth
+  const stateId = cp?.state_of_origin_id
+  const stage = PIPELINE_CONFIG[item.pipeline_stage]
+
+  const gLetter = gender === 'male' ? 'M' : gender === 'female' ? 'F' : null
+  const age = dob ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null
+  const location = stateId ? NIGERIAN_STATES[stateId] : null
+  const nameTag = gLetter && age ? `(${gLetter}|${age})` : gLetter ? `(${gLetter})` : age ? `(${age})` : null
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).duration(300)}>
-      <View className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3">
-        <View className="flex-row items-center gap-3 mb-3">
+      <Pressable
+        onPress={() => router.push(`/(company)/candidates/${item.candidate_id}?applicationId=${item.id}` as any)}
+        style={({ pressed }) => ({
+          backgroundColor: '#FFFFFF',
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: '#E5DFD3',
+          padding: 16,
+          marginBottom: 12,
+          opacity: pressed ? 0.85 : 1,
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: item.skills_match_pct != null ? 12 : 0 }}>
           {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
+            <Image source={{ uri: avatarUrl }} style={{ width: 48, height: 48, borderRadius: 24, flexShrink: 0 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Text style={{ color: '#FF6240', fontSize: 15, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
-          <View className="flex-1">
-            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
-            {headline && <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{headline}</Text>}
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+              <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 14 }} numberOfLines={1}>{name}</Text>
+              {nameTag ? <Text style={{ color: '#64748B', fontSize: 12 }}>{nameTag}</Text> : null}
+            </View>
+            {headline ? <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }} numberOfLines={1}>{headline}</Text> : null}
+            {location ? <Text style={{ color: '#94A3B8', fontSize: 11 }}>{location}</Text> : null}
           </View>
-          <View style={{ backgroundColor: stage.bg, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 }}>
-            <Text style={{ color: stage.color, fontSize: 10, fontWeight: '600' }}>{stage.label}</Text>
+          <View style={{
+            backgroundColor: stage.bg, borderRadius: 8,
+            paddingHorizontal: 8, paddingVertical: 4,
+            borderWidth: 1, borderColor: stage.border, flexShrink: 0,
+          }}>
+            <Text style={{ color: stage.color, fontSize: 11, fontWeight: '700' }}>{stage.label}</Text>
           </View>
         </View>
 
         {item.skills_match_pct != null && (
-          <View className="mb-3">
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-slate-400 text-xs">Skills match</Text>
+          <View style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text style={{ color: '#94A3B8', fontSize: 11 }}>Skills match</Text>
               <Text style={{ color: '#FF6240', fontSize: 11, fontWeight: '600' }}>{item.skills_match_pct}%</Text>
             </View>
-            <View style={{ height: 4, backgroundColor: '#DDD6C9', borderRadius: 2, overflow: 'hidden' }}>
+            <View style={{ height: 4, backgroundColor: '#E5DFD3', borderRadius: 2, overflow: 'hidden' }}>
               <View style={{ height: '100%', width: `${item.skills_match_pct}%`, backgroundColor: '#FF6240', borderRadius: 2 }} />
             </View>
           </View>
         )}
 
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            {(emailSeen || emailSent) && (
-              <View className="flex-row items-center gap-1">
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: emailSeen ? '#22C55E' : '#64748B' }} />
-                <MailIcon color={emailSeen ? '#22C55E' : '#64748B'} />
-                <Text style={{ color: emailSeen ? '#22C55E' : '#64748B', fontSize: 10 }}>
-                  {emailSeen ? 'Seen' : 'Sent'}
-                </Text>
-              </View>
-            )}
-            <Text className="text-slate-500 text-xs">{timeAgo(item.submitted_at)}</Text>
-          </View>
-
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => onMoveStage(item.id, item.pipeline_stage)}
-              disabled={isMoving}
-              style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              className="active:opacity-70"
-            >
-              <Text className="text-slate-300 text-xs">Stage</Text>
-              <ChevronDownIcon />
-            </Pressable>
-
-            <Pressable
-              onPress={() => router.push({ pathname: '/(company)/candidates/[id]', params: { id: item.candidate_id } })}
-              style={{ backgroundColor: '#FF624015', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#FF624030' }}
-              className="active:opacity-70"
-            >
-              <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Profile</Text>
-            </Pressable>
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ color: '#94A3B8', fontSize: 11 }}>{timeAgo(item.submitted_at)}</Text>
+          {item.email_opened_at && (
+            <>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#22C55E' }} />
+              <Text style={{ color: '#22C55E', fontSize: 11 }}>Seen</Text>
+            </>
+          )}
         </View>
-      </View>
+      </Pressable>
     </Animated.View>
   )
 }
@@ -190,7 +165,6 @@ export default function JobAtsScreen() {
   const { id: jobId } = useLocalSearchParams<{ id: string }>()
   const [activeStage, setActiveStage] = useState<PipelineStage | 'all'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('submitted_at')
-  const queryClient = useQueryClient()
 
   const { data: jobTitle } = useQuery({
     queryKey: ['job-title', jobId],
@@ -210,7 +184,7 @@ export default function JobAtsScreen() {
         .select(`
           id, candidate_id, pipeline_stage, email_sent_at, email_opened_at,
           skills_match_pct, submitted_at,
-          candidate_profiles ( first_name, last_name, avatar_url, headline )
+          candidate_profiles ( first_name, last_name, avatar_url, headline, gender, date_of_birth, state_of_origin_id )
         `)
         .eq('job_id', jobId!)
         .order('submitted_at', { ascending: false })
@@ -219,34 +193,6 @@ export default function JobAtsScreen() {
     },
     enabled: !!jobId,
   })
-
-  const { mutate: updateStage, isPending: isMoving } = useMutation({
-    mutationFn: async ({ id, stage }: { id: string; stage: PipelineStage }) => {
-      const { error } = await supabase
-        .from('job_applications')
-        .update({ pipeline_stage: stage })
-        .eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['job-applications', jobId] })
-    },
-  })
-
-  const handleMoveStage = (id: string, currentStage: PipelineStage) => {
-    const options = MOVABLE_STAGES.filter((s) => s !== currentStage)
-    Alert.alert(
-      'Move to stage',
-      `Current: ${STAGE_CONFIG[currentStage].label}`,
-      [
-        ...options.map((stage) => ({
-          text: STAGE_CONFIG[stage].label,
-          onPress: () => updateStage({ id, stage }),
-        })),
-        { text: 'Cancel', style: 'cancel' as const },
-      ],
-    )
-  }
 
   const sortedFiltered = (applications ?? [])
     .filter((a) => activeStage === 'all' || a.pipeline_stage === activeStage)
@@ -265,15 +211,15 @@ export default function JobAtsScreen() {
     })
 
   return (
-    <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-      <View className="px-5 pt-4 pb-3">
-        <View className="flex-row items-center gap-3 mb-1">
-          <Pressable onPress={() => router.back()} hitSlop={10} className="active:opacity-70">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <Pressable onPress={() => router.back()} hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
             <ArrowLeftIcon />
           </Pressable>
-          <View className="flex-1">
-            <Text className="text-[#1A1625] text-lg font-bold">Applicants</Text>
-            <Text className="text-slate-400 text-xs" numberOfLines={1}>{jobTitle}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Applicants</Text>
+            <Text style={{ color: '#94A3B8', fontSize: 12 }} numberOfLines={1}>{jobTitle}</Text>
           </View>
           <Pressable
             onPress={() => {
@@ -289,12 +235,12 @@ export default function JobAtsScreen() {
             }}
             style={{ backgroundColor: '#EDE7DB', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#DDD6C9' }}
           >
-            <Text className="text-slate-300 text-xs">Sort</Text>
+            <Text style={{ color: '#5A4F6E', fontSize: 12 }}>Sort</Text>
           </Pressable>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 -mx-1">
-          <View className="flex-row gap-2 px-1 pb-1">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4, paddingBottom: 4 }}>
             {STAGE_TABS.map((tab) => {
               const active = activeStage === tab.value
               return (
@@ -316,13 +262,13 @@ export default function JobAtsScreen() {
           </View>
         </ScrollView>
 
-        <Text className="text-slate-500 text-xs mt-2">
+        <Text style={{ color: '#64748B', fontSize: 12, marginTop: 8 }}>
           {sortedFiltered.length} applicant{sortedFiltered.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : (
@@ -330,12 +276,7 @@ export default function JobAtsScreen() {
           data={sortedFiltered}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <ApplicationCard
-              item={item}
-              index={index}
-              onMoveStage={handleMoveStage}
-              isMoving={isMoving}
-            />
+            <ApplicationCard item={item} index={index} />
           )}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
@@ -343,9 +284,9 @@ export default function JobAtsScreen() {
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#FF6240" />
           }
           ListEmptyComponent={
-            <View className="items-center py-16">
-              <Text className="text-slate-400 font-semibold text-base mb-1">No applicants in this stage</Text>
-              <Text className="text-slate-500 text-sm">Change the filter to see others</Text>
+            <View style={{ alignItems: 'center', paddingVertical: 64 }}>
+              <Text style={{ color: '#94A3B8', fontWeight: '600', fontSize: 15, marginBottom: 4 }}>No applicants in this stage</Text>
+              <Text style={{ color: '#64748B', fontSize: 13 }}>Change the filter to see others</Text>
             </View>
           }
         />

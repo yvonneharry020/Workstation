@@ -84,7 +84,7 @@ function DownloadIcon() {
 
 function SendIcon() {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" />
     </Svg>
   )

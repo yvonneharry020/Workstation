@@ -476,7 +476,7 @@ export default function ActiveMeetingRoomScreen() {
                   returnKeyType="send"
                 />
                 <Pressable onPress={sendMessage} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF6240', alignItems: 'center', justifyContent: 'center' }}>
-                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <Path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
                   </Svg>
                 </Pressable>

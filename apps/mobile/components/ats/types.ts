@@ -17,13 +17,13 @@ export const COMPANY_STAGES: PipelineStage[] = [
 ]
 
 export const PIPELINE_CONFIG: Record<PipelineStage, { label: string; color: string; bg: string; border: string }> = {
-  new:                 { label: 'New',         color: '#94A3B8', bg: '#F1F5F9', border: '#CBD5E1' },
-  reviewed:            { label: 'Reviewing',   color: '#0EA5E9', bg: '#E0F2FE', border: '#BAE6FD' },
-  shortlisted:         { label: 'Shortlisted', color: '#F59E0B', bg: '#FEF3C7', border: '#FDE68A' },
-  interview_scheduled: { label: 'Interview',   color: '#8B5CF6', bg: '#EDE9FE', border: '#C4B5FD' },
-  hired:               { label: 'Hired',       color: '#0DD4C3', bg: '#CCFBF1', border: '#99F6E4' },
-  rejected:            { label: 'Rejected',    color: '#EF4444', bg: '#FEE2E2', border: '#FECACA' },
-  withdrawn:           { label: 'Withdrawn',   color: '#9CA3AF', bg: '#F3F4F6', border: '#E5E7EB' },
+  new:                 { label: 'New',         color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE' },
+  reviewed:            { label: 'Reviewing',   color: '#8B5CF6', bg: '#F5F3FF', border: '#C4B5FD' },
+  shortlisted:         { label: 'Shortlisted', color: '#10B981', bg: '#ECFDF5', border: '#A7F3D0' },
+  interview_scheduled: { label: 'Interview',   color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A' },
+  hired:               { label: 'Hired',       color: '#22C55E', bg: '#F0FDF4', border: '#BBF7D0' },
+  rejected:            { label: 'Rejected',    color: '#EF4444', bg: '#FEF2F2', border: '#FECACA' },
+  withdrawn:           { label: 'Withdrawn',   color: '#64748B', bg: '#F8FAFC', border: '#E2E8F0' },
 }
 
 export const PIPELINE_ORDER: PipelineStage[] = [

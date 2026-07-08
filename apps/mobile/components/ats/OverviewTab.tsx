@@ -1,5 +1,6 @@
 import { View, Text, ScrollView } from 'react-native'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
+import { Image } from 'expo-image'
 import { AtsRowFull, PIPELINE_CONFIG, PIPELINE_ORDER, PipelineStage, calcAge } from './types'
 
 function formatDate(iso: string): string {
@@ -131,17 +132,25 @@ function CandidateCard({ row, index }: { row: AtsRowFull; index: number }) {
       }} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: 20, paddingRight: 14, paddingVertical: 14, gap: 12 }}>
-        {/* Avatar initials */}
-        <View style={{
-          width: 42, height: 42, borderRadius: 21,
-          backgroundColor: cfg.bg,
-          borderWidth: 1.5, borderColor: cfg.border,
-          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <Text style={{ color: cfg.color, fontSize: 13, fontWeight: '800' }}>
-            {row.full_name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()}
-          </Text>
-        </View>
+        {/* Avatar */}
+        {row.avatar_url ? (
+          <Image
+            source={{ uri: row.avatar_url }}
+            style={{ width: 42, height: 42, borderRadius: 21, borderWidth: 1.5, borderColor: cfg.border, flexShrink: 0 }}
+            contentFit="cover"
+          />
+        ) : (
+          <View style={{
+            width: 42, height: 42, borderRadius: 21,
+            backgroundColor: cfg.bg,
+            borderWidth: 1.5, borderColor: cfg.border,
+            alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <Text style={{ color: cfg.color, fontSize: 13, fontWeight: '800' }}>
+              {row.full_name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase()}
+            </Text>
+          </View>
+        )}
 
         {/* Info */}
         <View style={{ flex: 1, minWidth: 0 }}>

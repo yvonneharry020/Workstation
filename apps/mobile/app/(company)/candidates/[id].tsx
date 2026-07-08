@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Alert,
   Modal,
   Dimensions,
   StatusBar,
@@ -17,9 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Rect } from 'react-native-svg'
 import { Image } from 'expo-image'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { PIPELINE_CONFIG } from '@/components/ats/types'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -34,7 +34,7 @@ const NIGERIAN_STATES: Record<number, string> = {
   36: 'Yobe', 37: 'Zamfara',
 }
 
-type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'offer_made' | 'rejected' | 'withdrawn'
+type PipelineStage = 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'hired' | 'rejected' | 'withdrawn'
 
 interface CandidateProfile {
   id: string
@@ -75,6 +75,7 @@ interface CandidateProfile {
 
 interface ApplicationData {
   id: string
+  job_id: string
   pipeline_stage: PipelineStage
   cover_note: string | null
   screening_answers: Record<string, string> | null
@@ -84,17 +85,6 @@ interface ApplicationData {
   submitted_at: string
 }
 
-const STAGE_CONFIG: Record<PipelineStage, { label: string; color: string; bg: string }> = {
-  new:                 { label: 'New',         color: '#818CF8', bg: '#1E293B' },
-  reviewed:            { label: 'Reviewed',    color: '#38BDF8', bg: '#082F49' },
-  shortlisted:         { label: 'Shortlisted', color: '#0DD4C3', bg: '#042F2E' },
-  interview_scheduled: { label: 'Interview',   color: '#F59E0B', bg: '#451A03' },
-  offer_made:          { label: 'Hired',       color: '#22C55E', bg: '#052E16' },
-  rejected:            { label: 'Rejected',    color: '#EF4444', bg: '#450A0A' },
-  withdrawn:           { label: 'Withdrawn',   color: '#64748B', bg: '#1E293B' },
-}
-
-const MOVABLE_STAGES: PipelineStage[] = ['new', 'reviewed', 'shortlisted', 'interview_scheduled', 'offer_made', 'rejected']
 
 function getAge(dob: string): number {
   const today = new Date()
@@ -125,7 +115,7 @@ function getInitials(name: string): string {
 
 function ArrowLeftIcon() {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 12H5M12 19l-7-7 7-7" />
     </Svg>
   )
@@ -288,7 +278,7 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
   })
 
   return (
-    <Modal visible animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+    <Modal visible animationType="slide" onRequestClose={onClose}>
       <StatusBar barStyle="dark-content" backgroundColor="#F5F0E8" />
       <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
         {/* Header */}
@@ -477,8 +467,6 @@ export default function CandidateApplicationScreen() {
   const [avatarLightbox, setAvatarLightbox] = useState(false)
   const [showFullProfile, setShowFullProfile] = useState(false)
   const [hasRecordedView, setHasRecordedView] = useState(false)
-  const queryClient = useQueryClient()
-
   const { data: candidate, isLoading: loadingProfile } = useQuery({
     queryKey: ['candidate-profile', candidateId],
     queryFn: async () => {
@@ -504,7 +492,7 @@ export default function CandidateApplicationScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_applications')
-        .select('id, pipeline_stage, cover_note, screening_answers, email_sent_at, email_opened_at, internal_notes, submitted_at')
+        .select('id, job_id, pipeline_stage, cover_note, screening_answers, email_sent_at, email_opened_at, internal_notes, submitted_at')
         .eq('id', applicationId!)
         .maybeSingle()
       if (error) throw error
@@ -518,12 +506,17 @@ export default function CandidateApplicationScreen() {
     enabled: !!applicationId,
   })
 
-  const { mutate: updateStage } = useMutation({
-    mutationFn: async (stage: PipelineStage) => {
-      const { error } = await supabase.from('job_applications').update({ pipeline_stage: stage }).eq('id', applicationId!)
-      if (error) throw error
+  const { data: screeningQuestions } = useQuery({
+    queryKey: ['job-screening-questions', application?.job_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('job_postings')
+        .select('screening_questions')
+        .eq('id', application!.job_id!)
+        .maybeSingle()
+      return (data as { screening_questions: { question: string; required: boolean }[] } | null)?.screening_questions ?? []
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['application-detail', applicationId] }),
+    enabled: !!application?.job_id,
   })
 
   const { mutate: saveNotes } = useMutation({
@@ -567,19 +560,6 @@ export default function CandidateApplicationScreen() {
     void recordViewMutation.mutate()
   }
 
-  const handleMoveStage = () => {
-    if (!application) return
-    const options = MOVABLE_STAGES.filter((s) => s !== application.pipeline_stage)
-    Alert.alert(
-      'Move to stage',
-      `Current: ${STAGE_CONFIG[application.pipeline_stage].label}`,
-      [
-        ...options.map((stage) => ({ text: STAGE_CONFIG[stage].label, onPress: () => updateStage(stage) })),
-        { text: 'Cancel', style: 'cancel' as const },
-      ],
-    )
-  }
-
   const isLoading = loadingProfile || (!!applicationId && loadingApp)
 
   if (isLoading) {
@@ -608,7 +588,7 @@ export default function CandidateApplicationScreen() {
   const age = candidate.date_of_birth ? getAge(candidate.date_of_birth) : null
   const location = candidate.state_of_origin_id ? NIGERIAN_STATES[candidate.state_of_origin_id] : null
   const currentStage = application?.pipeline_stage
-  const stageConfig = currentStage ? STAGE_CONFIG[currentStage] : null
+  const stageConfig = currentStage ? PIPELINE_CONFIG[currentStage] : null
   const emailSeen = !!application?.email_opened_at
   const emailSent = !!application?.email_sent_at
 
@@ -621,13 +601,9 @@ export default function CandidateApplicationScreen() {
         </Pressable>
         <Text style={{ flex: 1, color: '#1A1625', fontWeight: '600', fontSize: 16 }} numberOfLines={1}>{name}</Text>
         {application && stageConfig && (
-          <Pressable
-            onPress={handleMoveStage}
-            style={{ backgroundColor: stageConfig.bg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}
-            className="active:opacity-70"
-          >
+          <View style={{ backgroundColor: stageConfig.bg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: stageConfig.border }}>
             <Text style={{ color: stageConfig.color, fontSize: 12, fontWeight: '600' }}>{stageConfig.label}</Text>
-          </Pressable>
+          </View>
         )}
       </View>
 
@@ -730,12 +706,16 @@ export default function CandidateApplicationScreen() {
                   </Pressable>
                   {showScreeningAnswers && (
                     <View style={{ marginTop: 12, gap: 10 }}>
-                      {Object.entries(application.screening_answers).map(([q, a]) => (
-                        <View key={q}>
-                          <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '600', marginBottom: 3 }}>{q}</Text>
-                          <Text style={{ color: '#1A1625', fontSize: 13 }}>{a}</Text>
-                        </View>
-                      ))}
+                      {Object.keys(application.screening_answers).map((key, i) => {
+                        const answer = application.screening_answers![key]
+                        const questionText = screeningQuestions?.[i]?.question ?? key
+                        return (
+                          <View key={key}>
+                            <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '600', marginBottom: 3 }}>{questionText}</Text>
+                            <Text style={{ color: '#1A1625', fontSize: 13 }}>{answer || '—'}</Text>
+                          </View>
+                        )
+                      })}
                     </View>
                   )}
                 </View>

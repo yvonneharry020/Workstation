@@ -6,18 +6,27 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
-  TextInput,
-  Modal,
 } from 'react-native'
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Path, Circle } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { Image } from 'expo-image'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+
+const NIGERIAN_STATES: Record<number, string> = {
+  1: 'Abia', 2: 'Adamawa', 3: 'Akwa Ibom', 4: 'Anambra', 5: 'Bauchi',
+  6: 'Bayelsa', 7: 'Benue', 8: 'Borno', 9: 'Cross River', 10: 'Delta',
+  11: 'Ebonyi', 12: 'Edo', 13: 'Ekiti', 14: 'Enugu', 15: 'FCT',
+  16: 'Gombe', 17: 'Imo', 18: 'Jigawa', 19: 'Kaduna', 20: 'Kano',
+  21: 'Katsina', 22: 'Kebbi', 23: 'Kogi', 24: 'Kwara', 25: 'Lagos',
+  26: 'Nasarawa', 27: 'Niger', 28: 'Ogun', 29: 'Ondo', 30: 'Osun',
+  31: 'Oyo', 32: 'Plateau', 33: 'Rivers', 34: 'Sokoto', 35: 'Taraba',
+  36: 'Yobe', 37: 'Zamfara',
+}
 
 interface SavedEntry {
   id: string
@@ -31,7 +40,9 @@ interface CandidateRow {
   last_name: string
   avatar_url: string | null
   headline: string | null
-  candidate_skills: { skills: { name: string } | null }[]
+  gender: string | null
+  date_of_birth: string | null
+  state_of_origin_id: number | null
 }
 
 function getSavedKey(userId: string) {
@@ -42,9 +53,18 @@ function getInitials(name: string): string {
   return name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 }
 
+function getAge(dob: string): number {
+  const today = new Date()
+  const birth = new Date(dob)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age
+}
+
 function ArrowLeftIcon() {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 12H5M12 19l-7-7 7-7" />
     </Svg>
   )
@@ -54,15 +74,6 @@ function BookmarkIcon() {
   return (
     <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-    </Svg>
-  )
-}
-
-function TagIcon() {
-  return (
-    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-      <Circle cx={7} cy={7} r={1.5} fill="#64748B" />
     </Svg>
   )
 }
@@ -77,24 +88,24 @@ function XIcon() {
 
 function CandidateCard({
   candidateId,
-  entry,
   candidate,
   onRemove,
-  onEditTag,
 }: {
   candidateId: string
-  entry: SavedEntry
   candidate: CandidateRow | undefined
   onRemove: (id: string) => void
-  onEditTag: (id: string, currentTag: string) => void
 }) {
   const name = candidate ? `${candidate.first_name} ${candidate.last_name}`.trim() : '…'
   const avatarUrl = candidate?.avatar_url
   const headline = candidate?.headline
-  const topSkills = candidate?.candidate_skills
-    .map((s) => s.skills?.name)
-    .filter(Boolean)
-    .slice(0, 3) as string[]
+  const gender = candidate?.gender
+  const dob = candidate?.date_of_birth
+  const stateId = candidate?.state_of_origin_id
+
+  const gLetter = gender === 'male' ? 'M' : gender === 'female' ? 'F' : null
+  const age = dob ? getAge(dob) : null
+  const location = stateId ? NIGERIAN_STATES[stateId] : null
+  const nameTag = gLetter && age ? `(${gLetter}|${age})` : gLetter ? `(${gLetter})` : age ? `(${age})` : null
 
   return (
     <Animated.View entering={FadeInDown.duration(300)}>
@@ -106,53 +117,42 @@ function CandidateCard({
             { text: 'Remove', style: 'destructive', onPress: () => onRemove(candidateId) },
           ])
         }
-        className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3 active:opacity-80"
+        style={({ pressed }) => ({
+          backgroundColor: '#FFFFFF',
+          borderRadius: 18,
+          borderWidth: 1,
+          borderColor: '#E5DFD3',
+          padding: 16,
+          marginBottom: 12,
+          opacity: pressed ? 0.85 : 1,
+        })}
       >
-        <View className="flex-row items-center gap-3 mb-2">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
+            <Image source={{ uri: avatarUrl }} style={{ width: 48, height: 48, borderRadius: 24, flexShrink: 0 }} contentFit="cover" />
           ) : (
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '700' }}>{getInitials(name)}</Text>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Text style={{ color: '#FF6240', fontSize: 15, fontWeight: '700' }}>{getInitials(name)}</Text>
             </View>
           )}
 
-          <View className="flex-1">
-            <Text className="text-[#1A1625] font-semibold text-sm" numberOfLines={1}>{name}</Text>
-            {headline && <Text className="text-slate-400 text-xs mt-0.5" numberOfLines={1}>{headline}</Text>}
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+              <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 14 }} numberOfLines={1}>{name}</Text>
+              {nameTag ? <Text style={{ color: '#64748B', fontSize: 12 }}>{nameTag}</Text> : null}
+            </View>
+            {headline ? <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }} numberOfLines={1}>{headline}</Text> : null}
+            {location ? <Text style={{ color: '#94A3B8', fontSize: 11 }}>{location}</Text> : null}
           </View>
 
           <Pressable
             onPress={() => onRemove(candidateId)}
             hitSlop={10}
-            className="active:opacity-70"
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
             <XIcon />
           </Pressable>
         </View>
-
-        {topSkills.length > 0 && (
-          <View className="flex-row flex-wrap gap-1.5 mb-2">
-            {topSkills.map((skill) => (
-              <View
-                key={skill}
-                style={{ backgroundColor: '#0DD4C310', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: '#0DD4C330' }}
-              >
-                <Text style={{ color: '#0DD4C3', fontSize: 10, fontWeight: '500' }}>{skill}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <Pressable
-          onPress={() => onEditTag(candidateId, entry.tag)}
-          className="flex-row items-center gap-1.5 active:opacity-70"
-        >
-          <TagIcon />
-          <Text style={{ color: entry.tag ? '#5A4F6E' : '#475569', fontSize: 12 }}>
-            {entry.tag || 'Add tag…'}
-          </Text>
-        </Pressable>
       </Pressable>
     </Animated.View>
   )
@@ -162,9 +162,6 @@ export default function SavedCandidatesScreen() {
   const user = useAuthStore((s) => s.user)
   const [savedEntries, setSavedEntries] = useState<SavedEntry[]>([])
   const [storageLoaded, setStorageLoaded] = useState(false)
-  const [tagModalVisible, setTagModalVisible] = useState(false)
-  const [tagTargetId, setTagTargetId] = useState<string | null>(null)
-  const [tagInput, setTagInput] = useState('')
 
   const loadFromStorage = useCallback(async () => {
     if (!user?.id) return
@@ -198,10 +195,7 @@ export default function SavedCandidatesScreen() {
       if (savedIds.length === 0) return new Map<string, CandidateRow>()
       const { data, error } = await supabase
         .from('candidate_profiles')
-        .select(`
-          id, first_name, last_name, avatar_url, headline,
-          candidate_skills ( skills ( name ) )
-        `)
+        .select('id, first_name, last_name, avatar_url, headline, gender, date_of_birth, state_of_origin_id')
         .in('id', savedIds)
       if (error) throw error
       const rows = data as unknown as CandidateRow[]
@@ -216,36 +210,18 @@ export default function SavedCandidatesScreen() {
     await saveToStorage(updated)
   }
 
-  const openTagModal = (candidateId: string, currentTag: string) => {
-    setTagTargetId(candidateId)
-    setTagInput(currentTag)
-    setTagModalVisible(true)
-  }
-
-  const handleSaveTag = async () => {
-    if (!tagTargetId) return
-    const updated = savedEntries.map((e) =>
-      e.id === tagTargetId ? { ...e, tag: tagInput.trim() } : e,
-    )
-    setSavedEntries(updated)
-    await saveToStorage(updated)
-    setTagModalVisible(false)
-    setTagTargetId(null)
-    setTagInput('')
-  }
-
   const isLoading = !storageLoaded || (savedIds.length > 0 && loadingCandidates)
 
   return (
-    <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-      <View className="px-5 pt-4 pb-3 flex-row items-center gap-3">
-        <Pressable onPress={() => router.back()} hitSlop={10} className="active:opacity-70">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }} edges={['top']}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Pressable onPress={() => router.back()} hitSlop={10} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
           <ArrowLeftIcon />
         </Pressable>
-        <View className="flex-1">
-          <Text className="text-[#1A1625] text-xl font-bold">Saved Candidates</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700' }}>Saved Candidates</Text>
           {!isLoading && (
-            <Text className="text-slate-400 text-xs">
+            <Text style={{ color: '#94A3B8', fontSize: 12 }}>
               {savedEntries.length} candidate{savedEntries.length !== 1 ? 's' : ''} saved
             </Text>
           )}
@@ -253,22 +229,21 @@ export default function SavedCandidatesScreen() {
       </View>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : savedEntries.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-8">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <BookmarkIcon />
-          <Text className="text-slate-400 font-semibold text-lg mt-4 mb-2">No saved candidates</Text>
-          <Text className="text-slate-500 text-sm text-center mb-6">
+          <Text style={{ color: '#94A3B8', fontWeight: '600', fontSize: 18, marginTop: 16, marginBottom: 8 }}>No saved candidates</Text>
+          <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center', marginBottom: 24 }}>
             Tap the star icon on any candidate in the Browse tab to save them here.
           </Text>
           <Pressable
             onPress={() => router.push('/(company)/candidates/browse')}
             style={{ backgroundColor: '#FF6240', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12 }}
-            className="active:opacity-80"
           >
-            <Text className="text-[#1A1625] font-semibold text-sm">Browse Talent</Text>
+            <Text style={{ color: '#1A1625', fontWeight: '600', fontSize: 14 }}>Browse Talent</Text>
           </Pressable>
         </View>
       ) : (
@@ -278,48 +253,14 @@ export default function SavedCandidatesScreen() {
           renderItem={({ item }) => (
             <CandidateCard
               candidateId={item.id}
-              entry={item}
               candidate={candidateMap?.get(item.id)}
               onRemove={handleRemove}
-              onEditTag={openTagModal}
             />
           )}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         />
       )}
-
-      <Modal visible={tagModalVisible} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#EDE7DB', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 }}>
-            <Text className="text-[#1A1625] font-bold text-lg mb-4">Add tag</Text>
-            <TextInput
-              placeholder="e.g. Strong frontend, Follow up next week…"
-              placeholderTextColor="#475569"
-              value={tagInput}
-              onChangeText={setTagInput}
-              autoFocus
-              style={{ backgroundColor: '#F5F0E8', borderRadius: 12, borderWidth: 1, borderColor: '#DDD6C9', color: '#1A1625', fontSize: 14, padding: 14, marginBottom: 16 }}
-            />
-            <View className="flex-row gap-3">
-              <Pressable
-                onPress={() => setTagModalVisible(false)}
-                style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
-                className="active:opacity-70"
-              >
-                <Text className="text-slate-300 font-semibold">Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleSaveTag}
-                style={{ flex: 1, backgroundColor: '#FF6240', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
-                className="active:opacity-80"
-              >
-                <Text className="text-[#1A1625] font-semibold">Save tag</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   )
 }

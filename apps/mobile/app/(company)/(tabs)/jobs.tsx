@@ -62,7 +62,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 
 function PlusIcon() {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M12 5v14M5 12h14" />
     </Svg>
   )
