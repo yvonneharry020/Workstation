@@ -24,9 +24,10 @@ interface CandidateProfile {
   last_name: string
   avatar_url: string | null
   headline: string | null
+  profiles: { email: string | null } | null
   candidate_skills: { skills: { name: string } | null }[]
   candidate_work_history: {
-    job_title: string
+    role_title: string
     company_name: string
     start_date: string
     end_date: string | null
@@ -72,6 +73,15 @@ function ArrowLeftIcon() {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M19 12H5M12 19l-7-7 7-7" />
+    </Svg>
+  )
+}
+
+function MailIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <Path d="M22 6l-10 7L2 6" />
     </Svg>
   )
 }
@@ -122,8 +132,9 @@ export default function CandidateProfileScreen() {
         .from('candidate_profiles')
         .select(`
           id, first_name, last_name, avatar_url, headline,
+          profiles ( email ),
           candidate_skills ( skills ( name ) ),
-          candidate_work_history ( job_title, company_name, start_date, end_date, is_current )
+          candidate_work_history ( role_title, company_name, start_date, end_date, is_current )
         `)
         .eq('id', candidateId!)
         .maybeSingle()
@@ -213,6 +224,7 @@ export default function CandidateProfileScreen() {
   }
 
   const name = `${candidate.first_name} ${candidate.last_name}`.trim() || 'Unknown'
+  const email = candidate.profiles?.email ?? null
   const avatarUrl = candidate.avatar_url
   const currentStage = application?.pipeline_stage
   const stageConfig = currentStage ? STAGE_CONFIG[currentStage] : null
@@ -259,6 +271,12 @@ export default function CandidateProfileScreen() {
               <Text className="text-[#1A1625] text-xl font-bold mb-0.5">{name}</Text>
               {candidate.headline && (
                 <Text className="text-slate-400 text-sm mb-1" numberOfLines={2}>{candidate.headline}</Text>
+              )}
+              {email && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                  <MailIcon />
+                  <Text style={{ color: '#64748B', fontSize: 12 }}>{email}</Text>
+                </View>
               )}
             </View>
             <TrustRing score={75} />
@@ -388,7 +406,7 @@ export default function CandidateProfileScreen() {
                     borderColor: '#DDD6C9', padding: 12, marginBottom: 8,
                   }}
                 >
-                  <Text className="text-[#1A1625] font-semibold text-sm">{job.job_title}</Text>
+                  <Text className="text-[#1A1625] font-semibold text-sm">{job.role_title}</Text>
                   <Text className="text-slate-400 text-xs mt-0.5">{job.company_name}</Text>
                   <Text className="text-slate-500 text-xs mt-1">
                     {formatWorkDate(job.start_date, false)} — {formatWorkDate(job.end_date, job.is_current)}

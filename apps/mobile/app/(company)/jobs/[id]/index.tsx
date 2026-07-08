@@ -162,9 +162,11 @@ export default function JobApplicantsOverview() {
           <BackIcon />
         </Pressable>
         <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700', flex: 1 }} numberOfLines={1}>{job.title}</Text>
-        <Pressable onPress={() => router.push(`/(company)/jobs/${jobId}/edit` as any)} hitSlop={8} className="active:opacity-70">
-          <EditIcon />
-        </Pressable>
+        {job.status === 'draft' && (
+          <Pressable onPress={() => router.push(`/(company)/jobs/${jobId}/edit` as any)} hitSlop={8} className="active:opacity-70">
+            <EditIcon />
+          </Pressable>
+        )}
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>

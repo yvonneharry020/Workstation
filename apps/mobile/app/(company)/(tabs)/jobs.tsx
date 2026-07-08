@@ -161,14 +161,16 @@ function JobCard({ job, onToggleStatus, onClose, onPublish }: {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Pressable
-            onPress={() => router.push(`/(company)/jobs/${job.id}` as any)}
-            style={{ flex: 1, backgroundColor: '#FF624015', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: '#FF624025' }}
-            className="active:opacity-70"
-          >
-            <UsersIcon />
-            <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Applicants</Text>
-          </Pressable>
+          {!isDraft && (
+            <Pressable
+              onPress={() => router.push(`/(company)/jobs/${job.id}` as any)}
+              style={{ flex: 1, backgroundColor: '#FF624015', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: '#FF624025' }}
+              className="active:opacity-70"
+            >
+              <UsersIcon />
+              <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Applicants</Text>
+            </Pressable>
+          )}
 
           {isDraft && (
             <Pressable
