@@ -217,7 +217,7 @@ export default function InterviewScheduleScreen() {
     if (selectedJobId) {
       router.replace({ pathname: '/(company)/jobs/[id]' as never, params: { id: selectedJobId } })
     } else {
-      router.replace('/(company)/applicants')
+      router.replace('/(company)/(tabs)/applicants')
     }
   }
 

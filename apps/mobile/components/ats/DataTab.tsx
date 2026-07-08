@@ -760,40 +760,40 @@ function GridRow({ row, index, isEven, handlers }: { row: AtsRowFull; index: num
       </View>
 
       {/* col[1]  Full Name  left=36  w=145 */}
-      <AbsTxt left={COL_OFFSETS[1]} width={COLS[1].width} value={row.full_name}              bg={bg} />
+      <AbsTxt left={COL_OFFSETS[1]!} width={COLS[1].width} value={row.full_name}              bg={bg} />
 
       {/* col[2]  Email  left=181  w=165 */}
-      <AbsTxt left={COL_OFFSETS[2]} width={COLS[2].width} value={row.email}                  bg={bg} />
+      <AbsTxt left={COL_OFFSETS[2]!} width={COLS[2].width} value={row.email}                  bg={bg} />
 
       {/* col[3]  Phone  left=346  w=120 */}
-      <AbsTxt left={COL_OFFSETS[3]} width={COLS[3].width} value={row.phone}                  bg={bg} />
+      <AbsTxt left={COL_OFFSETS[3]!} width={COLS[3].width} value={row.phone}                  bg={bg} />
 
       {/* col[4]  Location  left=466  w=115 */}
-      <AbsTxt left={COL_OFFSETS[4]} width={COLS[4].width} value={row.location}               bg={bg} />
+      <AbsTxt left={COL_OFFSETS[4]!} width={COLS[4].width} value={row.location}               bg={bg} />
 
       {/* col[5]  Gender  left=581  w=85 */}
-      <AbsTxt left={COL_OFFSETS[5]} width={COLS[5].width} value={row.gender}                 bg={bg} />
+      <AbsTxt left={COL_OFFSETS[5]!} width={COLS[5].width} value={row.gender}                 bg={bg} />
 
       {/* col[6]  Age  left=666  w=65 */}
-      <AbsTxt left={COL_OFFSETS[6]} width={COLS[6].width} value={calcAge(row.date_of_birth)} bg={bg} center />
+      <AbsTxt left={COL_OFFSETS[6]!} width={COLS[6].width} value={calcAge(row.date_of_birth)} bg={bg} center />
 
       {/* col[7]  Cover Letter  left=731  w=110 — always shows View, modal handles empty state */}
-      <AbsView left={COL_OFFSETS[7]} width={COLS[7].width} onPress={handlers.onCoverPress}    bg={bg} />
+      <AbsView left={COL_OFFSETS[7]!} width={COLS[7].width} onPress={handlers.onCoverPress}    bg={bg} />
 
       {/* col[8]  Profile  left=841  w=90 */}
-      <AbsView left={COL_OFFSETS[8]} width={COLS[8].width} onPress={handlers.onProfilePress}  bg={bg} />
+      <AbsView left={COL_OFFSETS[8]!} width={COLS[8].width} onPress={handlers.onProfilePress}  bg={bg} />
 
       {/* col[9]  Pipeline  left=931  w=135 */}
-      <AbsPipeline left={COL_OFFSETS[9]} width={COLS[9].width} row={row} onPress={handlers.onPipelinePress} bg={bg} />
+      <AbsPipeline left={COL_OFFSETS[9]!} width={COLS[9].width} row={row} onPress={handlers.onPipelinePress} bg={bg} />
 
       {/* col[10]  Notes  left=1066  w=155 */}
-      <AbsNotes left={COL_OFFSETS[10]} width={COLS[10].width} row={row} onPress={handlers.onNotesPress} bg={bg} />
+      <AbsNotes left={COL_OFFSETS[10]!} width={COLS[10].width} row={row} onPress={handlers.onNotesPress} bg={bg} />
 
       {/* col[11]  Screening  left=1221  w=110 */}
-      <AbsView left={COL_OFFSETS[11]} width={COLS[11].width} onPress={handlers.onScreeningPress} bg={bg} />
+      <AbsView left={COL_OFFSETS[11]!} width={COLS[11].width} onPress={handlers.onScreeningPress} bg={bg} />
 
       {/* col[12]  Interview  left=1331  w=100 */}
-      <AbsView left={COL_OFFSETS[12]} width={COLS[12].width} onPress={handlers.onInterviewPress} bg={bg} />
+      <AbsView left={COL_OFFSETS[12]!} width={COLS[12].width} onPress={handlers.onInterviewPress} bg={bg} />
 
       {/* col[13]  Attendance  left=1431  w=100 — not yet tracked */}
       <View style={{ position: 'absolute', left: COL_OFFSETS[13], top: 0, width: COLS[13].width, height: ROW_H, alignItems: 'center', justifyContent: 'center', backgroundColor: bg }}>

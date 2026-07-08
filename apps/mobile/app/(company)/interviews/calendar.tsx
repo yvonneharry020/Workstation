@@ -300,7 +300,7 @@ export default function InterviewCalendarScreen() {
             </View>
             <ScrollView style={{ flex: 1, padding: 20 }}>
               <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>
-                {selected.candidate_profiles?.profiles?.full_name ?? 'Unknown Candidate'}
+                {[selected.candidate_profiles?.first_name, selected.candidate_profiles?.last_name].filter(Boolean).join(' ') || 'Unknown Candidate'}
               </Text>
               {selected.job_postings?.title && (
                 <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 16 }}>{selected.job_postings.title}</Text>

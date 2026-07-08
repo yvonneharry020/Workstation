@@ -28,12 +28,12 @@ interface JobPosting {
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string }> = {
   active:   { label: 'Active',   color: '#22C55E', bg: '#14532D20' },
-  draft:    { label: 'Draft',    color: '#5A4F6E', bg: '#1E293B'   },
-  paused:   { label: 'Paused',   color: '#F59E0B', bg: '#78350F20' },
-  closed:   { label: 'Closed',   color: '#EF4444', bg: '#7F1D1D20' },
+  draft:    { label: 'Draft',    color: '#F59E0B', bg: '#78350F20' },
+  paused:   { label: 'Paused',   color: '#818CF8', bg: '#3730A320' },
+  closed:   { label: 'Closed',   color: '#64748B', bg: '#1E293B'   },
   expired:  { label: 'Closed',   color: '#64748B', bg: '#1E293B'   },
-  pending:  { label: 'Pending',  color: '#818CF8', bg: '#3730A320' },
-  rejected: { label: 'Rejected', color: '#F43F5E', bg: '#881337'   },
+  pending:  { label: 'Pending',  color: '#38BDF8', bg: '#082F4920' },
+  rejected: { label: 'Rejected', color: '#F43F5E', bg: '#88133720' },
 }
 
 const EMPLOYMENT_LABELS: Record<EmploymentType, string> = {
@@ -50,15 +50,14 @@ const WORK_MODE_LABELS: Record<WorkMode, string> = {
   on_site: 'On-site',
 }
 
-type FilterTab = 'all' | JobStatus
+type FilterTab = 'all' | 'active' | 'draft' | 'paused' | 'closed'
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all',     label: 'All' },
-  { key: 'active',  label: 'Active' },
-  { key: 'draft',   label: 'Draft' },
-  { key: 'paused',  label: 'Paused' },
-  { key: 'closed',  label: 'Closed' },
-  { key: 'expired', label: 'Closed' },
+  { key: 'all',    label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'draft',  label: 'Draft' },
+  { key: 'paused', label: 'Paused' },
+  { key: 'closed', label: 'Closed' },
 ]
 
 function PlusIcon() {
@@ -69,22 +68,6 @@ function PlusIcon() {
   )
 }
 
-function EyeIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <Circle cx={12} cy={12} r={3} />
-    </Svg>
-  )
-}
-
-function Circle({ cx, cy, r }: { cx: number; cy: number; r: number }) {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d={`M ${cx} ${cy} m -${r} 0 a ${r} ${r} 0 1 0 ${r * 2} 0 a ${r} ${r} 0 1 0 -${r * 2} 0`} />
-    </Svg>
-  )
-}
 
 function UsersIcon() {
   return (
@@ -146,19 +129,11 @@ function JobCard({ job, onToggleStatus, onClose, onPublish }: {
           )}
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <UsersIcon />
-            <Text style={{ color: '#64748B', fontSize: 12 }}>{job.applications_count} applicants</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <EyeIcon />
-            <Text style={{ color: '#64748B', fontSize: 12 }}>{job.views_count} views</Text>
-          </View>
-          {daysAgo !== null && (
-            <Text style={{ color: '#475569', fontSize: 12 }}>{daysAgo === 0 ? 'Today' : `${daysAgo}d ago`}</Text>
-          )}
-        </View>
+        {daysAgo !== null && (
+          <Text style={{ color: '#475569', fontSize: 12, marginBottom: 14 }}>
+            {daysAgo === 0 ? 'Posted today' : `${daysAgo}d ago`}
+          </Text>
+        )}
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {!isDraft && (
@@ -284,7 +259,11 @@ export default function CompanyJobsScreen() {
     ])
   }
 
-  const filtered = activeFilter === 'all' ? jobs : jobs.filter((j) => j.status === activeFilter)
+  const filtered = activeFilter === 'all'
+    ? jobs
+    : activeFilter === 'closed'
+      ? jobs.filter((j) => j.status === 'closed' || j.status === 'expired')
+      : jobs.filter((j) => j.status === activeFilter)
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -307,7 +286,11 @@ export default function CompanyJobsScreen() {
         style={{ maxHeight: 44 }}
       >
         {FILTER_TABS.map((tab) => {
-          const count = tab.key === 'all' ? jobs.length : jobs.filter((j) => j.status === tab.key).length
+          const count = tab.key === 'all'
+            ? jobs.length
+            : tab.key === 'closed'
+              ? jobs.filter((j) => j.status === 'closed' || j.status === 'expired').length
+              : jobs.filter((j) => j.status === tab.key).length
           const isActive = activeFilter === tab.key
           return (
             <Pressable

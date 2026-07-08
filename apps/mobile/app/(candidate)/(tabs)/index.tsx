@@ -328,15 +328,21 @@ export default function CandidateDashboard() {
         {/* ── Stats row ── */}
         <Animated.View entering={FadeInDown.delay(120).duration(350)} style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 20 }}>
           {[
-            { label: 'Applied', value: appCount ?? 0, color: '#FF6240', emoji: '📝' },
-            { label: 'Views (7d)', value: viewCount ?? 0, color: '#0DD4C3', emoji: '👁️' },
-            { label: 'Interviews', value: 0, color: '#A78BFA', emoji: '🗓️' },
+            { label: 'Applied', value: appCount ?? 0, color: '#FF6240', emoji: '📝', onPress: undefined },
+            { label: 'Views (7d)', value: viewCount ?? 0, color: '#0DD4C3', emoji: '👁️', onPress: () => router.push('/(candidate)/profile-views' as never) },
+            { label: 'Interviews', value: 0, color: '#A78BFA', emoji: '🗓️', onPress: undefined },
           ].map((s) => (
-            <View key={s.label} style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center' }}>
+            <Pressable
+              key={s.label}
+              onPress={s.onPress ?? undefined}
+              style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center' }}
+              className={s.onPress ? 'active:opacity-70' : undefined}
+            >
               <Text style={{ fontSize: 18, marginBottom: 4 }}>{s.emoji}</Text>
               <Text style={{ color: s.color, fontSize: 24, fontWeight: '800', lineHeight: 28 }}>{s.value}</Text>
               <Text style={{ color: '#475569', fontSize: 10, marginTop: 2, textAlign: 'center' }}>{s.label}</Text>
-            </View>
+              {s.onPress && <Text style={{ color: s.color, fontSize: 9, marginTop: 3, opacity: 0.7 }}>tap to view →</Text>}
+            </Pressable>
           ))}
         </Animated.View>
 

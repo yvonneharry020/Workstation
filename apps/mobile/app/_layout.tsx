@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   environment: process.env.NODE_ENV ?? 'development',
-  enableInExpoDevelopment: true,
   debug: false,
 })
 import { View, Modal, Platform } from 'react-native'

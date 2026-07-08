@@ -200,13 +200,13 @@ export default function ApplicationSubmittedScreen() {
         {/* Action buttons */}
         <Animated.View entering={FadeInUp.delay(700).duration(400)} className="w-full gap-3">
           <Pressable
-            onPress={() => router.replace('/(candidate)/applications')}
+            onPress={() => router.replace('/(candidate)/(tabs)/applications')}
             className="bg-primary-500 rounded-2xl py-4 items-center active:opacity-80"
           >
             <Text className="text-[#1A1625] font-semibold text-base">Track my application</Text>
           </Pressable>
           <Pressable
-            onPress={() => router.replace('/(candidate)/jobs')}
+            onPress={() => router.replace('/(candidate)/(tabs)/jobs')}
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-80"
           >
             <Text className="text-slate-300 font-semibold text-base">Browse more jobs</Text>

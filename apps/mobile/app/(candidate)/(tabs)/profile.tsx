@@ -309,7 +309,7 @@ export default function CandidateProfileScreen() {
               source={{ uri: avatarUri }}
               style={{ width: 88, height: 88, borderRadius: 44, marginBottom: 14, borderWidth: 3, borderColor: '#FF624040' }}
               contentFit="cover"
-              cachePolicy="reload"
+              cachePolicy="none"
             />
           ) : (
             <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: '#FF624020', borderWidth: 3, borderColor: '#FF624040', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
@@ -502,7 +502,7 @@ export default function CandidateProfileScreen() {
                       source={{ uri: img.image_url }}
                       style={{ width: 100, height: 100, borderRadius: 12 }}
                       contentFit="cover"
-                      cachePolicy="reload"
+                      cachePolicy="none"
                     />
                   </Pressable>
                 ))}

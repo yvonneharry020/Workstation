@@ -42,6 +42,11 @@ interface CandidateRow {
   cp: { first_name: string; last_name: string; avatar_url: string | null; profiles: { email: string | null } | null } | null
 }
 
+interface CandidateRowWithProfiles {
+  candidate_id: string
+  profiles: { full_name: string | null; avatar_url: string | null; email: string | null } | null
+}
+
 const SYSTEM_TEMPLATES: EmailTemplate[] = [
   {
     id: 'sys-1',
@@ -194,7 +199,7 @@ export default function ComposeEmailScreen() {
       .in('candidate_id', ids)
       .eq('company_id', user.id)
       .then(({ data }) => {
-        const rows = (data as unknown as CandidateRow[]) ?? []
+        const rows = (data as unknown as CandidateRowWithProfiles[]) ?? []
         const result: Recipient[] = rows.map((r) => ({
           id: r.candidate_id,
           full_name: r.profiles?.full_name ?? 'Unknown',

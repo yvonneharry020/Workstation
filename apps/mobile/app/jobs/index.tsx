@@ -60,7 +60,7 @@ type Job = {
   created_at: string
   company_profiles: {
     company_name: string
-    cac_verified: boolean
+    is_verified: boolean
   } | null
 }
 
@@ -116,7 +116,7 @@ function formatWorkMode(mode: string | null): string | null {
 function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
   const company = job.company_profiles
   const salary = formatSalary(job.salary_min, job.salary_max)
-  const isVerified = company?.cac_verified ?? false
+  const isVerified = company?.is_verified ?? false
 
   return (
     <Pressable
@@ -198,7 +198,7 @@ export default function BrowseJobsScreen() {
           created_at,
           company_profiles!company_id(
             company_name,
-            cac_verified
+            is_verified
           )
         `)
         .eq('status', 'active')

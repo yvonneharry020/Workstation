@@ -188,7 +188,7 @@ export default function CompanyPendingScreen() {
   useEffect(() => {
     if (isFullyApproved) {
       const timer = setTimeout(() => {
-        router.replace('/(company)')
+        router.replace('/(company)/(tabs)')
       }, 2000)
       return () => clearTimeout(timer)
     }
@@ -291,7 +291,7 @@ export default function CompanyPendingScreen() {
 
           <Pressable
             onPress={() => {
-              router.replace('/(company)')
+              router.replace('/(company)/(tabs)')
             }}
             className="bg-surface-card border border-surface-border rounded-2xl py-4 items-center active:opacity-80"
           >

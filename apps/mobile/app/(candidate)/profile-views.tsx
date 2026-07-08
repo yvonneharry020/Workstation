@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useQuery } from '@tanstack/react-query'
 import Svg, { Path, Circle } from 'react-native-svg'
+import { Image } from 'expo-image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -17,6 +18,12 @@ interface ProfileView {
   id: string
   viewed_at: string
   viewer_id: string
+}
+
+interface CompanyInfo {
+  id: string
+  company_name: string
+  logo_url: string | null
 }
 
 function timeAgo(d: string): string {
@@ -81,6 +88,23 @@ export default function ProfileViewsScreen() {
       return (data ?? []) as ProfileView[]
     },
     enabled: !!user?.id && showViews,
+  })
+
+  const viewerIds = [...new Set(views.map((v) => v.viewer_id))]
+
+  const { data: companyMap = {} } = useQuery({
+    queryKey: ['company-infos', viewerIds],
+    queryFn: async () => {
+      if (viewerIds.length === 0) return {}
+      const { data } = await supabase
+        .from('company_profiles')
+        .select('id, company_name, logo_url')
+        .in('id', viewerIds)
+      const map: Record<string, CompanyInfo> = {}
+      ;(data as unknown as CompanyInfo[] ?? []).forEach((c) => { map[c.id] = c })
+      return map
+    },
+    enabled: viewerIds.length > 0,
   })
 
   const sevenDaysAgo = Date.now() - 7 * 86_400_000
@@ -155,20 +179,27 @@ export default function ProfileViewsScreen() {
             </View>
           )
         }
-        renderItem={({ item }) => (
-          <View className="flex-row items-center gap-3 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
-            <View
-              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#0DD4C315', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <EyeIcon />
+        renderItem={({ item }) => {
+          const company = companyMap[item.viewer_id]
+          const companyName = company?.company_name ?? 'A verified company'
+          const logoUrl = company?.logo_url ?? null
+          return (
+            <View className="flex-row items-center gap-3 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+              {logoUrl ? (
+                <Image source={{ uri: logoUrl }} style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9' }} contentFit="cover" />
+              ) : (
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#0DD4C315', alignItems: 'center', justifyContent: 'center' }}>
+                  <EyeIcon />
+                </View>
+              )}
+              <View className="flex-1">
+                <Text className="text-[#1A1625] text-sm font-medium" numberOfLines={1}>{companyName} viewed your profile</Text>
+                <Text className="text-slate-500 text-xs mt-0.5">{new Date(item.viewed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+              </View>
+              <Text className="text-slate-500 text-xs">{timeAgo(item.viewed_at)}</Text>
             </View>
-            <View className="flex-1">
-              <Text className="text-[#1A1625] text-sm font-medium">A verified company viewed your profile</Text>
-              <Text className="text-slate-500 text-xs mt-0.5">{new Date(item.viewed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
-            </View>
-            <Text className="text-slate-500 text-xs">{timeAgo(item.viewed_at)}</Text>
-          </View>
-        )}
+          )
+        }}
       />
     </SafeAreaView>
   )

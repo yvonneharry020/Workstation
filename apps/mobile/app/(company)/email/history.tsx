@@ -232,7 +232,7 @@ export default function EmailHistoryScreen() {
             </View>
             <ScrollView style={{ flex: 1, padding: 20 }}>
               <Text style={{ color: '#5A4F6E', fontSize: 12, marginBottom: 4 }}>
-                To: {selected.profiles?.full_name ?? 'Unknown'} · {relativeTime(selected.sent_at)}
+                To: {[selected.recipient?.candidate_profiles?.first_name, selected.recipient?.candidate_profiles?.last_name].filter(Boolean).join(' ') || 'Unknown'} · {relativeTime(selected.sent_at)}
               </Text>
               {selected.opened_at && (
                 <Text style={{ color: '#22C55E', fontSize: 12, marginBottom: 16 }}>
@@ -240,7 +240,7 @@ export default function EmailHistoryScreen() {
                 </Text>
               )}
               <View style={{ height: 1, backgroundColor: '#DDD6C9', marginBottom: 16 }} />
-              <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 22 }}>{selected.body}</Text>
+              <Text style={{ color: '#1A1625', fontSize: 14, lineHeight: 22 }}>{selected.body_html}</Text>
             </ScrollView>
           </SafeAreaView>
         )}

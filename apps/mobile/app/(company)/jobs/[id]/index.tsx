@@ -29,7 +29,14 @@ interface ApplicationSummary {
   email_opened_at: string | null
   submitted_at: string
   candidate_id: string
-  candidate_profiles: { first_name: string; last_name: string; avatar_url: string | null; headline: string | null } | null
+  candidate_profiles: {
+    first_name: string
+    last_name: string
+    avatar_url: string | null
+    headline: string | null
+    gender: string | null
+    date_of_birth: string | null
+  } | null
 }
 
 interface StageBucket {
@@ -44,7 +51,7 @@ const STAGE_CONFIG: { stage: PipelineStage; label: string; color: string }[] = [
   { stage: 'reviewed',             label: 'Reviewed',   color: '#A78BFA' },
   { stage: 'shortlisted',          label: 'Shortlisted', color: '#34D399' },
   { stage: 'interview_scheduled',  label: 'Interview',  color: '#F59E0B' },
-  { stage: 'offer_made',           label: 'Offer',      color: '#22C55E' },
+  { stage: 'offer_made',           label: 'Hired',      color: '#22C55E' },
   { stage: 'rejected',             label: 'Rejected',   color: '#EF4444' },
 ]
 
@@ -112,7 +119,7 @@ export default function JobApplicantsOverview() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_applications')
-        .select('id, pipeline_stage, email_opened_at, submitted_at, candidate_id, candidate_profiles(first_name, last_name, avatar_url, headline)')
+        .select('id, pipeline_stage, email_opened_at, submitted_at, candidate_id, candidate_profiles(first_name, last_name, avatar_url, headline, gender, date_of_birth)')
         .eq('job_id', jobId)
         .order('submitted_at', { ascending: false })
         .limit(10)
@@ -251,6 +258,11 @@ export default function JobApplicantsOverview() {
                 const avatar = cp?.avatar_url
                 const headline = cp?.headline
                 const initials = name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+                const genderLetter = cp?.gender === 'male' ? 'M' : cp?.gender === 'female' ? 'F' : null
+                const age = cp?.date_of_birth
+                  ? Math.floor((Date.now() - new Date(cp.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                  : null
+                const nameTag = genderLetter && age ? ` (${genderLetter}|${age})` : genderLetter ? ` (${genderLetter})` : age ? ` (${age})` : ''
                 const stageCfg = STAGE_CONFIG.find((s) => s.stage === app.pipeline_stage)
                 const daysAgo = Math.floor((Date.now() - new Date(app.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
 
@@ -269,7 +281,9 @@ export default function JobApplicantsOverview() {
                       </View>
                     )}
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{name}</Text>
+                      <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>
+                        {name}<Text style={{ color: '#64748B', fontWeight: '400' }}>{nameTag}</Text>
+                      </Text>
                       {headline && <Text style={{ color: '#64748B', fontSize: 11, marginTop: 1 }} numberOfLines={1}>{headline}</Text>}
                     </View>
                     <View style={{ alignItems: 'flex-end', gap: 4 }}>

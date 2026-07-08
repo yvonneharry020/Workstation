@@ -20,43 +20,44 @@ interface Job {
   title: string
   description: string | null
   requirements: string | null
-  location: string | null
-  job_type: string | null
+  city: string | null
+  employment_type: string | null
   salary_min: number | null
   salary_max: number | null
-  currency: string | null
+  salary_is_confidential: boolean
   status: string
-  created_at: string
+  published_at: string
   company_profiles: CompanyProfile | null
 }
 
 async function fetchJob(id: string): Promise<Job> {
   const { data, error } = await supabase
-    .from('jobs')
+    .from('job_postings')
     .select(`
-      id, title, description, requirements, location, job_type,
-      salary_min, salary_max, currency, status, created_at,
+      id, title, description, requirements, city, employment_type,
+      salary_min, salary_max, salary_is_confidential, status, published_at,
       company_profiles ( id, company_name, industry, is_verified, logo_url, city )
     `)
     .eq('id', id)
     .eq('status', 'active')
-    .single()
+    .maybeSingle()
 
   if (error) throw new Error(error.message)
+  if (!data) throw new Error('Job not found')
   return data as unknown as Job
 }
 
-function formatSalary(min: number | null, max: number | null, currency: string | null): string {
+function formatSalary(min: number | null, max: number | null, isConfidential: boolean): string {
+  if (isConfidential) return 'Salary confidential'
   if (!min && !max) return 'Salary negotiable'
   const fmt = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
     if (n >= 1_000) return `${Math.round(n / 1_000)}k`
     return n.toString()
   }
-  const symbol = currency ?? '₦'
-  if (min && max) return `${symbol}${fmt(min)} – ${symbol}${fmt(max)}/mo`
-  if (min) return `From ${symbol}${fmt(min)}/mo`
-  return `Up to ${symbol}${fmt(max!)}/mo`
+  if (min && max) return `₦${fmt(min)} – ₦${fmt(max)}/mo`
+  if (min) return `From ₦${fmt(min)}/mo`
+  return `Up to ₦${fmt(max!)}/mo`
 }
 
 function timeAgo(dateStr: string): string {
@@ -72,7 +73,7 @@ function timeAgo(dateStr: string): string {
 function JobTypePill({ label }: { label: string }) {
   return (
     <View className="bg-surface-card border border-surface-border rounded-lg px-3 py-1">
-      <Text className="text-slate-400 font-sans text-xs capitalize">{label.replace('_', ' ')}</Text>
+      <Text className="text-slate-400 font-sans text-xs capitalize">{label.replace(/_/g, ' ')}</Text>
     </View>
   )
 }
@@ -100,7 +101,7 @@ export default function JobDeepLink() {
 
   const handleApply = () => {
     if (session) {
-      router.push(`/(candidate)/jobs`)
+      router.push({ pathname: '/(candidate)/jobs/[id]', params: { id } } as never)
     } else {
       router.push('/(auth)/welcome')
     }
@@ -182,14 +183,14 @@ export default function JobDeepLink() {
                 </View>
 
                 <View className="flex-row flex-wrap gap-2">
-                  {job.location && <JobTypePill label={`📍 ${job.location}`} />}
-                  {job.job_type && <JobTypePill label={job.job_type} />}
-                  <JobTypePill label={timeAgo(job.created_at)} />
+                  {job.city && <JobTypePill label={`📍 ${job.city}`} />}
+                  {job.employment_type && <JobTypePill label={job.employment_type} />}
+                  <JobTypePill label={timeAgo(job.published_at)} />
                 </View>
 
                 <View className="border-t border-surface-border pt-4">
                   <Text className="text-[#1A1625] font-display text-lg">
-                    {formatSalary(job.salary_min, job.salary_max, job.currency)}
+                    {formatSalary(job.salary_min, job.salary_max, job.salary_is_confidential)}
                   </Text>
                 </View>
               </View>
