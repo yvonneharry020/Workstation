@@ -24,7 +24,6 @@ interface CandidateProfile {
   last_name: string
   avatar_url: string | null
   headline: string | null
-  profiles: { email: string | null } | null
   candidate_skills: { skills: { name: string } | null }[]
   candidate_work_history: {
     job_title: string
@@ -77,15 +76,6 @@ function ArrowLeftIcon() {
   )
 }
 
-function MailIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-      <Path d="M22 6l-10 7L2 6" />
-    </Svg>
-  )
-}
-
 function BriefcaseIcon() {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -132,7 +122,6 @@ export default function CandidateProfileScreen() {
         .from('candidate_profiles')
         .select(`
           id, first_name, last_name, avatar_url, headline,
-          profiles ( email ),
           candidate_skills ( skills ( name ) ),
           candidate_work_history ( job_title, company_name, start_date, end_date, is_current )
         `)
@@ -225,7 +214,6 @@ export default function CandidateProfileScreen() {
 
   const name = `${candidate.first_name} ${candidate.last_name}`.trim() || 'Unknown'
   const avatarUrl = candidate.avatar_url
-  const email = candidate.profiles?.email
   const currentStage = application?.pipeline_stage
   const stageConfig = currentStage ? STAGE_CONFIG[currentStage] : null
   const emailSeen = !!application?.email_opened_at
@@ -272,9 +260,6 @@ export default function CandidateProfileScreen() {
               {candidate.headline && (
                 <Text className="text-slate-400 text-sm mb-1" numberOfLines={2}>{candidate.headline}</Text>
               )}
-              {email && (
-                <Text className="text-slate-500 text-xs" numberOfLines={1}>{email}</Text>
-              )}
             </View>
             <TrustRing score={75} />
           </View>
@@ -302,7 +287,6 @@ export default function CandidateProfileScreen() {
                       </Text>
                     )}
                   </View>
-                  <MailIcon />
                 </View>
               )}
 

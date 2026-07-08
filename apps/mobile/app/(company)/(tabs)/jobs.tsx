@@ -31,7 +31,7 @@ const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: strin
   draft:    { label: 'Draft',    color: '#5A4F6E', bg: '#1E293B'   },
   paused:   { label: 'Paused',   color: '#F59E0B', bg: '#78350F20' },
   closed:   { label: 'Closed',   color: '#EF4444', bg: '#7F1D1D20' },
-  expired:  { label: 'Expired',  color: '#64748B', bg: '#1E293B'   },
+  expired:  { label: 'Closed',   color: '#64748B', bg: '#1E293B'   },
   pending:  { label: 'Pending',  color: '#818CF8', bg: '#3730A320' },
   rejected: { label: 'Rejected', color: '#F43F5E', bg: '#881337'   },
 }
@@ -53,14 +53,12 @@ const WORK_MODE_LABELS: Record<WorkMode, string> = {
 type FilterTab = 'all' | JobStatus
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'all',      label: 'All' },
-  { key: 'active',   label: 'Active' },
-  { key: 'draft',    label: 'Draft' },
-  { key: 'paused',   label: 'Paused' },
-  { key: 'closed',   label: 'Closed' },
-  { key: 'expired',  label: 'Expired' },
-  { key: 'pending',  label: 'Pending' },
-  { key: 'rejected', label: 'Rejected' },
+  { key: 'all',     label: 'All' },
+  { key: 'active',  label: 'Active' },
+  { key: 'draft',   label: 'Draft' },
+  { key: 'paused',  label: 'Paused' },
+  { key: 'closed',  label: 'Closed' },
+  { key: 'expired', label: 'Closed' },
 ]
 
 function PlusIcon() {
@@ -106,11 +104,19 @@ function EditIcon() {
   )
 }
 
-function JobCard({ job, onToggleStatus, onClose }: { job: JobPosting; onToggleStatus: (id: string, current: JobStatus) => void; onClose: (id: string) => void }) {
+function JobCard({ job, onToggleStatus, onClose, onPublish }: {
+  job: JobPosting
+  onToggleStatus: (id: string, current: JobStatus) => void
+  onClose: (id: string) => void
+  onPublish: (id: string) => void
+}) {
   const config = STATUS_CONFIG[job.status] ?? { label: job.status, color: '#64748B', bg: '#1E293B' }
   const daysAgo = job.published_at
     ? Math.floor((Date.now() - new Date(job.published_at).getTime()) / (1000 * 60 * 60 * 24))
     : null
+
+  const isDraft = job.status === 'draft'
+  const isLive = job.status === 'active' || job.status === 'paused'
 
   return (
     <Animated.View entering={FadeInDown.duration(350)}>
@@ -163,15 +169,29 @@ function JobCard({ job, onToggleStatus, onClose }: { job: JobPosting; onToggleSt
             <UsersIcon />
             <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>Applicants</Text>
           </Pressable>
-          <Pressable
-            onPress={() => router.push(`/(company)/jobs/${job.id}/edit` as any)}
-            style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5 }}
-            className="active:opacity-70"
-          >
-            <EditIcon />
-            <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600' }}>Edit</Text>
-          </Pressable>
-          {(job.status === 'active' || job.status === 'paused') && (
+
+          {isDraft && (
+            <Pressable
+              onPress={() => router.push(`/(company)/jobs/${job.id}/edit` as any)}
+              style={{ flex: 1, backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 5 }}
+              className="active:opacity-70"
+            >
+              <EditIcon />
+              <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600' }}>Edit</Text>
+            </Pressable>
+          )}
+
+          {isDraft && (
+            <Pressable
+              onPress={() => onPublish(job.id)}
+              style={{ backgroundColor: '#22C55E15', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#22C55E30' }}
+              className="active:opacity-70"
+            >
+              <Text style={{ color: '#22C55E', fontSize: 12, fontWeight: '600' }}>Post Job</Text>
+            </Pressable>
+          )}
+
+          {isLive && (
             <Pressable
               onPress={() => onToggleStatus(job.id, job.status)}
               style={{ backgroundColor: '#DDD6C9', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' }}
@@ -182,6 +202,7 @@ function JobCard({ job, onToggleStatus, onClose }: { job: JobPosting; onToggleSt
               </Text>
             </Pressable>
           )}
+
           {job.status === 'active' && (
             <Pressable
               onPress={() => onClose(job.id)}
@@ -235,10 +256,29 @@ export default function CompanyJobsScreen() {
     onError: () => Alert.alert('Error', 'Could not close the job. Please try again.'),
   })
 
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('job_postings').update({
+        status: 'active',
+        published_at: new Date().toISOString(),
+      }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company-jobs', user?.id] }),
+    onError: () => Alert.alert('Error', 'Could not publish the job. Please try again.'),
+  })
+
   const handleClose = (id: string) => {
     Alert.alert('Close job?', 'Candidates will no longer be able to apply. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Close job', style: 'destructive', onPress: () => closeMutation.mutate(id) },
+    ])
+  }
+
+  const handlePublish = (id: string) => {
+    Alert.alert('Post this job?', 'Your job will go live and candidates will be able to apply.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Post job', onPress: () => publishMutation.mutate(id) },
     ])
   }
 
@@ -304,6 +344,7 @@ export default function CompanyJobsScreen() {
               job={item}
               onToggleStatus={(id, current) => toggleMutation.mutate({ id, current })}
               onClose={handleClose}
+              onPublish={handlePublish}
             />
           )}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 32 }}

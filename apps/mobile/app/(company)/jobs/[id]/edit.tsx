@@ -162,7 +162,7 @@ export default function EditJobScreen() {
   const { fields, append, remove } = useFieldArray({ control, name: 'screening_questions' })
   const salaryConfidential = watch('salary_is_confidential')
 
-  const { isLoading } = useQuery({
+  const { isLoading, data: jobData } = useQuery({
     queryKey: ['job-edit', jobId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -250,6 +250,23 @@ export default function EditJobScreen() {
     onError: () => Alert.alert('Error', 'Could not delete the job.'),
   })
 
+  const publishMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('job_postings').update({
+        status: 'active',
+        published_at: new Date().toISOString(),
+      }).eq('id', jobId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company-jobs'] })
+      Alert.alert('Job posted!', 'Your job is now live and candidates can apply.', [
+        { text: 'OK', onPress: () => router.back() },
+      ])
+    },
+    onError: () => Alert.alert('Error', 'Could not post the job. Please try again.'),
+  })
+
   const handleDelete = () => {
     Alert.alert(
       'Delete job?',
@@ -259,6 +276,13 @@ export default function EditJobScreen() {
         { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate() },
       ],
     )
+  }
+
+  const handlePublish = () => {
+    Alert.alert('Post this job?', 'Your job will go live and candidates will be able to apply.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Post job', onPress: () => publishMutation.mutate() },
+    ])
   }
 
   if (isLoading || !formReady) {
@@ -400,6 +424,21 @@ export default function EditJobScreen() {
               <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Save changes</Text>
             )}
           </Pressable>
+
+          {jobData?.status === 'draft' && (
+            <Pressable
+              onPress={handlePublish}
+              disabled={publishMutation.isPending}
+              style={{ backgroundColor: '#22C55E', borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginBottom: 12 }}
+              className="active:opacity-80"
+            >
+              {publishMutation.isPending ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Post Job</Text>
+              )}
+            </Pressable>
+          )}
 
           <Pressable
             onPress={handleDelete}

@@ -29,9 +29,9 @@ interface RecentApplication {
 
 interface DashboardStats {
   activeJobs: number
-  newApplicationsThisWeek: number
+  hiredThisMonth: number
   interviewsToday: number
-  profileViews: number
+  rejectedThisMonth: number
   trustScore: number
   companyName: string
   recentApplications: RecentApplication[]
@@ -76,15 +76,6 @@ function BriefcaseIcon() {
   )
 }
 
-function PeopleIcon() {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#0DD4C3" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <Circle cx={9} cy={7} r={4} />
-      <Path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </Svg>
-  )
-}
 
 function SearchIcon() {
   return (
@@ -394,7 +385,7 @@ export default function CompanyDashboard() {
   const user = useAuthStore((s) => s.user)
   const [showNotifications, setShowNotifications] = useState(false)
   const today = new Date().toISOString().slice(0, 10)
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
   const { data: bellCount = 0 } = useQuery<number>({
     queryKey: ['company-bell-count', user?.id],
@@ -413,9 +404,9 @@ export default function CompanyDashboard() {
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['company-dashboard', user?.id],
     queryFn: async () => {
-      const [jobsRes, appsRes, interviewsRes, profileRes, trustRes, recentRes] = await Promise.all([
+      const [jobsRes, hiredRes, interviewsRes, profileRes, trustRes, recentRes, rejectedRes] = await Promise.all([
         supabase.from('job_postings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('status', 'active'),
-        supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('job_postings.company_id', user!.id).gte('submitted_at', weekAgo),
+        supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('job_postings.company_id', user!.id).eq('pipeline_stage', 'hired').gte('submitted_at', monthStart),
         supabase.from('interview_bookings').select('id', { count: 'exact', head: true }).eq('company_id', user!.id).eq('slot_date', today),
         supabase.from('company_profiles').select('company_name').eq('id', user!.id).maybeSingle(),
         supabase.from('trust_scores').select('score').eq('profile_id', user!.id).maybeSingle(),
@@ -424,15 +415,16 @@ export default function CompanyDashboard() {
           .eq('job_postings.company_id', user!.id)
           .order('submitted_at', { ascending: false })
           .limit(5),
+        supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('job_postings.company_id', user!.id).eq('pipeline_stage', 'rejected').gte('submitted_at', monthStart),
       ])
 
       const hasJobs = (jobsRes.count ?? 0) > 0
 
       return {
         activeJobs: jobsRes.count ?? 0,
-        newApplicationsThisWeek: appsRes.count ?? 0,
+        hiredThisMonth: hiredRes.count ?? 0,
         interviewsToday: interviewsRes.count ?? 0,
-        profileViews: 0,
+        rejectedThisMonth: rejectedRes.count ?? 0,
         trustScore: (trustRes.data as any)?.score ?? 0,
         companyName: (profileRes.data as any)?.company_name ?? user?.user_metadata?.company_name ?? 'Your Company',
         recentApplications: (recentRes.data as unknown as RecentApplication[]) ?? [],
@@ -449,10 +441,10 @@ export default function CompanyDashboard() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const statCards = [
-    { label: 'Active Jobs', value: stats?.activeJobs ?? 0, color: '#FF6240' },
-    { label: 'New This Week', value: stats?.newApplicationsThisWeek ?? 0, color: '#0DD4C3' },
-    { label: 'Interviews Today', value: stats?.interviewsToday ?? 0, color: '#F59E0B' },
-    { label: 'Profile Views', value: stats?.profileViews ?? 0, color: '#A78BFA' },
+    { label: 'Active Jobs',         value: stats?.activeJobs ?? 0,        color: '#FF6240' },
+    { label: 'Hired This Month',    value: stats?.hiredThisMonth ?? 0,    color: '#0DD4C3' },
+    { label: 'Interviews Today',    value: stats?.interviewsToday ?? 0,   color: '#F59E0B' },
+    { label: 'Rejected This Month', value: stats?.rejectedThisMonth ?? 0, color: '#EF4444' },
   ]
 
   return (
@@ -527,14 +519,6 @@ export default function CompanyDashboard() {
             >
               <BriefcaseIcon />
               <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>Post Job</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/(company)/applicants' as any)}
-              style={{ flex: 1, backgroundColor: '#0DD4C315', borderRadius: 14, borderWidth: 1, borderColor: '#0DD4C330', padding: 14, alignItems: 'center', gap: 8 }}
-              className="active:opacity-70"
-            >
-              <PeopleIcon />
-              <Text style={{ color: '#0DD4C3', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>View ATS</Text>
             </Pressable>
             <Pressable
               onPress={() => router.push('/(company)/candidates/browse' as any)}
