@@ -16,6 +16,7 @@ import Svg, { Path } from 'react-native-svg'
 import { Image } from 'expo-image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface SavedJobItem {
   id: string
@@ -318,16 +319,7 @@ export default function SavedJobsScreen() {
                           <Text className="text-slate-400 text-xs" numberOfLines={1}>
                             {companyName}
                           </Text>
-                          {company?.is_verified && (
-                            <View
-                              style={{
-                                width: 7,
-                                height: 7,
-                                borderRadius: 3.5,
-                                backgroundColor: '#22C55E',
-                              }}
-                            />
-                          )}
+                          {company?.is_verified && <VerifiedBadge size={13} />}
                         </View>
                       </View>
 

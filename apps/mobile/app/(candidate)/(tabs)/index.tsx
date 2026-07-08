@@ -15,6 +15,7 @@ import Svg, { Circle, Path, G } from 'react-native-svg'
 import { Image } from 'expo-image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface CandidateProfile {
   id: string
@@ -390,7 +391,10 @@ export default function CandidateDashboard() {
                       )}
                       <View style={{ flex: 1 }}>
                         <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700', lineHeight: 18 }} numberOfLines={2}>{job.title}</Text>
-                        <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{companyName}{job.city ? ` · ${job.city}` : ''}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                          <Text style={{ color: '#64748B', fontSize: 11 }} numberOfLines={1}>{companyName}{job.city ? ` · ${job.city}` : ''}</Text>
+                          {job.company_profiles?.is_verified && <VerifiedBadge size={11} />}
+                        </View>
                       </View>
                     </View>
 

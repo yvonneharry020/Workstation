@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -92,14 +93,6 @@ function BookmarkIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function VerifiedBadge() {
-  return (
-    <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-full" style={{ backgroundColor: '#22C55E20' }}>
-      <View className="w-1.5 h-1.5 rounded-full bg-green-500" />
-      <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '600' }}>CAC Verified</Text>
-    </View>
-  )
-}
 
 function MetaPill({ label }: { label: string }) {
   return (

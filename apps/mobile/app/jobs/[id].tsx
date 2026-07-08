@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface CompanyProfile {
   id: string
@@ -78,14 +79,6 @@ function JobTypePill({ label }: { label: string }) {
   )
 }
 
-function VerifiedBadge() {
-  return (
-    <View className="flex-row items-center gap-1 bg-surface-card border border-surface-border rounded-lg px-2.5 py-1">
-      <View className="w-1.5 h-1.5 rounded-full bg-green-500" />
-      <Text className="text-green-400 font-sans text-xs font-semibold">CAC Verified</Text>
-    </View>
-  )
-}
 
 export default function JobDeepLink() {
   const { id } = useLocalSearchParams<{ id: string }>()

@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface Badge {
   id: string
@@ -92,9 +93,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
         <View className="flex-1">
           <View className="flex-row items-center gap-1.5">
             <Text className="text-[#1A1625] font-semibold text-sm">{company?.company_name ?? 'Unknown company'}</Text>
-            {company?.is_verified && (
-              <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#22C55E' }} />
-            )}
+            {company?.is_verified && <VerifiedBadge size={13} />}
           </View>
           <Text className="text-slate-300 text-sm font-bold mt-0.5">{badge.role_held}</Text>
           <Text className="text-slate-500 text-xs mt-0.5">{formatBadgePeriod(badge.start_date, badge.end_date, badge.is_current)}</Text>

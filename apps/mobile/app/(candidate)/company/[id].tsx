@@ -11,6 +11,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { supabase } from '@/lib/supabase'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface CompanyDetail {
   id: string
@@ -178,9 +179,12 @@ export default function CompanyProfileScreen() {
             </View>
           )}
 
-          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 6 }}>
-            {company.company_name}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 6 }}>
+            <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', textAlign: 'center' }}>
+              {company.company_name}
+            </Text>
+            {company.is_verified && <VerifiedBadge size={20} />}
+          </View>
 
           {company.industry ? (
             <View style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, backgroundColor: '#DDD6C9', marginBottom: 10 }}>
@@ -188,30 +192,12 @@ export default function CompanyProfileScreen() {
             </View>
           ) : null}
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {company.city ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 13 }}>📍</Text>
-                <Text style={{ color: '#64748B', fontSize: 13 }}>{company.city}</Text>
-              </View>
-            ) : null}
-            {company.is_verified ? (
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 10,
-                backgroundColor: '#22C55E15',
-                borderWidth: 1,
-                borderColor: '#22C55E40',
-              }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
-                <Text style={{ color: '#22C55E', fontSize: 12, fontWeight: '600' }}>CAC Verified</Text>
-              </View>
-            ) : null}
-          </View>
+          {company.city ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ fontSize: 13 }}>📍</Text>
+              <Text style={{ color: '#64748B', fontSize: 13 }}>{company.city}</Text>
+            </View>
+          ) : null}
         </Animated.View>
 
         {/* Divider */}

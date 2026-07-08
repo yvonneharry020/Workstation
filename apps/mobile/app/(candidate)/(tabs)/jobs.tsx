@@ -16,6 +16,7 @@ import { Image } from 'expo-image'
 import Svg, { Path, Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 interface Job {
   id: string
@@ -130,11 +131,7 @@ function JobCard({
           <Text style={{ color: '#1A1625', fontSize: 15, fontWeight: '700', lineHeight: 21, marginBottom: 3 }} numberOfLines={2}>{job.title}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ color: '#64748B', fontSize: 12 }}>{company?.company_name ?? 'Unknown'}</Text>
-            {company?.is_verified && (
-              <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#22C55E20', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 9 }}>✓</Text>
-              </View>
-            )}
+            {company?.is_verified && <VerifiedBadge size={14} />}
             {job.city && <Text style={{ color: '#334155', fontSize: 12 }}>· {job.city}</Text>}
           </View>
         </View>
