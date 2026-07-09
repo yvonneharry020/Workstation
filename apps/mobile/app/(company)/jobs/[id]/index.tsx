@@ -49,7 +49,7 @@ interface StageBucket {
 const STAGE_CONFIG: { stage: PipelineStage; label: string; color: string }[] = [
   { stage: 'new',                  label: 'New',        color: '#60A5FA' },
   { stage: 'reviewed',             label: 'Reviewed',   color: '#A78BFA' },
-  { stage: 'shortlisted',          label: 'Shortlisted', color: '#34D399' },
+  { stage: 'shortlisted',          label: 'Shortlisted', color: '#7C4B2A' },
   { stage: 'interview_scheduled',  label: 'Interview',  color: '#F59E0B' },
   { stage: 'hired',                 label: 'Hired',      color: '#22C55E' },
   { stage: 'rejected',             label: 'Rejected',   color: '#EF4444' },

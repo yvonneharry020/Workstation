@@ -50,7 +50,7 @@ interface RecentApp {
 const STAGE_COLOR: Record<string, string> = {
   new: '#60A5FA',
   reviewed: '#A78BFA',
-  shortlisted: '#34D399',
+  shortlisted: '#7C4B2A',
   interview_scheduled: '#F59E0B',
   offer_made: '#22C55E',
   rejected: '#EF4444',

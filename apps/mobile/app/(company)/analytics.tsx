@@ -34,7 +34,7 @@ interface Application {
 const STAGE_COLORS: Record<string, string> = {
   new: '#64748B',
   reviewed: '#818CF8',
-  shortlisted: '#0DD4C3',
+  shortlisted: '#7C4B2A',
   interview_scheduled: '#F59E0B',
   offer_made: '#FF6240',
   rejected: '#EF4444',

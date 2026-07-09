@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
 import { supabase } from '@/lib/supabase'
@@ -33,23 +33,28 @@ interface ApplicationCard {
   } | null
 }
 
-type FilterKey = 'all' | 'new' | 'reviewing' | 'shortlisted' | 'rejected'
+type FilterKey = 'all' | 'new' | 'reviewed' | 'shortlisted' | 'interview_scheduled' | 'rejected'
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'new', label: 'Applied' },
-  { key: 'reviewing', label: 'Reviewing' },
-  { key: 'shortlisted', label: 'Shortlisted' },
-  { key: 'rejected', label: 'Rejected' },
+  { key: 'all',                  label: 'All' },
+  { key: 'new',                  label: 'Applied' },
+  { key: 'reviewed',             label: 'Reviewing' },
+  { key: 'shortlisted',         label: 'Shortlisted' },
+  { key: 'interview_scheduled', label: 'Interview' },
+  { key: 'rejected',            label: 'Rejected' },
 ]
 
 const STAGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  new:         { bg: '#1E293B', text: '#5A4F6E', label: 'Submitted' },
-  reviewing:   { bg: '#78350F20', text: '#F59E0B', label: 'Reviewing' },
-  shortlisted: { bg: '#14532D20', text: '#22C55E', label: 'Shortlisted' },
-  rejected:    { bg: '#7F1D1D20', text: '#EF4444', label: 'Rejected' },
-  hired:       { bg: '#FF624020', text: '#FF6240', label: 'Hired' },
+  new:                 { bg: '#EFF6FF', text: '#3B82F6', label: 'Applied' },
+  reviewed:            { bg: '#F5F3FF', text: '#8B5CF6', label: 'Reviewing' },
+  shortlisted:         { bg: '#F9F1E8', text: '#7C4B2A', label: 'Shortlisted' },
+  interview_scheduled: { bg: '#FFFBEB', text: '#F59E0B', label: 'Interview' },
+  hired:               { bg: '#F0FDF4', text: '#22C55E', label: 'Hired' },
+  rejected:            { bg: '#FEF2F2', text: '#EF4444', label: 'Rejected' },
+  withdrawn:           { bg: '#F8FAFC', text: '#64748B', label: 'Withdrawn' },
 }
+
+const DEFAULT_STAGE_STYLE = { bg: '#EFF6FF', text: '#3B82F6', label: 'Applied' }
 
 function timeAgo(dateStr: string): string {
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
@@ -92,28 +97,15 @@ function CompanyLogo({ name, logoUrl }: { name: string; logoUrl: string | null }
   )
 }
 
-function EmailStatusPill({
-  sentAt,
-  openedAt,
-}: {
-  sentAt: string | null
-  openedAt: string | null
-}) {
+function EmailStatusPill({ sentAt, openedAt }: { sentAt: string | null; openedAt: string | null }) {
   if (openedAt) {
     return (
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 4,
-          paddingHorizontal: 8,
-          paddingVertical: 3,
-          borderRadius: 8,
-          backgroundColor: '#14532D20',
-          borderWidth: 1,
-          borderColor: '#22C55E30',
-          alignSelf: 'flex-start',
-          marginTop: 6,
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+          backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#22C55E30',
+          alignSelf: 'flex-start', marginTop: 6,
         }}
       >
         <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
@@ -127,17 +119,10 @@ function EmailStatusPill({
     return (
       <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 4,
-          paddingHorizontal: 8,
-          paddingVertical: 3,
-          borderRadius: 8,
-          backgroundColor: '#1E293B',
-          borderWidth: 1,
-          borderColor: '#334155',
-          alignSelf: 'flex-start',
-          marginTop: 6,
+          flexDirection: 'row', alignItems: 'center', gap: 4,
+          paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+          backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0',
+          alignSelf: 'flex-start', marginTop: 6,
         }}
       >
         <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#64748B' }} />
@@ -150,23 +135,19 @@ function EmailStatusPill({
   return null
 }
 
-function ApplicationItem({
-  item,
-  onPress,
-}: {
-  item: ApplicationCard
-  onPress: () => void
-}) {
+function ApplicationItem({ item, onPress }: { item: ApplicationCard; onPress: () => void }) {
   const company = item.job_postings?.company_profiles
   const companyName = company?.company_name ?? 'Company'
-  const stage = STAGE_STYLES[item.pipeline_stage] ?? { bg: '#1E293B', text: '#5A4F6E', label: 'Submitted' }
+  const stage = STAGE_STYLES[item.pipeline_stage] ?? DEFAULT_STAGE_STYLE
 
   return (
     <Pressable
       onPress={onPress}
-      style={{ backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9', padding: 16, marginBottom: 12, overflow: 'hidden' }}
+      style={{
+        backgroundColor: '#F0EBE1', borderRadius: 20, borderWidth: 1,
+        borderColor: '#DDD6C9', padding: 16, marginBottom: 12, overflow: 'hidden',
+      }}
     >
-      {/* Left accent line */}
       <View style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, backgroundColor: stage.text, borderRadius: 2 }} />
 
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
@@ -193,19 +174,20 @@ function ApplicationItem({
 
 function EmptyState({ filter }: { filter: FilterKey }) {
   const messages: Record<FilterKey, string> = {
-    all: "You haven't applied to any jobs yet. Browse jobs to find your next opportunity.",
-    new: 'No pending applications.',
-    reviewing: 'No applications currently under review.',
-    shortlisted: "You haven't been shortlisted yet — keep applying!",
-    rejected: 'No rejected applications.',
+    all:                  "You haven't applied to any jobs yet. Browse jobs to find your next opportunity.",
+    new:                  'No pending applications.',
+    reviewed:             'No applications currently under review.',
+    shortlisted:          "You haven't been shortlisted yet — keep applying!",
+    interview_scheduled:  'No interview invitations yet.',
+    rejected:             'No rejected applications.',
   }
   return (
-    <View className="flex-1 items-center justify-center px-8 mt-16">
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, marginTop: 64 }}>
       <Text style={{ fontSize: 40, marginBottom: 16 }}>📋</Text>
-      <Text className="text-[#1A1625] font-semibold text-base text-center mb-2">
+      <Text style={{ color: '#1A1625', fontWeight: '600', fontSize: 15, textAlign: 'center', marginBottom: 8 }}>
         No applications
       </Text>
-      <Text className="text-slate-400 text-sm text-center leading-5">
+      <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
         {messages[filter]}
       </Text>
     </View>
@@ -234,7 +216,22 @@ export default function ApplicationsScreen() {
       return rows as unknown as ApplicationCard[]
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    refetchInterval: 30_000,
   })
+
+  useEffect(() => {
+    if (!user?.id) return
+    const channel = supabase
+      .channel('my-applications-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'job_applications', filter: `candidate_id=eq.${user.id}` },
+        () => { queryClient.invalidateQueries({ queryKey: ['my-applications', user.id] }) },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user?.id, queryClient])
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -247,13 +244,12 @@ export default function ApplicationsScreen() {
       ? data ?? []
       : (data ?? []).filter((a) => a.pipeline_stage === activeFilter)
 
-  const totalCount = data?.length ?? 0
-  const shortlistedCount = data?.filter((a) => a.pipeline_stage === 'shortlisted').length ?? 0
-  const reviewingCount = data?.filter((a) => a.pipeline_stage === 'reviewing').length ?? 0
+  const totalCount    = data?.length ?? 0
+  const rejectedCount = data?.filter((a) => a.pipeline_stage === 'rejected').length ?? 0
+  const hiredCount    = data?.filter((a) => a.pipeline_stage === 'hired').length ?? 0
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
-      {/* Header */}
       <Animated.View
         entering={FadeInDown.duration(350)}
         style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 }}
@@ -269,13 +265,12 @@ export default function ApplicationsScreen() {
           )}
         </View>
 
-        {/* Mini stat strip */}
         {totalCount > 0 && (
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             {[
-              { label: 'Total', value: totalCount, color: '#FF6240' },
-              { label: 'Reviewing', value: reviewingCount, color: '#F59E0B' },
-              { label: 'Shortlisted', value: shortlistedCount, color: '#22C55E' },
+              { label: 'Total',    value: totalCount,    color: '#FF6240' },
+              { label: 'Rejected', value: rejectedCount, color: '#EF4444' },
+              { label: 'Hired',    value: hiredCount,    color: '#22C55E' },
             ].map((s) => (
               <View key={s.label} style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 14, borderWidth: 1, borderColor: '#DDD6C9', paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: s.color, fontSize: 22, fontWeight: '800' }}>{s.value}</Text>
@@ -286,7 +281,6 @@ export default function ApplicationsScreen() {
         )}
       </Animated.View>
 
-      {/* Filter chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -300,15 +294,13 @@ export default function ApplicationsScreen() {
               key={f.key}
               onPress={() => setActiveFilter(f.key)}
               style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 20,
+                paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
                 backgroundColor: isActive ? '#FF6240' : '#F0EBE1',
                 borderWidth: 1,
                 borderColor: isActive ? '#FF6240' : '#DDD6C9',
               }}
             >
-              <Text style={{ color: isActive ? '#1A1625' : '#64748B', fontSize: 13, fontWeight: isActive ? '700' : '400' }}>
+              <Text style={{ color: isActive ? '#fff' : '#64748B', fontSize: 13, fontWeight: isActive ? '700' : '400' }}>
                 {f.label}
               </Text>
             </Pressable>
@@ -317,7 +309,7 @@ export default function ApplicationsScreen() {
       </ScrollView>
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator color="#FF6240" size="large" />
         </View>
       ) : (
@@ -327,18 +319,14 @@ export default function ApplicationsScreen() {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#FF6240"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF6240" />
           }
           ListEmptyComponent={<EmptyState filter={activeFilter} />}
           renderItem={({ item }) => (
             <ApplicationItem
               item={item}
               onPress={() =>
-                router.push(`/(candidate)/jobs/${item.job_id}` as Parameters<typeof router.push>[0])
+                router.push(`/(candidate)/application/${item.id}` as Parameters<typeof router.push>[0])
               }
             />
           )}

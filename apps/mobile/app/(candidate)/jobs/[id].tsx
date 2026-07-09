@@ -106,7 +106,7 @@ function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, { bg: string; text: string }> = {
     submitted: { bg: '#6366F120', text: '#818CF8' },
     reviewing: { bg: '#F59E0B20', text: '#F59E0B' },
-    shortlisted: { bg: '#22C55E20', text: '#22C55E' },
+    shortlisted: { bg: '#F9F1E8', text: '#7C4B2A' },
     rejected: { bg: '#EF444420', text: '#EF4444' },
     hired: { bg: '#0DD4C320', text: '#0DD4C3' },
   }

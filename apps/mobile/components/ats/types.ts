@@ -19,7 +19,7 @@ export const COMPANY_STAGES: PipelineStage[] = [
 export const PIPELINE_CONFIG: Record<PipelineStage, { label: string; color: string; bg: string; border: string }> = {
   new:                 { label: 'New',         color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE' },
   reviewed:            { label: 'Reviewing',   color: '#8B5CF6', bg: '#F5F3FF', border: '#C4B5FD' },
-  shortlisted:         { label: 'Shortlisted', color: '#10B981', bg: '#ECFDF5', border: '#A7F3D0' },
+  shortlisted:         { label: 'Shortlisted', color: '#7C4B2A', bg: '#F9F1E8', border: '#C49060' },
   interview_scheduled: { label: 'Interview',   color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A' },
   hired:               { label: 'Hired',       color: '#22C55E', bg: '#F0FDF4', border: '#BBF7D0' },
   rejected:            { label: 'Rejected',    color: '#EF4444', bg: '#FEF2F2', border: '#FECACA' },
