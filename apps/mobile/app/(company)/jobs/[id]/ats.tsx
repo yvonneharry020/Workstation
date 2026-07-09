@@ -103,8 +103,8 @@ function ApplicationCard({ item, index }: { item: ApplicationRow; index: number 
         style={({ pressed }) => ({
           backgroundColor: '#FFFFFF',
           borderRadius: 18,
-          borderWidth: 1.5,
-          borderColor: '#C8BFB0',
+          borderWidth: 2,
+          borderColor: '#B8A898',
           shadowColor: '#1A1625',
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.06,

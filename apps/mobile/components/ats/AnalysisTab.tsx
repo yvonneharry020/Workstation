@@ -267,7 +267,7 @@ export function AnalysisTab({ rows }: Props) {
         <Text style={{ fontSize: 10, fontWeight: '700', color: '#9A8FA6', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>
           Interview Rate
         </Text>
-        <Text style={{ fontSize: 30, fontWeight: '800', color: '#6366F1', letterSpacing: -0.8, marginBottom: 4 }}>
+        <Text style={{ fontSize: 30, fontWeight: '800', color: '#F59E0B', letterSpacing: -0.8, marginBottom: 4 }}>
           {interviewRate}%
         </Text>
         <Text style={{ fontSize: 11, color: '#9A8FA6', lineHeight: 15 }}>{interviewed} of {total} selected for interview</Text>

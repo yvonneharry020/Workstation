@@ -47,6 +47,7 @@ interface CandidateData {
   date_of_birth: string | null
   state_of_origin_id: number | null
   updated_at: string
+  tools: string[] | null
 }
 
 interface WorkHistory {
@@ -391,6 +392,22 @@ export default function CandidateProfileScreen() {
                 {skills.map((s) => (
                   <View key={s.id} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9' }}>
                     <Text style={{ color: '#2D2640', fontSize: 12, fontWeight: '500' }}>{s.skills?.name ?? ''}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* ── Tools ── */}
+        {(candidate?.tools ?? []).length > 0 && (
+          <Animated.View entering={FadeInDown.delay(180).duration(350)} style={{ marginBottom: 16 }}>
+            <View style={{ backgroundColor: '#F0EBE1', borderRadius: 18, borderWidth: 1, borderColor: '#DDD6C9', padding: 16 }}>
+              <SectionLabel title="Tools" />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {(candidate!.tools ?? []).map((t) => (
+                  <View key={t} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9' }}>
+                    <Text style={{ color: '#2D2640', fontSize: 12, fontWeight: '500' }}>{t}</Text>
                   </View>
                 ))}
               </View>

@@ -63,7 +63,7 @@ function StatChips({ rows }: { rows: AtsRowFull[] }) {
 
   const chips = [
     { label: 'Total',     value: total,       color: '#FF6240' },
-    { label: 'Interview', value: interviewed,  color: '#6366F1' },
+    { label: 'Interview', value: interviewed,  color: '#F59E0B' },
     { label: 'Hired',     value: hired,        color: '#0DD4C3' },
     { label: 'Rejected',  value: rejected,     color: '#EF4444' },
   ]

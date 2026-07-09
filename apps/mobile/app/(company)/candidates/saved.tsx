@@ -120,8 +120,8 @@ function CandidateCard({
         style={({ pressed }) => ({
           backgroundColor: '#FFFFFF',
           borderRadius: 18,
-          borderWidth: 1,
-          borderColor: '#E5DFD3',
+          borderWidth: 2,
+          borderColor: '#B8A898',
           padding: 16,
           marginBottom: 12,
           opacity: pressed ? 0.85 : 1,

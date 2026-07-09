@@ -79,7 +79,7 @@ function CandidateCard({ item }: { item: ApplicationRow }) {
       onPress={() => router.push(`/(company)/candidates/${item.candidate_id}?applicationId=${item.id}` as any)}
       style={({ pressed }) => ({
         backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12,
-        borderWidth: 1, borderColor: '#DDD6C9', marginBottom: 8,
+        borderWidth: 2, borderColor: '#B8A898', marginBottom: 8,
         opacity: pressed ? 0.85 : 1,
       })}
     >
@@ -175,7 +175,7 @@ export default function KanbanScreen() {
               key={stage}
               style={{
                 width: COLUMN_WIDTH, backgroundColor: '#EDE7DB',
-                borderRadius: 16, borderWidth: 1, borderColor: '#E5DFD3',
+                borderRadius: 16, borderWidth: 1.5, borderColor: '#C4B5A5',
                 overflow: 'hidden',
               }}
             >
