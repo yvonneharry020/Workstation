@@ -95,7 +95,7 @@ function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
-function MessageCard({ notif }: { notif: NotificationItem }) {
+function MessageCard({ notif, companyName }: { notif: NotificationItem; companyName: string }) {
   const [expanded, setExpanded] = useState(false)
   const color = getMessageColor(notif)
   const title = getMessageTitle(notif)
@@ -112,6 +112,9 @@ function MessageCard({ notif }: { notif: NotificationItem }) {
       <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: color }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, paddingLeft: 18, gap: 10 }}>
         <View style={{ flex: 1 }}>
+          <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 }}>
+            {companyName}
+          </Text>
           <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700', lineHeight: 18 }}>{title}</Text>
           <Text style={{ color: '#94A3B8', fontSize: 11, marginTop: 2 }}>{date}</Text>
         </View>
@@ -322,7 +325,7 @@ export default function ApplicationDetailScreen() {
           ) : (
             <Animated.View entering={FadeInDown.duration(300)}>
               {messages.map((m) => (
-                <MessageCard key={m.id} notif={m} />
+                <MessageCard key={m.id} notif={m} companyName={company?.company_name ?? 'Company'} />
               ))}
             </Animated.View>
           )}
@@ -356,7 +359,7 @@ export default function ApplicationDetailScreen() {
                   Screening Questions
                 </Text>
                 {screeningQuestions.map((q, idx) => {
-                  const answer = screeningAnswers[String(idx)] ?? screeningAnswers[q.question] ?? ''
+                  const answer = screeningAnswers[`q${idx}`] ?? screeningAnswers[String(idx)] ?? screeningAnswers[q.question] ?? ''
                   return (
                     <View key={idx} style={{ marginBottom: idx < screeningQuestions.length - 1 ? 16 : 0 }}>
                       <Text style={{ color: '#5A4F6E', fontSize: 12, fontWeight: '600', marginBottom: 4 }}>

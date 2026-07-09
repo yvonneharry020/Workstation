@@ -128,6 +128,12 @@ export default function SettingsScreen() {
           <NavRow label="Saved Job Posts" sub="Jobs you've bookmarked" onPress={() => router.push('/(candidate)/saved' as never)} />
         </View>
 
+        {/* Interview Room */}
+        <SectionHeader title="Interview" />
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
+          <NavRow label="Interview Room" sub="Join a video or audio interview with a company" onPress={() => router.push('/(candidate)/interview-room' as never)} />
+        </View>
+
         {/* Subscription */}
         <SectionHeader title="Subscription" />
         <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>

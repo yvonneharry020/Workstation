@@ -383,10 +383,16 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+function normalizeUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `https://${url}`
+}
+
 function LinkBtn({ label, url }: { label: string; url: string }) {
   return (
     <Pressable
-      onPress={() => Linking.openURL(url)}
+      onPress={() => Linking.openURL(normalizeUrl(url)).catch(() => {})}
       style={({ pressed }) => ({
         flexDirection: 'row', alignItems: 'center', gap: 5,
         backgroundColor: '#EDE9FE', borderRadius: 10,
@@ -569,8 +575,11 @@ function PipelinePicker({
                       <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: cfg.color }} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={{ fontSize: 17, fontWeight: '800', color: cfg.color, letterSpacing: -0.2 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#1A1625' }}>
                         {cfg.label}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: cfg.color, fontWeight: '600', marginTop: 2 }}>
+                        {stage.replace('_', ' ')}
                       </Text>
                     </View>
                     {isActive && !isPending && <CheckIcon color={cfg.color} />}
