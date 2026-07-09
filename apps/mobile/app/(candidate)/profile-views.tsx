@@ -183,8 +183,13 @@ export default function ProfileViewsScreen() {
           const company = companyMap[item.viewer_id]
           const companyName = company?.company_name ?? 'A verified company'
           const logoUrl = company?.logo_url ?? null
+          const companyId = company?.id ?? null
           return (
-            <View className="flex-row items-center gap-3 py-4" style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
+            <Pressable
+              onPress={() => companyId && router.push(`/(candidate)/company/${companyId}` as Parameters<typeof router.push>[0])}
+              className="flex-row items-center gap-3 py-4 active:opacity-70"
+              style={{ borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}
+            >
               {logoUrl ? (
                 <Image source={{ uri: logoUrl }} style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#DDD6C9' }} contentFit="cover" />
               ) : (
@@ -197,7 +202,7 @@ export default function ProfileViewsScreen() {
                 <Text className="text-slate-500 text-xs mt-0.5">{new Date(item.viewed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
               </View>
               <Text className="text-slate-500 text-xs">{timeAgo(item.viewed_at)}</Text>
-            </View>
+            </Pressable>
           )
         }}
       />

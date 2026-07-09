@@ -11,7 +11,7 @@ import { router } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import Svg, { Circle, Path, G } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
 import { Image } from 'expo-image'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -78,27 +78,6 @@ function formatSalary(min: number | null, max: number | null, confidential: bool
   const f = (n: number) => (n >= 1_000_000 ? `${(n / 1e6).toFixed(1)}M` : n >= 1_000 ? `${Math.round(n / 1_000)}k` : String(n))
   if (min && max) return `₦${f(min)}–${f(max)}`
   return min ? `From ₦${f(min)}` : `Up to ₦${f(max!)}`
-}
-
-function TrustRing({ score }: { score: number }) {
-  const r = 36
-  const circ = 2 * Math.PI * r
-  const color = score >= 80 ? '#22C55E' : score >= 50 ? '#F59E0B' : '#EF4444'
-  return (
-    <View style={{ width: 84, height: 84, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={84} height={84} viewBox="0 0 84 84">
-        <G rotation="-90" origin="42,42">
-          <Circle cx={42} cy={42} r={r} stroke="#1E1B2E" strokeWidth={7} fill="none" />
-          <Circle cx={42} cy={42} r={r} stroke={color} strokeWidth={7} fill="none"
-            strokeDasharray={`${(score / 100) * circ} ${circ}`} strokeLinecap="round" />
-        </G>
-      </Svg>
-      <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '800' }}>{score}</Text>
-        <Text style={{ color: '#64748B', fontSize: 9 }}>/ 100</Text>
-      </View>
-    </View>
-  )
 }
 
 function BellIcon() {
@@ -286,8 +265,6 @@ export default function CandidateDashboard() {
                 </View>
               </View>
 
-              {/* Trust ring */}
-              <TrustRing score={trustScore} />
             </View>
 
             {/* Profile completion bar */}

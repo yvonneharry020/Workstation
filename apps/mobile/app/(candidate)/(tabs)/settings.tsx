@@ -45,15 +45,6 @@ function NavRow({ label, sub, onPress, danger }: { label: string; sub?: string; 
   )
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ paddingVertical: 13, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
-      <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 2 }}>{label}</Text>
-      <Text style={{ color: '#5A4F6E', fontSize: 14 }}>{value}</Text>
-    </View>
-  )
-}
-
 export default function SettingsScreen() {
   const user = useAuthStore((s) => s.user)
   const reset = useAuthStore((s) => s.reset)
@@ -132,9 +123,15 @@ export default function SettingsScreen() {
         {/* Account */}
         <SectionHeader title="Account" />
         <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
-          <InfoRow label="Email address" value={user?.email ?? '—'} />
           <NavRow label="Change password" sub="Reset via email link" onPress={handleChangePassword} />
           <NavRow label="Profile Template" sub="Choose how companies see your profile" onPress={() => router.push('/(candidate)/profile-template' as never)} />
+          <NavRow label="Saved Job Posts" sub="Jobs you've bookmarked" onPress={() => router.push('/(candidate)/saved' as never)} />
+        </View>
+
+        {/* Subscription */}
+        <SectionHeader title="Subscription" />
+        <View style={{ backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, overflow: 'hidden' }}>
+          <NavRow label="Manage Subscription" sub="View your plan and upgrade options" onPress={() => router.push('/(candidate)/subscription' as never)} />
         </View>
 
         {/* Notifications */}

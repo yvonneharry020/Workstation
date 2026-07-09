@@ -205,8 +205,8 @@ export default function JobDetailScreen() {
   const initials = company?.company_name?.slice(0, 2).toUpperCase() ?? '??'
   const deadline = job.application_deadline ? daysUntilDeadline(job.application_deadline) : null
   const isDeadlineSoon = deadline !== null && deadline <= 7 && deadline >= 0
-  const descriptionLong = job.description.length > 400
-  const displayedDescription = descriptionLong && !expanded ? job.description.slice(0, 400) + '…' : job.description
+  const descriptionLong = (job.description?.length ?? 0) > 400
+  const displayedDescription = descriptionLong && !expanded ? job.description!.slice(0, 400) + '…' : (job.description ?? '')
 
   return (
     <SafeAreaView className="flex-1 bg-surface">

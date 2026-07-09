@@ -549,11 +549,14 @@ export default function CandidateApplicationScreen() {
   const recordViewMutation = useMutation({
     mutationFn: async () => {
       if (hasRecordedView || !user?.id || !candidateId) return
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
       const { count } = await supabase
         .from('profile_views')
         .select('id', { count: 'exact', head: true })
         .eq('viewer_id', user.id)
         .eq('viewed_id', candidateId)
+        .gte('viewed_at', todayStart.toISOString())
       if ((count ?? 0) === 0) {
         await supabase.from('profile_views').insert({ viewer_id: user.id, viewed_id: candidateId })
         const { data: companyRow } = await supabase
