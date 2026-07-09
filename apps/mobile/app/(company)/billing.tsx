@@ -170,7 +170,7 @@ export default function BillingScreen() {
             <Path d="M19 12H5M12 5l-7 7 7 7" />
           </Svg>
         </Pressable>
-        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Billing & Plans</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800' }}>Billing & Plans</Text>
       </View>
 
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20, paddingBottom: 48 }}>

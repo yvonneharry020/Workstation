@@ -259,7 +259,7 @@ export default function ApplicationsScreen() {
         style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', letterSpacing: -0.3 }}>
             Applications
           </Text>
           {totalCount > 0 && (

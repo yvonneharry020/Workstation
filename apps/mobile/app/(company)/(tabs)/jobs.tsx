@@ -268,7 +268,7 @@ export default function CompanyJobsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
-        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Job Listings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '700' }}>Job Listings</Text>
         <Pressable
           onPress={() => router.push('/(company)/jobs/post' as any)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FF6240', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9 }}

@@ -185,7 +185,7 @@ export default function InterviewCalendarScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-[#1A1625] text-lg font-bold flex-1">Interview Calendar</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold flex-1">Interview Calendar</Text>
         <Pressable
           onPress={() => router.push('/(company)/interviews/schedule')}
           style={{ backgroundColor: '#FF624015', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#FF624030' }}

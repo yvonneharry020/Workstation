@@ -250,7 +250,7 @@ export default function BrowseCandidatesScreen() {
           <Pressable onPress={() => router.back()} hitSlop={10} className="active:opacity-70">
             <ArrowLeftIcon />
           </Pressable>
-          <Text style={{ flex: 1, color: '#1A1625', fontSize: 20, fontWeight: '800' }}>Browse Talent</Text>
+          <Text style={{ flex: 1, color: '#1A1625', fontSize: 26, fontWeight: '800' }}>Browse Talent</Text>
           <Pressable
             onPress={() => router.push('/(company)/candidates/saved' as any)}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FF624015', borderRadius: 10, borderWidth: 1, borderColor: '#FF624030', paddingHorizontal: 12, paddingVertical: 7 }}

@@ -26,7 +26,7 @@ import { stateNameToId } from '@/lib/nigerianStates'
 import { Input as FormInput } from '@/components/ui/Input'
 import { PickerModal } from '@/components/ui/PickerModal'
 
-const STEPS_TOTAL = 7
+const STEPS_TOTAL = 6
 
 const INDUSTRIES = [
   'Technology', 'Finance & Banking', 'Healthcare', 'Education', 'E-Commerce',
@@ -218,7 +218,7 @@ export default function CompanyStep5() {
 
       if (error) throw error
 
-      router.push('/(onboarding)/company/step-6')
+      router.push('/(onboarding)/company/pending')
     } catch {
       Alert.alert('Error', 'Could not save your profile. Please try again.')
     } finally {
@@ -251,7 +251,7 @@ export default function CompanyStep5() {
           </View>
           <Text className="text-slate-500 text-xs mb-8">Step 5 of {STEPS_TOTAL}</Text>
 
-          <Text className="text-[#1A1625] text-3xl font-bold mb-2">Company profile</Text>
+          <Text className="text-[#1A1625] text-4xl font-bold mb-2">Company profile</Text>
           <Text className="text-slate-400 text-base mb-8">
             This is what candidates see when they browse your jobs. Make a strong first impression.
           </Text>

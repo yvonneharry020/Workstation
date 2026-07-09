@@ -145,7 +145,7 @@ export default function CompanyProfileViewScreen() {
         >
           <BackIcon />
         </Pressable>
-        <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Company Profile</Text>
+        <Text style={{ color: '#1A1625', fontSize: 23, fontWeight: '700' }}>Company Profile</Text>
         <Pressable
           onPress={() => router.push('/(company)/profile/edit' as never)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FF6240', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 }}

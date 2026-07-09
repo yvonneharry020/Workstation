@@ -167,7 +167,7 @@ export default function JobApplicantsOverview() {
         <Pressable onPress={() => router.back()} hitSlop={8} className="active:opacity-70">
           <BackIcon />
         </Pressable>
-        <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700', flex: 1 }} numberOfLines={1}>{job.title}</Text>
+        <Text style={{ color: '#1A1625', fontSize: 23, fontWeight: '700', flex: 1 }} numberOfLines={1}>{job.title}</Text>
         {job.status === 'draft' && (
           <Pressable onPress={() => router.push(`/(company)/jobs/${jobId}/edit` as any)} hitSlop={8} className="active:opacity-70">
             <EditIcon />

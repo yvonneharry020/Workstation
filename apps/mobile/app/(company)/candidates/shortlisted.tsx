@@ -196,7 +196,7 @@ export default function ShortlistedScreen() {
           <ArrowLeftIcon />
         </Pressable>
         <View className="flex-1">
-          <Text className="text-[#1A1625] text-xl font-bold">Shortlisted</Text>
+          <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '700' }}>Shortlisted</Text>
           {!isLoading && (
             <Text className="text-slate-400 text-xs">
               {totalCount} candidate{totalCount !== 1 ? 's' : ''}

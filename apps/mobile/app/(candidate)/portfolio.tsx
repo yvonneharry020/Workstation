@@ -344,7 +344,7 @@ export default function PortfolioScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 pt-5 pb-4">
-        <Text className="text-[#1A1625] text-2xl font-bold">Portfolio</Text>
+        <Text className="text-[#1A1625] text-3xl font-bold">Portfolio</Text>
         <Pressable onPress={openAdd} className="flex-row items-center gap-1.5 active:opacity-70">
           <PlusIcon />
           <Text style={{ color: '#FF6240', fontSize: 14, fontWeight: '600' }}>Add</Text>

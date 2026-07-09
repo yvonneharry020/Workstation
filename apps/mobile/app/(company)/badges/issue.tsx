@@ -185,7 +185,7 @@ export default function IssueBadgeScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-[#1A1625] text-lg font-bold flex-1">Issue Badge</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold flex-1">Issue Badge</Text>
         <ShieldIcon />
       </View>
 

@@ -262,7 +262,7 @@ export default function NotificationsScreen() {
         borderBottomColor: '#DDD6C9',
       }}>
         <View>
-          <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '800' }}>Notifications</Text>
+          <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '800' }}>Notifications</Text>
           {unreadCount > 0 && (
             <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{unreadCount} unread</Text>
           )}

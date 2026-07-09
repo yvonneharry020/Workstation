@@ -114,7 +114,7 @@ export default function ProfileViewsScreen() {
     return (
       <SafeAreaView className="flex-1 bg-surface">
         <View className="px-5 pt-5 pb-4">
-          <Text className="text-[#1A1625] text-2xl font-bold">Profile Views</Text>
+          <Text className="text-[#1A1625] text-3xl font-bold">Profile Views</Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <View

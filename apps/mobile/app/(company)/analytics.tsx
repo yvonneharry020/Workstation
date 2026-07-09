@@ -184,7 +184,7 @@ export default function AnalyticsScreen() {
               <Path d="M19 12H5M12 5l-7 7 7 7" />
             </Svg>
           </Pressable>
-          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Analytics</Text>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800' }}>Analytics</Text>
         </View>
         <View style={{ flexDirection: 'row', backgroundColor: '#EDE7DB', borderRadius: 10, borderWidth: 1, borderColor: '#DDD6C9', padding: 3 }}>
           {(['30', '90'] as DateRange[]).map((r) => (

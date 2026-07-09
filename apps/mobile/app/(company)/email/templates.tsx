@@ -247,7 +247,7 @@ export default function EmailTemplatesScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-[#1A1625] text-lg font-bold flex-1">Email Templates</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold flex-1">Email Templates</Text>
         <Pressable
           onPress={() => setShowNewForm((v) => !v)}
           style={{ backgroundColor: '#FF6240', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6 }}

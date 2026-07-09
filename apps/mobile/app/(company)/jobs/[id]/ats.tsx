@@ -103,8 +103,13 @@ function ApplicationCard({ item, index }: { item: ApplicationRow; index: number 
         style={({ pressed }) => ({
           backgroundColor: '#FFFFFF',
           borderRadius: 18,
-          borderWidth: 1,
-          borderColor: '#E5DFD3',
+          borderWidth: 1.5,
+          borderColor: '#C8BFB0',
+          shadowColor: '#1A1625',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.06,
+          shadowRadius: 4,
+          elevation: 2,
           padding: 16,
           marginBottom: 12,
           opacity: pressed ? 0.85 : 1,
@@ -218,7 +223,7 @@ export default function JobAtsScreen() {
             <ArrowLeftIcon />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Applicants</Text>
+            <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700' }}>Applicants</Text>
             <Text style={{ color: '#94A3B8', fontSize: 12 }} numberOfLines={1}>{jobTitle}</Text>
           </View>
           <Pressable

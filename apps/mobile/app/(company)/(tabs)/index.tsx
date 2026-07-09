@@ -468,7 +468,7 @@ export default function CompanyDashboard() {
         <View className="px-5 pt-6 pb-4 flex-row items-center justify-between">
           <View style={{ flex: 1 }}>
             <Text style={{ color: '#64748B', fontSize: 13 }}>{greeting}</Text>
-            <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>
+            <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '700', marginTop: 2 }} numberOfLines={1}>
               {isLoading ? '...' : stats?.companyName}
             </Text>
           </View>

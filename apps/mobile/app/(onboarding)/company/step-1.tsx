@@ -46,7 +46,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const STEPS_TOTAL = 7
+const STEPS_TOTAL = 6
 
 export default function CompanyStep1() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -152,7 +152,7 @@ export default function CompanyStep1() {
           </View>
           <Text className="text-slate-500 text-xs mb-8">Step 1 of {STEPS_TOTAL}</Text>
 
-          <Text className="text-[#1A1625] text-3xl font-bold mb-2">Register your company</Text>
+          <Text className="text-[#1A1625] text-4xl font-bold mb-2">Register your company</Text>
           <Text className="text-slate-400 text-base mb-8">
             Enter your company details. You'll verify your RC number in the next step.
           </Text>

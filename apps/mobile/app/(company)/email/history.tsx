@@ -131,7 +131,7 @@ export default function EmailHistoryScreen() {
         <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
           <ArrowLeftIcon />
         </Pressable>
-        <Text className="text-[#1A1625] text-lg font-bold">Email History</Text>
+        <Text className="text-[#1A1625] text-2xl font-bold">Email History</Text>
       </View>
 
       <View className="px-5 py-4 flex-row gap-3">

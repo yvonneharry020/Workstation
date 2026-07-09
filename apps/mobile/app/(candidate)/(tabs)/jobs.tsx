@@ -233,7 +233,7 @@ export default function JobsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
-        <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginBottom: 14 }}>
+        <Text style={{ color: '#1A1625', fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginBottom: 14 }}>
           Browse Jobs 💼
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F0EBE1', borderWidth: 1, borderColor: '#DDD6C9', borderRadius: 16, paddingHorizontal: 14, height: 48 }}>

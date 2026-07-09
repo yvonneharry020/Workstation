@@ -154,7 +154,7 @@ export default function KanbanScreen() {
             <ArrowLeftIcon />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>Kanban Board</Text>
+            <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700' }}>Kanban Board</Text>
             <Text style={{ color: '#94A3B8', fontSize: 12 }} numberOfLines={1}>{jobTitle}</Text>
           </View>
         </View>
@@ -174,7 +174,7 @@ export default function KanbanScreen() {
             <View
               key={stage}
               style={{
-                width: COLUMN_WIDTH, backgroundColor: '#FFFFFF',
+                width: COLUMN_WIDTH, backgroundColor: '#EDE7DB',
                 borderRadius: 16, borderWidth: 1, borderColor: '#E5DFD3',
                 overflow: 'hidden',
               }}

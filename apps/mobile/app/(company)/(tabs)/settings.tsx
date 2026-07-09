@@ -20,10 +20,6 @@ import { logEvent } from '@/lib/audit'
 
 interface CompanyProfile {
   company_name: string | null
-  gmail_connected: boolean
-  gmail_account: string | null
-  outlook_connected: boolean
-  outlook_account: string | null
 }
 
 const DELETE_CONFIRM_WORD = 'DELETE'
@@ -118,7 +114,7 @@ export default function SettingsScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_profiles')
-        .select('company_name, gmail_connected, gmail_account, outlook_connected, outlook_account')
+        .select('company_name')
         .eq('id', user!.id)
         .maybeSingle()
       if (error) throw error
@@ -191,7 +187,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Settings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800' }}>Settings</Text>
         {profile?.company_name && (
           <Text style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>{profile.company_name}</Text>
         )}
@@ -229,29 +225,21 @@ export default function SettingsScreen() {
             />
             <Divider />
             <SettingRow
-              label="Gmail integration"
-              sub={profile?.gmail_connected ? (profile.gmail_account ?? 'Connected') : 'Not connected'}
+              label="Google Spreadsheet"
+              sub="Export candidate data to Google Sheets"
+              icon={
+                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <Path d="M14 2v6h6M8 13h8M8 17h8M10 9H8" />
+                </Svg>
+              }
+              iconBg="#22C55E15"
               right={
-                <View style={{ backgroundColor: profile?.gmail_connected ? '#22C55E20' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: profile?.gmail_connected ? '#22C55E' : '#64748B', fontSize: 11, fontWeight: '600' }}>
-                    {profile?.gmail_connected ? 'Connected' : 'Connect'}
-                  </Text>
+                <View style={{ backgroundColor: '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: '#64748B', fontSize: 11, fontWeight: '600' }}>Connect</Text>
                 </View>
               }
-              onPress={() => router.push('/(onboarding)/company/step-6')}
-            />
-            <Divider />
-            <SettingRow
-              label="Outlook integration"
-              sub={profile?.outlook_connected ? (profile.outlook_account ?? 'Connected') : 'Not connected'}
-              right={
-                <View style={{ backgroundColor: profile?.outlook_connected ? '#22C55E20' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: profile?.outlook_connected ? '#22C55E' : '#64748B', fontSize: 11, fontWeight: '600' }}>
-                    {profile?.outlook_connected ? 'Connected' : 'Connect'}
-                  </Text>
-                </View>
-              }
-              onPress={() => router.push('/(onboarding)/company/step-6')}
+              onPress={() => router.push('/(company)/integrations/google-sheets' as never)}
             />
           </SectionCard>
         </Animated.View>

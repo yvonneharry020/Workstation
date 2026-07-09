@@ -718,7 +718,7 @@ export default function InterviewsScreen() {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <View>
-          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Interviews</Text>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '700' }}>Interviews</Text>
           <Text style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Live & scheduled video rooms</Text>
         </View>
         <Pressable

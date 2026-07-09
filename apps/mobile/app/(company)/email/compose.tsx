@@ -259,7 +259,7 @@ export default function ComposeEmailScreen() {
           <Pressable onPress={() => router.back()} className="mr-3 active:opacity-70">
             <ArrowLeftIcon />
           </Pressable>
-          <Text className="text-[#1A1625] text-lg font-bold flex-1">Compose Email</Text>
+          <Text className="text-[#1A1625] text-2xl font-bold flex-1">Compose Email</Text>
           <Pressable
             onPress={() => setShowPreview((v) => !v)}
             style={{ backgroundColor: showPreview ? '#FF624020' : '#DDD6C9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}

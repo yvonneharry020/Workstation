@@ -219,7 +219,7 @@ export default function SavedCandidatesScreen() {
           <ArrowLeftIcon />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '700' }}>Saved Candidates</Text>
+          <Text style={{ color: '#1A1625', fontSize: 26, fontWeight: '700' }}>Saved Candidates</Text>
           {!isLoading && (
             <Text style={{ color: '#94A3B8', fontSize: 12 }}>
               {savedEntries.length} candidate{savedEntries.length !== 1 ? 's' : ''} saved

@@ -29,7 +29,7 @@ interface CACResult {
   rcNumber: string
 }
 
-const STEPS_TOTAL = 7
+const STEPS_TOTAL = 6
 const IS_MOCK = process.env.EXPO_PUBLIC_MOCK_VERIFICATION === 'true'
 
 function PulsingRing({ color }: { color: string }) {
@@ -242,7 +242,7 @@ export default function CompanyStep2() {
         </View>
         <Text className="text-slate-500 text-xs mb-8">Step 2 of {STEPS_TOTAL}</Text>
 
-        <Text className="text-[#1A1625] text-3xl font-bold mb-2">CAC Verification</Text>
+        <Text className="text-[#1A1625] text-4xl font-bold mb-2">CAC Verification</Text>
         <Text className="text-slate-400 text-base mb-8">
           We'll verify your company's registration with the Corporate Affairs Commission.
         </Text>

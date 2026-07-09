@@ -246,7 +246,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface">
       <View className="flex-row items-center justify-between px-5 py-4 border-b border-surface-border">
-        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800' }}>Notifications</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800' }}>Notifications</Text>
         {unreadCount > 0 && (
           <Pressable
             onPress={() => markAllReadMutation.mutate()}

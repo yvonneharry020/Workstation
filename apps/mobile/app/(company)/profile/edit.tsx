@@ -347,7 +347,7 @@ export default function EditCompanyProfileScreen() {
           <Pressable onPress={() => router.back()} className="active:opacity-70 p-1">
             <ArrowLeftIcon />
           </Pressable>
-          <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Edit Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 23, fontWeight: '700' }}>Edit Profile</Text>
           <Pressable
             onPress={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}

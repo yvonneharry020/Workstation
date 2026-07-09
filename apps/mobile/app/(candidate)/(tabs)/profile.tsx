@@ -291,7 +291,7 @@ export default function CandidateProfileScreen() {
 
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(350)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 24 }}>
-          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}>My Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', letterSpacing: -0.3 }}>My Profile</Text>
           <Pressable
             onPress={() => router.push('/(candidate)/profile/edit')}
             style={{ backgroundColor: '#FF624015', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: '#FF624030' }}

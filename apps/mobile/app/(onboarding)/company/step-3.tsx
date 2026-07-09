@@ -29,7 +29,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-const STEPS_TOTAL = 7
+const STEPS_TOTAL = 6
 
 type VerifyState = 'idle' | 'loading' | 'success' | 'mismatch'
 
@@ -211,7 +211,7 @@ export default function CompanyStep3() {
 
           {verifyState !== 'success' ? (
             <>
-              <Text className="text-[#1A1625] text-3xl font-bold mb-2">Director identity</Text>
+              <Text className="text-[#1A1625] text-4xl font-bold mb-2">Director identity</Text>
               <Text className="text-slate-400 text-base mb-8">
                 Confirm you are one of the directors registered with the CAC.
               </Text>

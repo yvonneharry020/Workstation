@@ -251,7 +251,7 @@ export default function SavedJobsScreen() {
         </Pressable>
         <View className="flex-row items-center gap-3 flex-1">
           <Text
-            style={{ color: '#1A1625', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 }}
+            style={{ color: '#1A1625', fontSize: 28, fontWeight: '800', letterSpacing: -0.3 }}
           >
             Saved Jobs
           </Text>

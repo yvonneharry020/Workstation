@@ -16,7 +16,7 @@ import Svg, { Path, Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
-const STEPS_TOTAL = 7
+const STEPS_TOTAL = 6
 
 interface UploadedDoc {
   name: string
@@ -282,7 +282,7 @@ export default function CompanyStep4() {
         </View>
         <Text className="text-slate-500 text-xs mb-8">Step 4 of {STEPS_TOTAL}</Text>
 
-        <Text className="text-[#1A1625] text-3xl font-bold mb-2">Business documents</Text>
+        <Text className="text-[#1A1625] text-4xl font-bold mb-2">Business documents</Text>
         <Text className="text-slate-400 text-base mb-8">
           Upload the documents below. All files go through automated fraud detection before human review.
         </Text>

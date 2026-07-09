@@ -453,7 +453,7 @@ export default function EditProfileScreen() {
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Text style={{ color: '#5A4F6E', fontSize: 14 }}>← Back</Text>
           </Pressable>
-          <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700' }}>Edit Profile</Text>
+          <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Edit Profile</Text>
           <Pressable onPress={handleSave} disabled={isSaving} hitSlop={12}>
             <Text style={{ color: isSaving ? '#64748B' : '#FF6240', fontSize: 14, fontWeight: '600' }}>
               {isSaving ? 'Saving…' : 'Save'}

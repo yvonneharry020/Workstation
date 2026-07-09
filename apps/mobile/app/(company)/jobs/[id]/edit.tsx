@@ -300,7 +300,7 @@ export default function EditJobScreen() {
           <Pressable onPress={() => router.back()} hitSlop={8} className="active:opacity-70">
             <BackIcon />
           </Pressable>
-          <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700', flex: 1 }}>Edit job</Text>
+          <Text style={{ color: '#1A1625', fontSize: 24, fontWeight: '700', flex: 1 }}>Edit job</Text>
         </View>
 
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 48 }}>

@@ -124,7 +124,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F0E8' }}>
       <View style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#DDD6C9' }}>
-        <Text style={{ color: '#1A1625', fontSize: 22, fontWeight: '700' }}>Settings</Text>
+        <Text style={{ color: '#1A1625', fontSize: 28, fontWeight: '700' }}>Settings</Text>
       </View>
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>

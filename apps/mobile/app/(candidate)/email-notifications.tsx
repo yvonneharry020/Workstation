@@ -79,7 +79,7 @@ export default function EmailNotificationsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} className="active:opacity-70">
           <BackIcon />
         </Pressable>
-        <Text style={{ color: '#1A1625', fontSize: 17, fontWeight: '700' }}>Email Notifications</Text>
+        <Text style={{ color: '#1A1625', fontSize: 23, fontWeight: '700' }}>Email Notifications</Text>
       </View>
 
       {isLoading ? (
