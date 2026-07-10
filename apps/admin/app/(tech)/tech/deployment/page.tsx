@@ -9,6 +9,10 @@ const CARD: React.CSSProperties = {
   boxShadow: 'var(--shadow-card)',
 }
 
+// Same source of truth as the NEXT_PUBLIC_APP_URL fallback in auth-actions.ts —
+// derived here instead of a second hardcoded literal so the two can't drift.
+const ADMIN_PANEL_DOMAIN = new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://skiniq.store').hostname
+
 type VState = 'READY' | 'ERROR' | 'BUILDING' | 'QUEUED' | 'CANCELED' | string
 type EState = 'FINISHED' | 'ERRORED' | 'IN_PROGRESS' | 'NEW' | string
 
@@ -373,7 +377,7 @@ export default function DeploymentPage() {
                   </svg>
                 </div>
                 <h2 className="text-[13px] font-bold" style={{ color: 'var(--tx-1)' }}>Admin Panel</h2>
-                <span className="text-[11px]" style={{ color: 'var(--tx-3)' }}>Vercel · skiniq.store</span>
+                <span className="text-[11px]" style={{ color: 'var(--tx-3)' }}>Vercel · {ADMIN_PANEL_DOMAIN}</span>
               </div>
               <VercelSection data={data.vercel} />
             </section>
