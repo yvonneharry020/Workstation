@@ -31,17 +31,6 @@ interface ProfileRow {
   profiles: { full_name: string; avatar_url: string | null } | null
 }
 
-function mockSignature(payload: string): string {
-  let hash = 0
-  for (let i = 0; i < payload.length; i++) {
-    const char = payload.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash
-  }
-  const hex = Math.abs(hash).toString(16).padStart(8, '0')
-  return `${hex}${hex}${hex}${hex}${hex}${hex}${hex}${hex}`.slice(0, 64)
-}
-
 function ArrowLeftIcon() {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#1A1625" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -154,15 +143,12 @@ export default function IssueBadgeScreen() {
       if (badgeErr) throw badgeErr
 
       const badgeId = (badge as unknown as { id: string }).id
-      const payload = JSON.stringify({ badgeId, issuerId: user!.id, recipientId: candidate.id, roleHeld, issuedAt: new Date().toISOString() })
-      const signature = mockSignature(payload)
 
-      await supabase.from('badge_signatures').insert({
-        badge_id: badgeId,
-        signature,
-        payload,
-        signed_at: new Date().toISOString(),
-      })
+      // Real HMAC-SHA256 signing happens server-side — the signing key is
+      // never sent to or computable by the client. This also re-derives the
+      // payload from the actual badges row rather than trusting client state.
+      const { error: signErr } = await supabase.rpc('sign_badge', { p_badge_id: badgeId })
+      if (signErr) throw signErr
 
       return badgeId
     },
