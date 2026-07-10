@@ -134,7 +134,38 @@ export default function AnalyticsScreen() {
     enabled: !!jobs,
   })
 
-  const isLoading = jobsLoading || appsLoading
+  const { data: emailsSent, isLoading: emailsSentLoading } = useQuery({
+    queryKey: ['analytics-emails-sent', user?.id, dateRange],
+    queryFn: async () => {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - parseInt(dateRange, 10))
+      const { data, error } = await supabase
+        .from('emails_sent')
+        .select('id')
+        .eq('company_id', user!.id)
+        .gte('sent_at', cutoff.toISOString())
+      if (error) throw error
+      return (data ?? []) as { id: string }[]
+    },
+    enabled: !!user?.id,
+  })
+
+  const { data: emailOpens, isLoading: emailOpensLoading } = useQuery({
+    queryKey: ['analytics-email-opens', emailsSent],
+    queryFn: async () => {
+      const ids = (emailsSent ?? []).map((e) => e.id)
+      if (!ids.length) return []
+      const { data, error } = await supabase
+        .from('email_open_events')
+        .select('email_id')
+        .in('email_id', ids)
+      if (error) throw error
+      return (data ?? []) as { email_id: string }[]
+    },
+    enabled: !!emailsSent,
+  })
+
+  const isLoading = jobsLoading || appsLoading || emailsSentLoading || emailOpensLoading
 
   const totalJobs = jobs?.length ?? 0
   const activeJobs = jobs?.filter((j) => j.status === 'active').length ?? 0
@@ -167,9 +198,9 @@ export default function AnalyticsScreen() {
 
   const maxJobApps = Math.max(...topJobs.map((j) => j.applications_count ?? 0), 1)
 
-  const emailSentMock = Math.max(totalApps * 2, 0)
-  const emailOpenedMock = Math.round(emailSentMock * 0.38)
-  const openRate = emailSentMock > 0 ? Math.round((emailOpenedMock / emailSentMock) * 100) : 0
+  const emailsSentCount = emailsSent?.length ?? 0
+  const emailsOpenedCount = new Set((emailOpens ?? []).map((e) => e.email_id)).size
+  const openRate = emailsSentCount > 0 ? Math.round((emailsOpenedCount / emailsSentCount) * 100) : 0
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -291,18 +322,17 @@ export default function AnalyticsScreen() {
           <Animated.View entering={FadeInDown.delay(250).duration(300)} style={{ marginBottom: 28 }}>
             <Text style={{ color: '#1A1625', fontSize: 16, fontWeight: '700', marginBottom: 14 }}>Email performance</Text>
             <View style={{ backgroundColor: '#EDE7DB', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6C9', padding: 20 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 20 }}>
+              <View style={{ alignItems: 'center', marginBottom: 20 }}>
                 <RingChart value={openRate} color="#FF6240" label="Open rate" />
-                <RingChart value={totalApps > 0 ? Math.min(Math.round((totalApps / Math.max(activeJobs, 1)) * 5), 100) : 0} color="#0DD4C3" label="Response rate" />
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 10, padding: 12 }}>
                   <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 4 }}>Sent</Text>
-                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailSentMock}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailsSentCount}</Text>
                 </View>
                 <View style={{ flex: 1, backgroundColor: '#F0EBE1', borderRadius: 10, padding: 12 }}>
                   <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 4 }}>Opened</Text>
-                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailOpenedMock}</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 18, fontWeight: '700' }}>{emailsOpenedCount}</Text>
                 </View>
               </View>
             </View>

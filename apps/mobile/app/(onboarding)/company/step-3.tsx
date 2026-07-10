@@ -30,8 +30,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const STEPS_TOTAL = 6
+const IS_MOCK = process.env.EXPO_PUBLIC_MOCK_VERIFICATION === 'true'
 
-type VerifyState = 'idle' | 'loading' | 'success' | 'mismatch'
+type VerifyState = 'idle' | 'loading' | 'success' | 'mismatch' | 'failed'
 
 function UserIcon() {
   return (
@@ -163,6 +164,11 @@ export default function CompanyStep3() {
     try {
       await new Promise((res) => setTimeout(res, 2000))
 
+      if (!IS_MOCK) {
+        // Real NIN verification API call goes here when a provider (e.g. Dojah) is configured.
+        throw new Error('NIN_API_NOT_CONFIGURED')
+      }
+
       const { error } = await supabase.from('company_verification').upsert({
         company_id: user.id,
         director_nin_status: 'approved',
@@ -178,9 +184,15 @@ export default function CompanyStep3() {
         .eq('id', user.id)
 
       setVerifyState('success')
-    } catch {
-      Alert.alert('Verification error', 'Something went wrong. Please try again.')
-      setVerifyState('idle')
+    } catch (err) {
+      const isUnconfigured = err instanceof Error && err.message === 'NIN_API_NOT_CONFIGURED'
+      setVerifyState('failed')
+      Alert.alert(
+        'Verification error',
+        isUnconfigured
+          ? 'NIN verification is not yet configured. Please contact support.'
+          : 'Something went wrong. Please try again.'
+      )
     }
   }
 

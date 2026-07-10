@@ -291,6 +291,17 @@ export default function PayrollPage() {
       approved_by: user?.email ?? 'finance admin',
       approved_at: new Date().toISOString(),
     }).eq('id', existingRun.id)
+    await supabase.from('audit_logs').insert({
+      event: 'admin.payroll_run_approved',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: existingRun.id,
+      target_type: 'payroll_run',
+      severity: 'warning',
+      app: 'admin_panel',
+      metadata: { month: existingRun.month, total_net_pay: existingRun.total_net_pay },
+    })
     setActing(false)
     void loadRun()
   }
@@ -298,12 +309,24 @@ export default function PayrollPage() {
   async function markPaid() {
     if (!existingRun) return
     setActing(true)
+    const { data: { user } } = await supabase.auth.getUser()
     await supabase.from('payroll_runs').update({
       status: 'paid',
       paid_at: new Date().toISOString(),
     }).eq('id', existingRun.id)
     await supabase.from('payroll_run_items').update({ payment_status: 'paid', paid_at: new Date().toISOString() })
       .eq('payroll_run_id', existingRun.id)
+    await supabase.from('audit_logs').insert({
+      event: 'admin.payroll_run_paid',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: existingRun.id,
+      target_type: 'payroll_run',
+      severity: 'warning',
+      app: 'admin_panel',
+      metadata: { month: existingRun.month, total_net_pay: existingRun.total_net_pay },
+    })
     setActing(false)
     void loadRun()
   }

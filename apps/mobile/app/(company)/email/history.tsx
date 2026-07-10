@@ -97,11 +97,35 @@ export default function EmailHistoryScreen() {
           .order('sent_at', { ascending: false })
           .limit(200)
         if (error) throw error
-        return (data as unknown as EmailRow[]).map((r) => ({
-          ...r,
-          opened_at: null,
-          open_count: 0,
-        })) as EmailSent[]
+        const rows = data as unknown as EmailRow[]
+
+        const ids = rows.map((r) => r.id)
+        const opensByEmailId = new Map<string, { count: number; firstOpenedAt: string }>()
+        if (ids.length > 0) {
+          const { data: opens, error: opensErr } = await supabase
+            .from('email_open_events')
+            .select('email_id, opened_at')
+            .in('email_id', ids)
+            .order('opened_at', { ascending: true })
+          if (opensErr) throw opensErr
+          for (const o of (opens ?? []) as { email_id: string; opened_at: string }[]) {
+            const existing = opensByEmailId.get(o.email_id)
+            if (existing) {
+              existing.count += 1
+            } else {
+              opensByEmailId.set(o.email_id, { count: 1, firstOpenedAt: o.opened_at })
+            }
+          }
+        }
+
+        return rows.map((r) => {
+          const opens = opensByEmailId.get(r.id)
+          return {
+            ...r,
+            opened_at: opens?.firstOpenedAt ?? null,
+            open_count: opens?.count ?? 0,
+          }
+        }) as EmailSent[]
       } catch {
         return [] as EmailSent[]
       }
