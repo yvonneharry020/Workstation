@@ -23,8 +23,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
-const DAILY_API_KEY = process.env.EXPO_PUBLIC_DAILY_API_KEY ?? ''
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type InterviewType = 'live' | 'scheduled'
@@ -86,40 +84,6 @@ function isJoinable(room: InterviewRoom): boolean {
   const scheduledDay = new Date(room.scheduled_at)
   scheduledDay.setHours(0, 0, 0, 0)
   return today >= scheduledDay
-}
-
-async function createDailyRoom(roomName: string): Promise<{ url: string; name: string }> {
-  const res = await fetch('https://api.daily.co/v1/rooms', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${DAILY_API_KEY}`,
-    },
-    body: JSON.stringify({
-      name: roomName,
-      privacy: 'public',
-      properties: {
-        max_participants: 10,
-        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 days for scheduled
-        enable_chat: true,
-        enable_people_ui: true,
-        start_video_off: false,
-        start_audio_off: false,
-      },
-    }),
-  })
-  if (!res.ok) {
-    const err = await res.json() as { error?: string }
-    throw new Error(err?.error ?? 'Failed to create room on Daily.co')
-  }
-  return res.json() as Promise<{ url: string; name: string }>
-}
-
-async function deleteDailyRoom(roomName: string): Promise<void> {
-  await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${DAILY_API_KEY}` },
-  })
 }
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -651,18 +615,14 @@ export default function InterviewsScreen() {
       type: InterviewType
       scheduledAt: Date | null
     }) => {
-      const roomName = `ivw-${user!.id.slice(0, 8)}-${Date.now()}`
-      const daily = await createDailyRoom(roomName)
-      const { error } = await supabase.from('interview_rooms').insert({
-        company_id: user!.id,
-        room_name: daily.name,
-        room_url: daily.url,
-        label: job.title,
-        job_posting_id: job.id,
-        job_title: job.title,
-        interview_type: type,
-        scheduled_at: scheduledAt?.toISOString() ?? null,
-        status: 'active',
+      const { error } = await supabase.functions.invoke('interview-rooms', {
+        method: 'POST',
+        body: {
+          jobPostingId: job.id,
+          jobTitle: job.title,
+          interviewType: type,
+          scheduledAt: scheduledAt?.toISOString() ?? null,
+        },
       })
       if (error) throw error
     },
@@ -675,12 +635,11 @@ export default function InterviewsScreen() {
   })
 
   const endMutation = useMutation({
-    mutationFn: async ({ id, roomName }: { id: string; roomName: string }) => {
-      await deleteDailyRoom(roomName)
-      const { error } = await supabase
-        .from('interview_rooms')
-        .update({ status: 'ended', ended_at: new Date().toISOString() })
-        .eq('id', id)
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase.functions.invoke('interview-rooms', {
+        method: 'DELETE',
+        body: { roomId: id },
+      })
       if (error) throw error
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['interview-rooms', user?.id] }),
@@ -693,7 +652,7 @@ export default function InterviewsScreen() {
       'The room will be closed and the link will stop working.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'End room', style: 'destructive', onPress: () => endMutation.mutate({ id: room.id, roomName: room.room_name }) },
+        { text: 'End room', style: 'destructive', onPress: () => endMutation.mutate({ id: room.id }) },
       ],
     )
   }, [endMutation])
