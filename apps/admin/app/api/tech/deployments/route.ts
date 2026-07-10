@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getStaffMember, getAllowedRooms } from '@/lib/staff-auth'
 
 const VERCEL_TOKEN      = process.env.VERCEL_API_TOKEN
 const VERCEL_TEAM_ID    = process.env.VERCEL_TEAM_ID
@@ -79,6 +80,14 @@ async function fetchEAS() {
 }
 
 export async function GET(req: Request) {
+  const { user, staffMember } = await getStaffMember()
+  const isSuperAdmin = user?.email === 'yvonne2okis@gmail.com'
+  const canAccessTech = isSuperAdmin ||
+    (!!staffMember && staffMember.is_active && getAllowedRooms(staffMember).includes('technical'))
+  if (!canAccessTech) {
+    return NextResponse.json({ error: 'Forbidden — technical staff only' }, { status: 403 })
+  }
+
   const { searchParams } = new URL(req.url)
   const failedId = searchParams.get('buildLogs')
 

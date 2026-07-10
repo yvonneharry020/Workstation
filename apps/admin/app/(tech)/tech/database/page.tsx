@@ -42,20 +42,12 @@ export default function DatabasePage() {
     setLoading(true)
     setError(null)
     setResults(null)
+    // The database itself enforces the real guard (single SELECT statement,
+    // no stacking, RLS still applies) — this client-side check above is only
+    // a fast pre-flight for UX, not the security boundary.
     const { data, error: e } = await supabase.rpc('execute_readonly_sql' as never, { sql: q })
     if (e) {
-      const match = q.match(/from\s+(\w+)/i)
-      const table = match?.[1]
-      if (table) {
-        const { data: fallback, error: fe } = await supabase.from(table as never).select('*').limit(25)
-        if (!fe && fallback) {
-          setResults(fallback as Record<string, unknown>[])
-        } else {
-          setError(`Query failed: ${e.message}`)
-        }
-      } else {
-        setError(`Query failed: ${e.message}`)
-      }
+      setError(`Query failed: ${e.message}`)
     } else {
       setResults((data ?? []) as Record<string, unknown>[])
     }

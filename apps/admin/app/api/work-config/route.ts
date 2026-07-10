@@ -9,6 +9,20 @@ export async function GET() {
 
   const admin = createAdminClient()
 
+  // This returns every staff member's salary — admin only, matching POST below.
+  const { data: staffMember } = await admin
+    .from('staff_members')
+    .select('role')
+    .eq('email', user.email)
+    .maybeSingle()
+
+  const isSuperAdmin = user.email === 'yvonne2okis@gmail.com'
+  const isAdmin      = isSuperAdmin || staffMember?.role === 'admin'
+
+  if (!isAdmin) {
+    return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
+  }
+
   const { data: configs, error } = await admin
     .from('staff_work_config')
     .select('*')

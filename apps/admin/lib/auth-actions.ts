@@ -10,6 +10,19 @@ import { validatePassword } from './password-validator'
 import { logAdminEvent } from './audit'
 import { sendEmail } from './email'
 import { passwordResetEmail, staffInviteEmail } from './email/templates'
+import { getStaffMember } from './staff-auth'
+
+// Server Actions are callable directly once bundled to the client, not just
+// through the UI that happens to render a button for them — so each one
+// that performs a privileged write must re-check the caller itself rather
+// than trusting that only an admin would ever be the one invoking it.
+async function requireCallingAdmin(): Promise<{ email: string } | null> {
+  const { user, staffMember } = await getStaffMember()
+  const isSuperAdmin = user?.email === 'yvonne2okis@gmail.com'
+  const isActiveAdmin = !!staffMember && staffMember.is_active && staffMember.role === 'admin'
+  if (!isSuperAdmin && !isActiveAdmin) return null
+  return { email: user?.email ?? '' }
+}
 
 // ─── Multi-session cookie helpers ─────────────────────────────────────────────
 
@@ -369,6 +382,9 @@ export async function resendStaffInviteAction(
   rooms: string[],
 ): Promise<ResendInviteState> {
   try {
+    const caller = await requireCallingAdmin()
+    if (!caller) return { error: 'Forbidden — admin only' }
+
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'https://skiniq.store'
     const redirectTo = `${origin}/auth/callback?next=/setup-account`
 
@@ -476,6 +492,9 @@ export async function saveStaffPermissionsAction(
   oldPermissions: Record<string, boolean>,
 ): Promise<SavePermissionsState> {
   try {
+    const caller = await requireCallingAdmin()
+    if (!caller) return { error: 'Forbidden — admin only' }
+
     const admin = createAdminClient()
 
     const { error: updateError } = await admin
@@ -528,6 +547,9 @@ export async function toggleStaffActiveAction(
   newIsActive: boolean,
 ): Promise<ToggleActiveState> {
   try {
+    const caller = await requireCallingAdmin()
+    if (!caller) return { error: 'Forbidden — admin only' }
+
     const admin = createAdminClient()
 
     const { error: updateError } = await admin

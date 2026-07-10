@@ -58,6 +58,16 @@ const LEGACY_ROOM_ROLES: Array<{ prefix: string; allowed: string[] }> = [
 ]
 
 function getRoomForPath(pathname: string): string | null {
+  // API routes — the room check below only fires when a room is returned,
+  // so any path not listed here (email/send, attendance, clock/*) is
+  // reachable by any active staff member regardless of department. That's
+  // intentional for genuinely cross-department/personal-use routes; the
+  // ones below are single-purpose and privileged enough to lock to one room.
+  if (pathname.startsWith('/api/staff/'))       return 'admin'
+  if (pathname.startsWith('/api/work-config'))  return 'admin'
+  if (pathname.startsWith('/api/tech/'))         return 'technical'
+  if (pathname.startsWith('/api/health-proxy')) return 'technical'
+
   if (pathname.startsWith('/ops/'))     return 'management'
   if (pathname.startsWith('/tech/'))    return 'technical'
   if (pathname.startsWith('/finance/')) return 'finance'
@@ -263,7 +273,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
       }
     } catch {
-      // Fail open on DB errors
+      // Fail closed: if we can't verify staff status, treat the request the
+      // same as "no staff record found" above rather than letting it through.
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
