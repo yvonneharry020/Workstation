@@ -37,6 +37,16 @@ interface ApprovedEntry {
   reviewed_at: string | null
 }
 
+interface IssuedBadge {
+  id: string
+  recipient_id: string
+  recipient_name: string
+  issued_by: string | null
+  issuer_label: string
+  issued_at: string
+  status: string
+}
+
 function formatDate(d: string | null) {
   if (!d) return 'Present'
   return new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -46,9 +56,15 @@ function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-NG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
+type Tab = 'issue' | 'history'
+
 export default function AdminBadgeReviewPage() {
   const supabase = createClient()
   const router = useRouter()
+
+  const [tab, setTab] = useState<Tab>('issue')
+  const [history, setHistory] = useState<IssuedBadge[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const [search, setSearch] = useState('')
   const [searching, setSearching] = useState(false)
@@ -98,6 +114,59 @@ export default function AdminBadgeReviewPage() {
       email: emailById.get(r.id) ?? null,
     })))
     setSearching(false)
+  }
+
+  // Every admin badge with who issued it and when — so a wrong decision
+  // can be traced back to the staff member who made it.
+  async function loadHistory() {
+    setLoadingHistory(true)
+    const { data: badgeRows } = await supabase
+      .from('badges')
+      .select('id, recipient_id, issued_by, issued_at, status')
+      .eq('badge_type', 'admin')
+      .order('issued_at', { ascending: false })
+
+    const rows = (badgeRows ?? []) as { id: string; recipient_id: string; issued_by: string | null; issued_at: string; status: string }[]
+    const recipientIds = [...new Set(rows.map(r => r.recipient_id))]
+    const issuerIds = [...new Set(rows.map(r => r.issued_by).filter((v): v is string => !!v))]
+
+    const [{ data: recipients }, { data: issuerProfiles }] = await Promise.all([
+      recipientIds.length > 0
+        ? supabase.from('candidate_profiles').select('id, first_name, last_name').in('id', recipientIds)
+        : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string }[] }),
+      issuerIds.length > 0
+        ? supabase.from('profiles').select('id, email').in('id', issuerIds)
+        : Promise.resolve({ data: [] as { id: string; email: string }[] }),
+    ])
+
+    const issuerEmails = (issuerProfiles ?? []).map(p => p.email).filter(Boolean)
+    const { data: staffRows } = issuerEmails.length > 0
+      ? await supabase.from('staff_members').select('email, full_name').in('email', issuerEmails)
+      : { data: [] as { email: string; full_name: string | null }[] }
+
+    const recipientMap = new Map((recipients ?? []).map(r => [r.id, `${r.first_name} ${r.last_name}`.trim()]))
+    const emailByProfileId = new Map((issuerProfiles ?? []).map(p => [p.id, p.email]))
+    const nameByEmail = new Map((staffRows ?? []).map(s => [s.email.toLowerCase(), s.full_name]))
+
+    setHistory(rows.map(r => {
+      const email = r.issued_by ? emailByProfileId.get(r.issued_by) ?? null : null
+      const staffName = email ? nameByEmail.get(email.toLowerCase()) : null
+      return {
+        id: r.id,
+        recipient_id: r.recipient_id,
+        recipient_name: recipientMap.get(r.recipient_id) ?? 'Unknown candidate',
+        issued_by: r.issued_by,
+        issuer_label: staffName ? `${staffName} (${email})` : email ?? 'Unknown staff',
+        issued_at: r.issued_at,
+        status: r.status,
+      }
+    }))
+    setLoadingHistory(false)
+  }
+
+  function switchTab(next: Tab) {
+    setTab(next)
+    if (next === 'history' && history.length === 0) void loadHistory()
   }
 
   async function openCandidate(c: CandidateResult) {
@@ -225,6 +294,7 @@ export default function AdminBadgeReviewPage() {
     })
 
     setExistingBadge((badge as { id: string }).id)
+    setHistory([]) // stale — refetch next time the Issued Badges tab is opened
     setIssuing(false)
   }
 
@@ -232,6 +302,56 @@ export default function AdminBadgeReviewPage() {
     <div className="flex flex-col min-h-full">
       <TopBar title="Admin Badge Review" subtitle="Search a candidate to review their listed work history and education" />
 
+      <div className="px-8 pt-4 flex gap-1 border-b border-surface-border">
+        <button
+          onClick={() => switchTab('issue')}
+          className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${tab === 'issue' ? 'border-ops-500 text-text-primary' : 'border-transparent text-text-muted hover:text-text-primary'}`}
+        >
+          Search &amp; Issue
+        </button>
+        <button
+          onClick={() => switchTab('history')}
+          className={`px-3 py-2 text-sm font-semibold border-b-2 transition-colors ${tab === 'history' ? 'border-ops-500 text-text-primary' : 'border-transparent text-text-muted hover:text-text-primary'}`}
+        >
+          Issued Badges
+        </button>
+      </div>
+
+      {tab === 'history' ? (
+        <div className="px-8 py-4 flex-1 overflow-y-auto">
+          {loadingHistory ? (
+            <p className="text-text-muted text-sm">Loading…</p>
+          ) : history.length === 0 ? (
+            <p className="text-text-muted text-sm">No admin badges issued yet.</p>
+          ) : (
+            <div className="max-w-3xl overflow-x-auto rounded-xl border border-surface-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-surface-elevated border-b border-surface-border">
+                    {['Candidate', 'Issued By', 'Date & Time', 'Status'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-muted">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-border">
+                  {history.map(h => (
+                    <tr key={h.id} className="hover:bg-surface-elevated/50 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-text-primary">{h.recipient_name}</td>
+                      <td className="px-4 py-3 text-text-secondary">{h.issuer_label}</td>
+                      <td className="px-4 py-3 text-text-muted text-xs">{formatDateTime(h.issued_at)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${h.status === 'active' ? 'bg-trust-high-bg text-trust-high border-trust-high-border' : 'bg-red-900/20 text-red-400 border-red-800/30'}`}>
+                          {h.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="px-8 py-4 flex-1 overflow-y-auto">
         {!candidate ? (
           <div className="max-w-xl">
@@ -390,6 +510,7 @@ export default function AdminBadgeReviewPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
