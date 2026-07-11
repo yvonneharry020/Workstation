@@ -46,12 +46,12 @@ export default function OnboardingFunnelPage() {
       supabase.from('cv_versions').select('candidate_id', { count: 'exact', head: true }),
       supabase.from('candidates').select('id', { count: 'exact', head: true }).neq('verification_status', 'pending'),
       supabase.from('job_applications').select('candidate_id', { count: 'exact', head: true }),
-      supabase.from('candidates').select('id', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+      supabase.from('candidates').select('id', { count: 'exact', head: true }).eq('verification_status', 'approved'),
       supabase.from('companies').select('id', { count: 'exact', head: true }),
       supabase.from('companies').select('id', { count: 'exact', head: true }).not('company_name', 'is', null).not('industry', 'is', null),
       supabase.from('job_postings').select('company_id', { count: 'exact', head: true }),
       supabase.from('companies').select('id', { count: 'exact', head: true }).neq('verification_status', 'pending'),
-      supabase.from('companies').select('id', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+      supabase.from('companies').select('id', { count: 'exact', head: true }).eq('verification_status', 'approved'),
       supabase.from('job_applications').select('id', { count: 'exact', head: true }).eq('status', 'hired'),
     ])
 

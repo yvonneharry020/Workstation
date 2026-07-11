@@ -160,6 +160,28 @@ export default function InterviewScheduleScreen() {
   const [companyMessage, setCompanyMessage] = useState('')
   const [slots, setSlots] = useState<SlotCreated[]>([])
   const [confirmModal, setConfirmModal] = useState({ visible: false, success: false, count: 0 })
+  const [showAddressGate, setShowAddressGate] = useState(false)
+
+  const { data: addressVerified } = useQuery({
+    queryKey: ['company-address-verified', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('company_verification')
+        .select('documents_status')
+        .eq('company_id', user!.id)
+        .maybeSingle()
+      return data?.documents_status === 'approved'
+    },
+    enabled: !!user?.id,
+  })
+
+  const handleMeetingTypeSelect = (key: MeetingType) => {
+    if (key === 'in_person' && !addressVerified) {
+      setShowAddressGate(true)
+      return
+    }
+    setMeetingType(key)
+  }
 
   const days = nextNDays(14)
   const startTime = `${String(timeDate.getHours()).padStart(2, '0')}:${String(timeDate.getMinutes()).padStart(2, '0')}`
@@ -441,7 +463,7 @@ export default function InterviewScheduleScreen() {
                 {MEETING_TYPES.map((t) => (
                   <Pressable
                     key={t.key}
-                    onPress={() => setMeetingType(t.key)}
+                    onPress={() => handleMeetingTypeSelect(t.key)}
                     style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: meetingType === t.key ? '#FF624020' : '#EDE7DB', borderWidth: 1, borderColor: meetingType === t.key ? '#FF6240' : '#DDD6C9', alignItems: 'center' }}
                   >
                     <Text style={{ color: meetingType === t.key ? '#FF6240' : '#5A4F6E', fontSize: 13, fontWeight: '600' }}>{t.label}</Text>
@@ -593,6 +615,32 @@ export default function InterviewScheduleScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Business address not verified */}
+      <Modal visible={showAddressGate} transparent animationType="fade" onRequestClose={() => setShowAddressGate(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: '#00000060', justifyContent: 'center', padding: 24 }} onPress={() => setShowAddressGate(false)}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: '#F5F0E8', borderRadius: 20, padding: 28, alignItems: 'center' }}>
+            <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#F5970015', borderWidth: 1, borderColor: '#F5970030', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <AlertCircleIcon />
+            </View>
+            <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '800', marginBottom: 8, textAlign: 'center' }}>
+              Business address not verified
+            </Text>
+            <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>
+              To invite candidates for an in-person interview, your business address needs to be verified first — this confirms candidates are being sent to a real, registered office.
+            </Text>
+            <Pressable
+              onPress={() => { setShowAddressGate(false); router.push('/(company)/business-verification' as never) }}
+              style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 14, width: '100%', alignItems: 'center', marginBottom: 10 }}
+            >
+              <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Go to Business Verification</Text>
+            </Pressable>
+            <Pressable onPress={() => setShowAddressGate(false)} style={{ paddingVertical: 6 }}>
+              <Text style={{ color: '#64748B', fontSize: 13, fontWeight: '600' }}>Not now</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Success / Failure modal */}
       <Modal

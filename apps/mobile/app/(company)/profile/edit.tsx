@@ -190,6 +190,19 @@ export default function EditCompanyProfileScreen() {
     setPersonalPhone(profileData.personalPhone)
   }, [profileData])
 
+  const { data: addressVerified } = useQuery({
+    queryKey: ['company-address-verified', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('company_verification')
+        .select('documents_status')
+        .eq('company_id', user!.id)
+        .maybeSingle()
+      return data?.documents_status === 'approved'
+    },
+    enabled: !!user?.id,
+  })
+
   const { data: galleryData } = useQuery({
     queryKey: ['company-gallery', user?.id],
     queryFn: async () => {
@@ -522,7 +535,14 @@ export default function EditCompanyProfileScreen() {
               searchable
             />
             <FormInput label="City" placeholder="Lagos Island" value={form.headquarters_city} onChangeText={updateField('headquarters_city')} />
-            <FormInput label="Business address" placeholder="12 Victoria Island, Lagos" value={form.headquarters_address} onChangeText={updateField('headquarters_address')} />
+            <FormInput
+              label="Business address"
+              placeholder="12 Victoria Island, Lagos"
+              value={form.headquarters_address}
+              onChangeText={updateField('headquarters_address')}
+              editable={!addressVerified}
+              hint={addressVerified ? 'Locked — verified addresses can\'t be edited. Contact support to request a change.' : undefined}
+            />
             <FormInput label="Business phone" placeholder="+234 801 234 5678" value={form.business_phone} onChangeText={updateField('business_phone')} keyboardType="phone-pad" />
 
           </Animated.View>

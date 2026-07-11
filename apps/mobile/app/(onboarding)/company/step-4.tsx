@@ -26,7 +26,7 @@ interface UploadedDoc {
 }
 
 interface DocSlot {
-  key: 'cac_cert' | 'scuml' | 'address_proof'
+  key: 'cac_cert' | 'scuml'
   label: string
   description: string
   required: boolean
@@ -164,7 +164,6 @@ export default function CompanyStep4() {
   const [docs, setDocs] = useState<Record<DocSlot['key'], UploadedDoc | null>>({
     cac_cert: null,
     scuml: null,
-    address_proof: null,
   })
 
   const SLOTS: DocSlot[] = [
@@ -182,14 +181,12 @@ export default function CompanyStep4() {
       required: false,
       uploaded: docs.scuml,
     },
-    {
-      key: 'address_proof',
-      label: 'Proof of Business Address',
-      description: 'Utility bill or tenancy agreement not older than 3 months, showing your business address.',
-      required: true,
-      uploaded: docs.address_proof,
-    },
   ]
+
+  // Business address proof moved to its own screen (Settings → Business
+  // Verification) — it's optional at onboarding since remote-only
+  // companies never need it, and is only required later to post
+  // on-site/hybrid jobs or invite candidates in person.
 
   const handleUpload = async (key: DocSlot['key']) => {
     try {
@@ -239,7 +236,7 @@ export default function CompanyStep4() {
     setDocs((prev) => ({ ...prev, [key]: null }))
   }
 
-  const canContinue = docs.cac_cert !== null && docs.address_proof !== null
+  const canContinue = docs.cac_cert !== null
 
   const handleContinue = async () => {
     if (!user?.id || !canContinue) return
@@ -248,7 +245,8 @@ export default function CompanyStep4() {
     try {
       const { error } = await supabase.from('company_verification').upsert({
         company_id: user.id,
-        documents_status: 'in_review',
+        cac_cert_url: docs.cac_cert?.uploadedUrl ?? null,
+        scuml_url: docs.scuml?.uploadedUrl ?? null,
       }, { onConflict: 'company_id' })
 
       if (error) throw error

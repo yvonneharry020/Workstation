@@ -23,8 +23,10 @@ import {
   PipelineStage,
   PIPELINE_CONFIG,
   COMPANY_STAGES,
+  AiMatchCriteria,
   calcAge,
 } from './types'
+import { AiMatchModal } from './AiMatchModal'
 
 // ─── Column definitions ───────────────────────────────────────────────────────
 const COLS = [
@@ -42,6 +44,7 @@ const COLS = [
   { key: 'screening',  label: 'Screening',    width: 110, align: 'center' as const },
   { key: 'interview',  label: 'Interview',    width: 100, align: 'center' as const },
   { key: 'attendance', label: 'Attendance',   width: 100, align: 'center' as const },
+  { key: 'aiScore',    label: 'AI Scoring',   width: 110, align: 'center' as const },
 ] as const
 
 const TOTAL_W  = COLS.reduce((s, c) => s + c.width, 0)
@@ -522,6 +525,67 @@ function InterviewModal({ row, onClose }: { row: AtsRowFull | null; onClose: () 
   )
 }
 
+// ─── AI Match Reasoning Modal ─────────────────────────────────────────────────
+function AiReasoningModal({ row, onClose }: { row: AtsRowFull | null; onClose: () => void }) {
+  if (!row) return null
+  const analysis = row.ai_match_analysis
+  const pct = row.skills_match_pct
+
+  return (
+    <ModalShell visible title="AI Match Reasoning" subtitle={row.full_name} onClose={onClose}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        {pct != null && (
+          <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <Text style={{ fontSize: 32, fontWeight: '800', color: scoreColor(pct) }}>{pct}%</Text>
+            <Text style={{ fontSize: 12, color: '#9A8FA6' }}>match score</Text>
+          </View>
+        )}
+
+        {analysis?.matchedCriteria && analysis.matchedCriteria.length > 0 && (
+          <>
+            <SectionTitle>Matched</SectionTitle>
+            <View style={{ marginBottom: 16 }}>
+              {analysis.matchedCriteria.map((c, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 6 }}>
+                  <Text style={{ color: '#22C55E', fontSize: 13 }}>✓</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, flex: 1, lineHeight: 19 }}>{c}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {analysis?.missingCriteria && analysis.missingCriteria.length > 0 && (
+          <>
+            <SectionTitle>Missing</SectionTitle>
+            <View style={{ marginBottom: 16 }}>
+              {analysis.missingCriteria.map((c, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 6 }}>
+                  <Text style={{ color: '#EF4444', fontSize: 13 }}>✗</Text>
+                  <Text style={{ color: '#1A1625', fontSize: 13, flex: 1, lineHeight: 19 }}>{c}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {analysis?.reasoning ? (
+          <>
+            <SectionTitle>Reasoning</SectionTitle>
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E5DFD3' }}>
+              <Text style={{ color: '#1A1625', fontSize: 13, lineHeight: 20 }}>{analysis.reasoning}</Text>
+            </View>
+          </>
+        ) : (
+          <Text style={{ color: '#9A8FA6', fontSize: 13, textAlign: 'center', paddingVertical: 24 }}>
+            No AI scoring has been run for this candidate yet.
+          </Text>
+        )}
+      </ScrollView>
+    </ModalShell>
+  )
+}
+
 // ─── Pipeline Picker ──────────────────────────────────────────────────────────
 function PipelinePicker({
   visible, row, onSelect, onClose, isPending,
@@ -805,6 +869,37 @@ function AbsPipeline({ left, width, row, onPress, bg }: CellPos & { row: AtsRowF
   )
 }
 
+function scoreColor(pct: number): string {
+  if (pct >= 70) return '#22C55E'
+  if (pct >= 40) return '#F59E0B'
+  return '#EF4444'
+}
+
+function AbsAiScore({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
+  const pct = row.skills_match_pct
+  return (
+    <View style={{
+      position: 'absolute', left, top: 0, width, height: ROW_H,
+      backgroundColor: bg,
+      borderRightWidth: 1, borderRightColor: '#E5DFD3',
+      alignItems: 'center', justifyContent: 'center',
+    }}>
+      {pct == null ? (
+        <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
+      ) : (
+        <Pressable onPress={onPress} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, width: '80%' })}>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 4 }}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: scoreColor(pct) }}>{pct}%</Text>
+          </View>
+          <View style={{ height: 4, backgroundColor: '#E5DFD3', borderRadius: 2, overflow: 'hidden' }}>
+            <View style={{ height: '100%', width: `${pct}%`, backgroundColor: scoreColor(pct), borderRadius: 2 }} />
+          </View>
+        </Pressable>
+      )}
+    </View>
+  )
+}
+
 function AbsNotes({ left, width, row, onPress, bg }: CellPos & { row: AtsRowFull; onPress: () => void; bg: string }) {
   return (
     <View style={{
@@ -839,6 +934,7 @@ interface CellHandlers {
   onNotesPress:       () => void
   onScreeningPress:   () => void
   onInterviewPress:   () => void
+  onAiScorePress:     () => void
   screeningQuestions: { question: string; required: boolean }[] | null
 }
 
@@ -894,6 +990,9 @@ function GridRow({ row, index, isEven, handlers }: { row: AtsRowFull; index: num
         <Text style={{ fontSize: 12, color: '#D4CCBE', fontStyle: 'italic' }}>—</Text>
       </View>
 
+      {/* col[14]  AI Scoring  left=1531  w=110 — always last, per the 200-candidate scan use case */}
+      <AbsAiScore left={COL_OFFSETS[14]!} width={COLS[14].width} row={row} onPress={handlers.onAiScorePress} bg={bg} />
+
     </View>
   )
 }
@@ -907,6 +1006,9 @@ export interface DataTabProps {
   onNotesUpdate:      (applicationId: string, notes: string) => void
   isUpdatingPipeline: boolean
   isSavingNotes:      boolean
+  jobId:              string | null
+  aiMatchCriteria:    AiMatchCriteria | null
+  onAiScoringRun:     () => void
 }
 
 export function DataTab({
@@ -917,6 +1019,9 @@ export function DataTab({
   onNotesUpdate,
   isUpdatingPipeline,
   isSavingNotes,
+  jobId,
+  aiMatchCriteria,
+  onAiScoringRun,
 }: DataTabProps) {
   const { height } = useWindowDimensions()
   const gridBodyH  = Math.max(height - CHROME_H, 200)
@@ -927,6 +1032,8 @@ export function DataTab({
   const [interviewModal,setInterviewModal]= useState<AtsRowFull | null>(null)
   const [pipelinePicker,setPipelinePicker]= useState<{ row: AtsRowFull | null; visible: boolean }>({ row: null, visible: false })
   const [notesModal,    setNotesModal]    = useState<{ row: AtsRowFull | null; visible: boolean }>({ row: null, visible: false })
+  const [aiReasoningModal, setAiReasoningModal] = useState<AtsRowFull | null>(null)
+  const [aiMatchModalVisible, setAiMatchModalVisible] = useState(false)
 
   const makeHandlers = useCallback((row: AtsRowFull): CellHandlers => ({
     onCoverPress:     () => setCoverModal(row),
@@ -935,6 +1042,7 @@ export function DataTab({
     onNotesPress:     () => setNotesModal({ row, visible: true }),
     onScreeningPress: () => setScreenModal(row),
     onInterviewPress: () => setInterviewModal(row),
+    onAiScorePress:   () => setAiReasoningModal(row),
     screeningQuestions,
   }), [screeningQuestions])
 
@@ -955,6 +1063,24 @@ export function DataTab({
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F5F0E8', paddingTop: 8 }}>
+
+      {jobId && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+          <Pressable
+            onPress={() => setAiMatchModalVisible(true)}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+              backgroundColor: '#1A1625', borderRadius: 12, paddingVertical: 12,
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#FF6240" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6-6.3 4.6 2.3-7.2-6-4.4h7.6L12 2z" />
+            </Svg>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>AI Candidate Scoring</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Single horizontal scroll — header + body share the same TOTAL_W container */}
       <ScrollView
@@ -1032,6 +1158,18 @@ export function DataTab({
         onClose={() => setNotesModal({ row: null, visible: false })}
         isSaving={isSavingNotes}
       />
+
+      <AiReasoningModal row={aiReasoningModal} onClose={() => setAiReasoningModal(null)} />
+
+      {jobId && (
+        <AiMatchModal
+          visible={aiMatchModalVisible}
+          jobId={jobId}
+          initialCriteria={aiMatchCriteria}
+          onClose={() => setAiMatchModalVisible(false)}
+          onRun={onAiScoringRun}
+        />
+      )}
     </View>
   )
 }

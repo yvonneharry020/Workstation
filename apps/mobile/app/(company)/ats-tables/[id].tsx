@@ -16,6 +16,7 @@ import {
   AtsRowRaw,
   PipelineStage,
   PIPELINE_CONFIG,
+  AiMatchCriteria,
   transformAtsRow,
 } from '@/components/ats/types'
 import { OverviewTab }  from '@/components/ats/OverviewTab'
@@ -127,19 +128,21 @@ export default function AtsTableDetailScreen() {
     },
   })
 
-  // ── Screening questions for the linked job ───────────────────────────────────
-  const { data: screeningQuestions } = useQuery({
-    queryKey: ['ats-screening-questions', tableInfo?.job_id],
+  // ── Screening questions + AI match criteria for the linked job ──────────────
+  const { data: jobExtras } = useQuery({
+    queryKey: ['ats-job-extras', tableInfo?.job_id],
     enabled: !!tableInfo?.job_id,
     queryFn: async () => {
       const { data } = await supabase
         .from('job_postings')
-        .select('screening_questions')
+        .select('screening_questions, ai_match_criteria')
         .eq('id', tableInfo!.job_id!)
         .maybeSingle()
-      return (data as { screening_questions: { question: string; required: boolean }[] | null } | null)?.screening_questions ?? null
+      return data as { screening_questions: { question: string; required: boolean }[] | null; ai_match_criteria: AiMatchCriteria | null } | null
     },
   })
+  const screeningQuestions = jobExtras?.screening_questions ?? null
+  const aiMatchCriteria = jobExtras?.ai_match_criteria ?? null
 
   // ── Rows (full join) ─────────────────────────────────────────────────────────
   const { data: rows, isLoading } = useQuery({
@@ -151,7 +154,8 @@ export default function AtsTableDetailScreen() {
         .select(`
           id, table_id, application_id, candidate_id, created_at,
           job_applications!application_id(
-            pipeline_stage, cover_note, screening_answers, internal_notes
+            pipeline_stage, cover_note, screening_answers, internal_notes,
+            skills_match_pct, ai_match_analysis
           ),
           candidate_profiles!candidate_id(
             first_name, last_name, gender, date_of_birth, avatar_url,
@@ -294,11 +298,14 @@ export default function AtsTableDetailScreen() {
           <DataTab
             rows={safeRows}
             isLoading={isLoading}
-            screeningQuestions={screeningQuestions ?? null}
+            screeningQuestions={screeningQuestions}
             onPipelineUpdate={handlePipelineUpdate}
             onNotesUpdate={handleNotesUpdate}
             isUpdatingPipeline={isUpdatingPipeline}
             isSavingNotes={isSavingNotes}
+            jobId={tableInfo?.job_id ?? null}
+            aiMatchCriteria={aiMatchCriteria}
+            onAiScoringRun={() => void queryClient.invalidateQueries({ queryKey: ['ats-rows', tableId] })}
           />
         )}
 

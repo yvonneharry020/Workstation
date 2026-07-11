@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -65,6 +66,8 @@ function formatMsgTime(iso: string) {
 }
 
 export default function OpsLiveChatPage() {
+  const searchParams = useSearchParams()
+  const deepLinkUserId = searchParams.get('user')
   const [threads, setThreads] = useState<Thread[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -128,6 +131,18 @@ export default function OpsLiveChatPage() {
   }, [supabase])
 
   useEffect(() => { void fetchThreads() }, [fetchThreads])
+
+  // Deep-link from the admin badge review page ("Open chat with candidate")
+  // — select their thread once threads have loaded, one time only.
+  const didDeepLinkRef = useRef(false)
+  useEffect(() => {
+    if (didDeepLinkRef.current || !deepLinkUserId || threads.length === 0) return
+    const match = threads.find(t => t.user_id === deepLinkUserId)
+    if (match) {
+      setSelectedId(match.id)
+      didDeepLinkRef.current = true
+    }
+  }, [deepLinkUserId, threads])
   useEffect(() => { if (selectedId) void fetchMessages(selectedId) }, [selectedId, fetchMessages])
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })

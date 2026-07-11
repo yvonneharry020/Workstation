@@ -18,8 +18,8 @@ import { useForm, Controller, useFieldArray, useWatch, Control, FieldErrors } fr
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated'
-import Svg, { Path } from 'react-native-svg'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import Svg, { Path, Circle } from 'react-native-svg'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { Input } from '@/components/ui/Input'
@@ -312,6 +312,20 @@ export default function PostJobScreen() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [successJobId, setSuccessJobId] = useState<SuccessJobId>(null)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [showAddressGate, setShowAddressGate] = useState(false)
+
+  const { data: addressVerified } = useQuery({
+    queryKey: ['company-address-verified', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('company_verification')
+        .select('documents_status')
+        .eq('company_id', user!.id)
+        .maybeSingle()
+      return data?.documents_status === 'approved'
+    },
+    enabled: !!user?.id,
+  })
 
   const {
     control,
@@ -505,7 +519,20 @@ export default function PostJobScreen() {
                 control={control}
                 name="work_mode"
                 render={({ field: { onChange, value } }) => (
-                  <PickerModal label="Work mode" value={value} options={WORK_MODE_OPTIONS} onSelect={onChange} placeholder="Select mode" error={errors.work_mode?.message} />
+                  <PickerModal
+                    label="Work mode"
+                    value={value}
+                    options={WORK_MODE_OPTIONS}
+                    onSelect={(mode) => {
+                      if ((mode === 'on_site' || mode === 'hybrid') && !addressVerified) {
+                        setShowAddressGate(true)
+                        return
+                      }
+                      onChange(mode)
+                    }}
+                    placeholder="Select mode"
+                    error={errors.work_mode?.message}
+                  />
                 )}
               />
               <Controller
@@ -628,6 +655,34 @@ export default function PostJobScreen() {
                   />
                 )}
               />
+
+              <Modal visible={showAddressGate} transparent animationType="fade" onRequestClose={() => setShowAddressGate(false)}>
+                <Pressable style={{ flex: 1, backgroundColor: '#00000060', justifyContent: 'center', padding: 24 }} onPress={() => setShowAddressGate(false)}>
+                  <Pressable onPress={(e) => e.stopPropagation()} style={{ backgroundColor: '#F5F0E8', borderRadius: 20, padding: 28, alignItems: 'center' }}>
+                    <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#F5970015', borderWidth: 1, borderColor: '#F5970030', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                      <Svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#F59700" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <Circle cx={12} cy={12} r={10} />
+                        <Path d="M12 8v4M12 16h.01" />
+                      </Svg>
+                    </View>
+                    <Text style={{ color: '#1A1625', fontSize: 20, fontWeight: '800', marginBottom: 8, textAlign: 'center' }}>
+                      Business address not verified
+                    </Text>
+                    <Text style={{ color: '#64748B', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>
+                      To post an on-site or hybrid role, your business address needs to be verified first — this confirms candidates are being sent to a real, registered office.
+                    </Text>
+                    <Pressable
+                      onPress={() => { setShowAddressGate(false); router.push('/(company)/business-verification' as never) }}
+                      style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 14, width: '100%', alignItems: 'center', marginBottom: 10 }}
+                    >
+                      <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Go to Business Verification</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setShowAddressGate(false)} style={{ paddingVertical: 6 }}>
+                      <Text style={{ color: '#64748B', fontSize: 13, fontWeight: '600' }}>Not now</Text>
+                    </Pressable>
+                  </Pressable>
+                </Pressable>
+              </Modal>
 
               <Pressable onPress={goToStep3} style={{ backgroundColor: '#FF6240', borderRadius: 14, paddingVertical: 15, alignItems: 'center', marginTop: 8 }} className="active:opacity-80">
                 <Text style={{ color: '#1A1625', fontWeight: '700', fontSize: 15 }}>Continue</Text>

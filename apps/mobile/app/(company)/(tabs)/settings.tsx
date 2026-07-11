@@ -225,6 +225,17 @@ export default function SettingsScreen() {
             />
             <Divider />
             <SettingRow
+              label="Business Verification"
+              sub="Verify your office address to post on-site or hybrid jobs"
+              icon={
+                <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <Path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4" />
+                </Svg>
+              }
+              onPress={() => router.push('/(company)/business-verification' as never)}
+            />
+            <Divider />
+            <SettingRow
               label="Google Spreadsheet"
               sub="Export candidate data to Google Sheets"
               icon={
@@ -273,6 +284,26 @@ export default function SettingsScreen() {
                 </Svg>
               }
               onPress={() => router.push('/(company)/team')}
+            />
+          </SectionCard>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(175).duration(300)}>
+          <SectionHeader label="Badges" />
+          <SectionCard>
+            <SettingRow
+              label="Issue Badge"
+              sub="Vouch for a candidate's work at your company"
+              icon={<ShieldIcon color="#0DD4C3" />}
+              iconBg="#0DD4C315"
+              onPress={() => router.push('/(company)/badges/issue')}
+            />
+            <Divider />
+            <SettingRow
+              label="Badge History"
+              sub="Badges you've issued"
+              icon={<ShieldIcon color="#94A3B8" />}
+              onPress={() => router.push('/(company)/badges/history')}
             />
           </SectionCard>
         </Animated.View>

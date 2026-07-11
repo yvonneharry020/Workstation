@@ -27,14 +27,23 @@ interface Company {
   logo_url: string | null
 }
 
-interface VerificationDoc {
-  id: string
-  candidate_id: string
-  doc_type: 'nin' | 'passport' | 'degree' | 'liveness' | 'other'
-  file_url: string | null
-  status: 'pending' | 'verified' | 'rejected'
-  notes: string | null
-  uploaded_at: string
+interface CompanyDocs {
+  cac_cert_url: string | null
+  scuml_url: string | null
+  address_proof_url: string | null
+  address_proof_document_date: string | null
+  office_video_url: string | null
+  documents_status: string
+  documents_reviewer_id: string | null
+  documents_reviewed_at: string | null
+  documents_rejection_reason: string | null
+}
+
+const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 30 * 6
+
+function isDocumentStale(dateStr: string | null): boolean {
+  if (!dateStr) return false
+  return Date.now() - new Date(dateStr).getTime() > SIX_MONTHS_MS
 }
 
 type Tab = 'candidates' | 'companies'
@@ -43,36 +52,44 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending:      'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
-  verified:     'bg-green-900/20 text-green-400 border-green-800/30',
-  rejected:     'bg-red-900/20 text-red-400 border-red-800/30',
-  under_review: 'bg-blue-900/20 text-blue-400 border-blue-800/30',
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('en-NG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-const DOC_LABELS: Record<string, string> = {
-  nin:       'NIN',
-  passport:  'Passport',
-  degree:    'Degree Certificate',
-  liveness:  'Liveness Check',
-  other:     'Other Document',
+const STATUS_COLORS: Record<string, string> = {
+  not_started:  'bg-surface-muted text-text-muted border-surface-border',
+  pending:      'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
+  in_review:    'bg-blue-900/20 text-blue-400 border-blue-800/30',
+  approved:     'bg-green-900/20 text-green-400 border-green-800/30',
+  rejected:     'bg-red-900/20 text-red-400 border-red-800/30',
+  requires_resubmission: 'bg-orange-900/20 text-orange-400 border-orange-800/30',
 }
 
 function isImageUrl(url: string) {
   return /\.(jpg|jpeg|png|gif|webp|bmp)(\?.*)?$/i.test(url)
 }
 
-function DocStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, { color: string; bg: string; border: string }> = {
-    pending:  { color: '#FBBF24', bg: 'rgba(251,191,36,0.1)',  border: 'rgba(251,191,36,0.3)' },
-    verified: { color: '#34D399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.3)' },
-    rejected: { color: '#F87171', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)' },
+function DocLink({ label, url }: { label: string; url: string | null }) {
+  if (!url) {
+    return (
+      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx-1)', marginBottom: 4 }}>{label}</p>
+        <p style={{ fontSize: 12, color: 'var(--tx-3)' }}>Not uploaded yet.</p>
+      </div>
+    )
   }
-  const s = styles[status] ?? styles.pending
   return (
-    <span style={{ color: s.color, backgroundColor: s.bg, border: `1px solid ${s.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
-      {status}
-    </span>
+    <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx-1)', marginBottom: 8 }}>{label}</p>
+      {isImageUrl(url) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt={label} style={{ width: '100%', maxHeight: 220, objectFit: 'contain', backgroundColor: 'var(--bg-base)', borderRadius: 8, border: '1px solid var(--border)' }} />
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#6366F1', textDecoration: 'underline' }}>
+          View document
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -84,13 +101,13 @@ export default function VerificationsPage() {
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [filter, setFilter] = useState('pending')
+  const [error, setError] = useState<string | null>(null)
 
-  // Doc drawer state
-  const [docDrawerCandidateId, setDocDrawerCandidateId] = useState<string | null>(null)
-  const [docs, setDocs] = useState<VerificationDoc[]>([])
+  // Company doc drawer
+  const [docDrawerCompanyId, setDocDrawerCompanyId] = useState<string | null>(null)
+  const [companyDocs, setCompanyDocs] = useState<CompanyDocs | null>(null)
   const [docsLoading, setDocsLoading] = useState(false)
-  const [docActing, setDocActing] = useState<string | null>(null)
-  const [docNotes, setDocNotes] = useState<Record<string, string>>({})
+  const [rejectionNote, setRejectionNote] = useState('')
 
   useEffect(() => { void load() }, [])
 
@@ -104,95 +121,73 @@ export default function VerificationsPage() {
     const avatarMap = new Map((avatarData ?? []).map((r: { id: string; avatar_url: string | null }) => [r.id, r.avatar_url]))
     const logoMap = new Map((logoData ?? []).map((r: { id: string; logo_url: string | null }) => [r.id, r.logo_url]))
     setCandidates((candData ?? []).map(c => ({ ...c, avatar_url: avatarMap.get(c.id) ?? null })) as Candidate[])
-    setCompanies((compData ?? []).map(c => ({ ...c, logo_url: logoMap.get(c.id) ?? null })) as Company[])
+    // Only companies that have actually requested business-address verification
+    // belong in this queue — staff can't action anything for a company that
+    // hasn't submitted, so 'not_started' rows are excluded unconditionally.
+    setCompanies((compData ?? [])
+      .filter((c: { verification_status: string }) => c.verification_status !== 'not_started')
+      .map((c: Omit<Company, 'logo_url'>) => ({ ...c, logo_url: logoMap.get(c.id) ?? null })) as Company[])
     setLoading(false)
   }
 
-  async function openDocDrawer(candidateId: string) {
-    setDocDrawerCandidateId(candidateId)
+  async function openDocDrawer(companyId: string) {
+    setDocDrawerCompanyId(companyId)
     setDocsLoading(true)
+    setRejectionNote('')
     const { data } = await supabase
-      .from('verification_documents')
-      .select('*')
-      .eq('candidate_id', candidateId)
-      .order('uploaded_at', { ascending: false })
-    setDocs((data ?? []) as VerificationDoc[])
+      .from('company_verification')
+      .select('cac_cert_url, scuml_url, address_proof_url, address_proof_document_date, office_video_url, documents_status, documents_reviewer_id, documents_reviewed_at, documents_rejection_reason')
+      .eq('company_id', companyId)
+      .maybeSingle()
+    setCompanyDocs((data as CompanyDocs | null) ?? {
+      cac_cert_url: null, scuml_url: null, address_proof_url: null, address_proof_document_date: null, office_video_url: null,
+      documents_status: 'not_started', documents_reviewer_id: null, documents_reviewed_at: null, documents_rejection_reason: null,
+    })
     setDocsLoading(false)
   }
 
   function closeDocDrawer() {
-    setDocDrawerCandidateId(null)
-    setDocs([])
-    setDocNotes({})
+    setDocDrawerCompanyId(null)
+    setCompanyDocs(null)
   }
 
-  async function updateDocStatus(doc: VerificationDoc, status: 'verified' | 'rejected') {
-    setDocActing(doc.id)
+  // Companies only — this is the one manual staff approval step (business
+  // address proof + CAC cert + SCUML); everything else about a company is
+  // third-party verified. Upserts because no company_verification row may
+  // exist yet, and records who decided + when for accountability.
+  async function decideCompanyDocuments(companyId: string, status: 'approved' | 'rejected') {
+    setActing(companyId)
+    setError(null)
     const { data: { user } } = await supabase.auth.getUser()
-    const notes = docNotes[doc.id] ?? null
-    await supabase.from('verification_documents').update({ status, notes }).eq('id', doc.id)
+
+    const { error: updateErr } = await supabase.from('company_verification').upsert({
+      company_id: companyId,
+      documents_status: status,
+      documents_reviewer_id: user?.id ?? null,
+      documents_reviewed_at: new Date().toISOString(),
+      documents_rejection_reason: status === 'rejected' ? (rejectionNote.trim() || null) : null,
+    }, { onConflict: 'company_id' })
+
+    if (updateErr) {
+      setError(`Could not save decision: ${updateErr.message}`)
+      setActing(null)
+      return
+    }
+
     await supabase.from('audit_logs').insert({
-      event: `admin.doc_${status}`,
+      event: `admin.company_documents_${status}`,
       actor_email: user?.email ?? null,
       actor_id: user?.id ?? null,
       actor_type: 'admin',
-      target_id: doc.id,
-      target_type: 'verification_document',
-      severity: 'info',
-      app: 'admin_panel',
-    })
-    setDocs(prev => prev.map(d => d.id === doc.id ? { ...d, status, notes } : d))
-    setDocActing(null)
-  }
-
-  async function requestReupload(doc: VerificationDoc) {
-    setDocActing(`reupload-${doc.id}`)
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('admin_notifications').insert({
-      type: 'reupload_request',
-      category: 'verification',
-      title: 'Document Re-upload Required',
-      body: `Please re-upload your ${DOC_LABELS[doc.doc_type] ?? doc.doc_type}. Notes: ${docNotes[doc.id] ?? 'Please provide a clearer photo.'}`,
-      is_read: false,
-      metadata: { doc_id: doc.id, candidate_id: doc.candidate_id, requested_by: user?.id ?? null },
-    })
-    setDocActing(null)
-    alert('Re-upload request sent to candidate')
-  }
-
-  async function updateCandidateStatus(id: string, status: string) {
-    setActing(id)
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('candidate_verification').update({ overall_status: status }).eq('candidate_id', id)
-    await supabase.from('audit_logs').insert({
-      event: `admin.candidate_verification_${status}`,
-      actor_email: user?.email ?? null,
-      actor_id: user?.id ?? null,
-      actor_type: 'admin',
-      target_id: id,
-      target_type: 'candidate',
-      severity: 'info',
-      app: 'admin_panel',
-    })
-    setCandidates(prev => prev.map(c => c.id === id ? { ...c, verification_status: status } : c))
-    setActing(null)
-  }
-
-  async function updateCompanyStatus(id: string, status: string) {
-    setActing(id)
-    const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('company_verification').update({ overall_status: status }).eq('company_id', id)
-    await supabase.from('audit_logs').insert({
-      event: `admin.company_verification_${status}`,
-      actor_email: user?.email ?? null,
-      actor_id: user?.id ?? null,
-      actor_type: 'admin',
-      target_id: id,
+      target_id: companyId,
       target_type: 'company',
       severity: 'info',
       app: 'admin_panel',
+      metadata: { note: rejectionNote.trim() || null },
     })
-    setCompanies(prev => prev.map(c => c.id === id ? { ...c, verification_status: status } : c))
+
+    setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, verification_status: status } : c))
+    setCompanyDocs(prev => prev ? { ...prev, documents_status: status, documents_reviewer_id: user?.id ?? null, documents_reviewed_at: new Date().toISOString() } : prev)
     setActing(null)
   }
 
@@ -201,14 +196,20 @@ export default function VerificationsPage() {
   const pendingCand = candidates.filter(c => c.verification_status === 'pending').length
   const pendingComp = companies.filter(c => c.verification_status === 'pending').length
 
-  const drawerCandidate = candidates.find(c => c.id === docDrawerCandidateId)
+  const drawerCompany = companies.find(c => c.id === docDrawerCompanyId)
 
   return (
     <div className="flex flex-col" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)' }}>
       <div className="px-8 py-6 border-b border-surface-border">
         <h1 className="text-xl font-semibold font-display text-text-primary">Verification Queue</h1>
-        <p className="text-sm text-text-secondary mt-0.5">Review and approve candidate and company accounts.</p>
+        <p className="text-sm text-text-secondary mt-0.5">
+          Candidates are verified automatically by our identity provider — nothing to review here. Companies need one manual step: confirming their business-address proof after CAC checks pass.
+        </p>
       </div>
+
+      {error && (
+        <div className="mx-8 mt-4 bg-red-900/20 border border-red-800/30 text-red-400 text-sm px-4 py-2.5 rounded-lg">{error}</div>
+      )}
 
       <div className="px-8 py-3 border-b border-surface-border flex items-center gap-4">
         <div className="flex gap-1">
@@ -222,7 +223,7 @@ export default function VerificationsPage() {
           </button>
         </div>
         <div className="flex gap-1 ml-4">
-          {['all','pending','verified','rejected','under_review'].map(s => (
+          {['all','pending','approved','rejected','in_review'].map(s => (
             <button key={s} onClick={() => setFilter(s)} className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${filter === s ? 'bg-surface-elevated text-text-primary border border-surface-border' : 'text-text-muted hover:text-text-primary'}`}>{s.replace('_',' ')}</button>
           ))}
         </div>
@@ -233,6 +234,9 @@ export default function VerificationsPage() {
           <div className="text-text-muted text-sm">Loading…</div>
         ) : tab === 'candidates' ? (
           <div className="space-y-2">
+            <div className="bg-ops-900/10 border border-ops-800/20 rounded-xl px-4 py-3 mb-2">
+              <p className="text-xs text-text-secondary">Identity (NIN, liveness) is verified automatically by the identity provider — status shown for visibility only, nothing to action here.</p>
+            </div>
             {filteredCandidates.map(c => (
               <div key={c.id} className="bg-surface-card border border-surface-border rounded-xl p-4 flex items-start justify-between">
                 <div className="flex items-start gap-3">
@@ -245,24 +249,11 @@ export default function VerificationsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-text-primary">{c.full_name}</p>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border capitalize ${STATUS_COLORS[c.verification_status] ?? ''}`}>{c.verification_status}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border capitalize ${STATUS_COLORS[c.verification_status] ?? ''}`}>{c.verification_status.replace('_', ' ')}</span>
                     </div>
                     <p className="text-xs text-text-muted">{c.email}</p>
                     <p className="text-xs text-text-muted mt-0.5">Joined {formatDate(c.created_at)}{c.trust_score !== null ? ` · Trust: ${c.trust_score}%` : ''}</p>
                   </div>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => void openDocDrawer(c.id)}
-                    style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-2)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
-                    View Docs
-                  </button>
-                  {c.verification_status === 'pending' && (
-                    <>
-                      <button onClick={() => void updateCandidateStatus(c.id, 'verified')} disabled={acting === c.id} className="px-3 py-1.5 bg-green-900/20 border border-green-800/30 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-900/30 transition-colors disabled:opacity-40">Approve</button>
-                      <button onClick={() => void updateCandidateStatus(c.id, 'rejected')} disabled={acting === c.id} className="px-3 py-1.5 bg-red-900/20 border border-red-800/30 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/30 transition-colors disabled:opacity-40">Reject</button>
-                    </>
-                  )}
                 </div>
               </div>
             ))}
@@ -282,18 +273,19 @@ export default function VerificationsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-text-primary">{c.name}</p>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border capitalize ${STATUS_COLORS[c.verification_status] ?? ''}`}>{c.verification_status}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border capitalize ${STATUS_COLORS[c.verification_status] ?? ''}`}>{c.verification_status.replace('_', ' ')}</span>
                     </div>
                     <p className="text-xs text-text-muted">{c.email}{c.industry ? ` · ${c.industry}` : ''}</p>
                     <p className="text-xs text-text-muted mt-0.5">Registered {formatDate(c.created_at)}</p>
                   </div>
                 </div>
-                {c.verification_status === 'pending' && (
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button onClick={() => void updateCompanyStatus(c.id, 'verified')} disabled={acting === c.id} className="px-3 py-1.5 bg-green-900/20 border border-green-800/30 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-900/30 transition-colors disabled:opacity-40">Approve</button>
-                    <button onClick={() => void updateCompanyStatus(c.id, 'rejected')} disabled={acting === c.id} className="px-3 py-1.5 bg-red-900/20 border border-red-800/30 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/30 transition-colors disabled:opacity-40">Reject</button>
-                  </div>
-                )}
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => void openDocDrawer(c.id)}
+                    style={{ padding: '5px 11px', borderRadius: 7, border: '1px solid var(--border)', backgroundColor: 'transparent', color: 'var(--tx-2)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
+                    View Business Documents
+                  </button>
+                </div>
               </div>
             ))}
             {filteredCompanies.length === 0 && <p className="text-text-muted text-sm">No companies with status: {filter}.</p>}
@@ -301,99 +293,81 @@ export default function VerificationsPage() {
         )}
       </div>
 
-      {/* Document Viewer Drawer */}
-      {docDrawerCandidateId && (
+      {/* Company Business Documents Drawer */}
+      {docDrawerCompanyId && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', justifyContent: 'flex-end' }}>
           <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={closeDocDrawer} />
           <div style={{ position: 'relative', width: 520, height: '100%', backgroundColor: 'var(--bg-surface)', overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx-1)' }}>Verification Documents</h3>
-                {drawerCandidate && <p style={{ fontSize: 12, color: 'var(--tx-3)', marginTop: 2 }}>{drawerCandidate.full_name} · {drawerCandidate.email}</p>}
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tx-1)' }}>Business Documents</h3>
+                {drawerCompany && <p style={{ fontSize: 12, color: 'var(--tx-3)', marginTop: 2 }}>{drawerCompany.name} · {drawerCompany.email}</p>}
               </div>
               <button onClick={closeDocDrawer} style={{ border: 'none', background: 'none', color: 'var(--tx-3)', cursor: 'pointer', fontSize: 22, lineHeight: 1 }}>×</button>
             </div>
 
             {docsLoading ? (
               <p style={{ color: 'var(--tx-3)', fontSize: 13 }}>Loading documents…</p>
-            ) : docs.length === 0 ? (
-              <div style={{ padding: '32px 0', textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: 'var(--tx-3)' }}>No documents uploaded yet.</p>
-                <p style={{ fontSize: 11, color: 'var(--tx-3)', marginTop: 6 }}>The candidate has not submitted any identity documents.</p>
-              </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {docs.map(doc => (
-                  <div key={doc.id} style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
-                    {/* Doc header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx-1)' }}>{DOC_LABELS[doc.doc_type] ?? doc.doc_type}</p>
-                        <p style={{ fontSize: 11, color: 'var(--tx-3)', marginTop: 2 }}>Uploaded {formatDate(doc.uploaded_at)}</p>
-                      </div>
-                      <DocStatusBadge status={doc.status} />
-                    </div>
-
-                    {/* File preview */}
-                    {doc.file_url ? (
-                      isImageUrl(doc.file_url) ? (
-                        <div style={{ marginBottom: 12, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={doc.file_url} alt={DOC_LABELS[doc.doc_type] ?? 'Document'} style={{ width: '100%', maxHeight: 220, objectFit: 'contain', backgroundColor: 'var(--bg-base)' }} />
-                        </div>
-                      ) : (
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, backgroundColor: 'var(--bg-base)', border: '1px solid var(--border)', marginBottom: 12, textDecoration: 'none' }}>
-                          <span style={{ fontSize: 20 }}>📄</span>
-                          <div>
-                            <p style={{ fontSize: 12, fontWeight: 600, color: '#6366F1' }}>View Document</p>
-                            <p style={{ fontSize: 10, color: 'var(--tx-3)' }}>{doc.file_url.split('/').pop()}</p>
-                          </div>
-                        </a>
-                      )
-                    ) : (
-                      <p style={{ fontSize: 12, color: 'var(--tx-3)', marginBottom: 12 }}>No file attached.</p>
-                    )}
-
-                    {/* Existing notes */}
-                    {doc.notes && (
-                      <p style={{ fontSize: 11, color: 'var(--tx-3)', backgroundColor: 'var(--bg-base)', padding: '8px 12px', borderRadius: 8, marginBottom: 12 }}>
-                        Note: {doc.notes}
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <DocLink label="CAC Certificate" url={companyDocs?.cac_cert_url ?? null} />
+                  <div>
+                    <DocLink label="Business Address Proof" url={companyDocs?.address_proof_url ?? null} />
+                    {companyDocs?.address_proof_document_date && (
+                      <p style={{ fontSize: 11, marginTop: 6, color: isDocumentStale(companyDocs.address_proof_document_date) ? '#F87171' : 'var(--tx-3)' }}>
+                        Document dated {formatDate(companyDocs.address_proof_document_date)}
+                        {isDocumentStale(companyDocs.address_proof_document_date) ? ' — older than 6 months, should not be accepted' : ''}
                       </p>
                     )}
+                  </div>
+                  <DocLink label="SCUML Certificate" url={companyDocs?.scuml_url ?? null} />
+                  <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx-1)', marginBottom: 8 }}>Office Walkthrough Video</p>
+                    {companyDocs?.office_video_url ? (
+                      // eslint-disable-next-line jsx-a11y/media-has-caption
+                      <video src={companyDocs.office_video_url} controls style={{ width: '100%', maxHeight: 260, borderRadius: 8, backgroundColor: 'var(--bg-base)' }} />
+                    ) : (
+                      <p style={{ fontSize: 12, color: 'var(--tx-3)' }}>Not uploaded yet.</p>
+                    )}
+                  </div>
+                </div>
 
-                    {/* Notes input */}
+                {companyDocs?.documents_reviewed_at && (
+                  <div style={{ backgroundColor: 'var(--bg-base)', borderRadius: 10, padding: 12 }}>
+                    <p style={{ fontSize: 11, color: 'var(--tx-3)' }}>
+                      Last reviewed {formatDateTime(companyDocs.documents_reviewed_at)}
+                      {companyDocs.documents_rejection_reason ? ` — ${companyDocs.documents_rejection_reason}` : ''}
+                    </p>
+                  </div>
+                )}
+
+                {companyDocs?.documents_status !== 'approved' && (
+                  <>
                     <textarea
-                      placeholder="Add reviewer notes (optional)…"
-                      value={docNotes[doc.id] ?? ''}
-                      onChange={e => setDocNotes(prev => ({ ...prev, [doc.id]: e.target.value }))}
+                      placeholder="Rejection reason (only needed if rejecting)…"
+                      value={rejectionNote}
+                      onChange={e => setRejectionNote(e.target.value)}
                       rows={2}
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', backgroundColor: 'var(--bg-base)', color: 'var(--tx-1)', fontSize: 12, resize: 'vertical', marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', backgroundColor: 'var(--bg-base)', color: 'var(--tx-1)', fontSize: 12, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
                     />
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {doc.status !== 'verified' && (
-                        <button onClick={() => void updateDocStatus(doc, 'verified')} disabled={docActing === doc.id}
-                          style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(52,211,153,0.4)', backgroundColor: 'rgba(52,211,153,0.08)', color: '#34D399', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
-                          {docActing === doc.id ? '…' : '✓ Verify'}
-                        </button>
-                      )}
-                      {doc.status !== 'rejected' && (
-                        <button onClick={() => void updateDocStatus(doc, 'rejected')} disabled={docActing === doc.id}
-                          style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(239,68,68,0.4)', backgroundColor: 'rgba(239,68,68,0.08)', color: '#F87171', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
-                          {docActing === doc.id ? '…' : '✗ Reject'}
-                        </button>
-                      )}
-                      <button onClick={() => void requestReupload(doc)} disabled={docActing === `reupload-${doc.id}`}
-                        style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(251,191,36,0.4)', backgroundColor: 'rgba(251,191,36,0.08)', color: '#FBBF24', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
-                        {docActing === `reupload-${doc.id}` ? '…' : '↑ Request Re-upload'}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => void decideCompanyDocuments(docDrawerCompanyId, 'approved')}
+                        disabled={acting === docDrawerCompanyId}
+                        style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(52,211,153,0.4)', backgroundColor: 'rgba(52,211,153,0.08)', color: '#34D399', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>
+                        {acting === docDrawerCompanyId ? '…' : '✓ Approve'}
+                      </button>
+                      <button
+                        onClick={() => void decideCompanyDocuments(docDrawerCompanyId, 'rejected')}
+                        disabled={acting === docDrawerCompanyId}
+                        style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.4)', backgroundColor: 'rgba(239,68,68,0.08)', color: '#F87171', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>
+                        {acting === docDrawerCompanyId ? '…' : '✗ Reject'}
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>

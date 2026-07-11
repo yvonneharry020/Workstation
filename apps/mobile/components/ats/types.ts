@@ -49,6 +49,8 @@ export interface AtsRowFull {
   cover_note: string | null
   screening_answers: Record<string, unknown> | null
   internal_notes: string | null
+  skills_match_pct: number | null
+  ai_match_analysis: AiMatchAnalysis | null
 
   // candidate_profiles (flat)
   full_name: string
@@ -67,6 +69,36 @@ export interface AtsRowFull {
   phone: string | null
 }
 
+// AI scoring — the "why" behind skills_match_pct, written by the
+// ats-ai-score edge function. Never shown as a bare percentage — always
+// alongside this reasoning.
+export interface AiMatchAnalysis {
+  matchedCriteria: string[]
+  missingCriteria: string[]
+  reasoning: string
+  criteriaHash: string
+  scoredAt: string
+  model: string
+}
+
+export interface AiMatchCriteria {
+  customInstructions: string
+  mustHaveSkills: string[]
+  niceToHaveSkills: string[]
+  minYearsExperience: number | null
+  requiredDegree: string | null
+  requiredBadges: ('admin' | 'company')[]
+  allowedColumns: string[]
+  updatedAt?: string
+}
+
+export const AI_MATCH_COLUMNS: { key: string; label: string }[] = [
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'cover',     label: 'Cover Letter' },
+  { key: 'profile',   label: 'Profile (skills, work history, education)' },
+  { key: 'screening', label: 'Screening Answers' },
+]
+
 // Raw shape from Supabase join (before transform)
 export interface AtsRowRaw {
   id: string
@@ -79,6 +111,8 @@ export interface AtsRowRaw {
     cover_note: string | null
     screening_answers: Record<string, unknown> | null
     internal_notes: string | null
+    skills_match_pct: number | null
+    ai_match_analysis: AiMatchAnalysis | null
   } | null
   candidate_profiles: {
     first_name: string
@@ -114,6 +148,8 @@ export function transformAtsRow(
     cover_note:        ja?.cover_note ?? null,
     screening_answers: ja?.screening_answers ?? null,
     internal_notes:    ja?.internal_notes ?? null,
+    skills_match_pct:  ja?.skills_match_pct ?? null,
+    ai_match_analysis: ja?.ai_match_analysis ?? null,
 
     full_name:    cp ? `${cp.first_name} ${cp.last_name}`.trim() : 'Unknown',
     gender:       cp?.gender ?? null,
