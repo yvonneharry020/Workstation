@@ -298,6 +298,7 @@ export default function InterviewScheduleScreen() {
 
       for (let i = 0; i < targets.length; i++) {
         const candidate = targets[i]
+        if (!candidate) continue
         const slot = slots.length > 0 ? slots[i % slots.length] : null
 
         if (slot) {

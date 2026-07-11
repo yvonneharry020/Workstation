@@ -114,7 +114,7 @@ export default function GoogleSheetsScreen() {
   const [isConnecting, setIsConnecting] = useState(false)
   const [successModal, setSuccessModal] = useState<{ visible: boolean; sheetUrl: string }>({ visible: false, sheetUrl: '' })
 
-  const redirectUri = AuthSession.makeRedirectUri({ useProxy: true })
+  const redirectUri = AuthSession.makeRedirectUri()
 
   const { data: candidateData, isLoading: loadingCandidates } = useQuery({
     queryKey: ['export-candidates', user?.id],

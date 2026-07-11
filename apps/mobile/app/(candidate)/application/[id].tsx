@@ -44,8 +44,10 @@ interface ApplicationDetail {
   } | null
 }
 
+const DEFAULT_STAGE_STYLE = { bg: '#EFF6FF', text: '#3B82F6', label: 'Applied' }
+
 const STAGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  new:                 { bg: '#EFF6FF', text: '#3B82F6', label: 'Applied' },
+  new:                 DEFAULT_STAGE_STYLE,
   reviewed:            { bg: '#F5F3FF', text: '#8B5CF6', label: 'Reviewing' },
   shortlisted:         { bg: '#F9F1E8', text: '#7C4B2A', label: 'Shortlisted' },
   interview_scheduled: { bg: '#FFFBEB', text: '#F59E0B', label: 'Interview' },
@@ -244,7 +246,7 @@ export default function ApplicationDetailScreen() {
 
   const job = application?.job_postings
   const company = job?.company_profiles
-  const stage = STAGE_STYLES[application?.pipeline_stage ?? 'new'] ?? STAGE_STYLES.new
+  const stage = STAGE_STYLES[application?.pipeline_stage ?? 'new'] ?? DEFAULT_STAGE_STYLE
   const screeningQuestions = (job?.screening_questions ?? []) as { question: string }[]
   const screeningAnswers = (application?.screening_answers ?? {}) as Record<string, string>
 
