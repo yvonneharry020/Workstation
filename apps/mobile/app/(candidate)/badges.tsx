@@ -5,18 +5,19 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { Image } from 'expo-image'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
+import { Badge as BadgeMedal } from '@/components/ui/Badge'
 
 interface Badge {
   id: string
+  badge_type: 'company' | 'admin'
   role_held: string
   start_date: string
   end_date: string | null
@@ -63,6 +64,7 @@ function ShieldIcon() {
 function BadgeCard({ badge }: { badge: Badge }) {
   const [expanded, setExpanded] = useState(false)
   const company = badge.company_profiles
+  const isAdmin = badge.badge_type === 'admin'
 
   return (
     <Animated.View
@@ -70,33 +72,21 @@ function BadgeCard({ badge }: { badge: Badge }) {
       className="bg-surface-card border border-surface-border rounded-2xl p-4 mb-3"
     >
       <View className="flex-row items-start gap-3 mb-3">
-        {company?.logo_url ? (
-          <Image
-            source={{ uri: company.logo_url }}
-            style={{ width: 48, height: 48, borderRadius: 12 }}
-            contentFit="cover"
-          />
-        ) : (
-          <View
-            style={{
-              width: 48, height: 48, borderRadius: 12,
-              backgroundColor: '#DDD6C9',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#475569', fontSize: 18, fontWeight: '700' }}>
-              {company?.company_name?.charAt(0) ?? '?'}
-            </Text>
-          </View>
-        )}
+        <BadgeMedal tone={isAdmin ? 'bronze' : 'silver'} size="sm" />
 
         <View className="flex-1">
-          <View className="flex-row items-center gap-1.5">
-            <Text className="text-[#1A1625] font-semibold text-sm">{company?.company_name ?? 'Unknown company'}</Text>
-            {company?.is_verified && <VerifiedBadge size={13} />}
-          </View>
+          {isAdmin ? (
+            <Text className="text-[#1A1625] font-semibold text-sm">Workstation Admin</Text>
+          ) : (
+            <View className="flex-row items-center gap-1.5">
+              <Text className="text-[#1A1625] font-semibold text-sm">{company?.company_name ?? 'Unknown company'}</Text>
+              {company?.is_verified && <VerifiedBadge size={13} />}
+            </View>
+          )}
           <Text className="text-slate-300 text-sm font-bold mt-0.5">{badge.role_held}</Text>
-          <Text className="text-slate-500 text-xs mt-0.5">{formatBadgePeriod(badge.start_date, badge.end_date, badge.is_current)}</Text>
+          {!isAdmin && (
+            <Text className="text-slate-500 text-xs mt-0.5">{formatBadgePeriod(badge.start_date, badge.end_date, badge.is_current)}</Text>
+          )}
         </View>
 
         <View
@@ -149,6 +139,7 @@ function BadgeCard({ badge }: { badge: Badge }) {
 
 export default function BadgesScreen() {
   const user = useAuthStore((s) => s.user)
+  const queryClient = useQueryClient()
 
   const { data: badges = [], isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['badges', user?.id],
@@ -163,6 +154,21 @@ export default function BadgesScreen() {
     },
     enabled: !!user?.id,
   })
+
+  // A staff member issuing or revoking a badge should show up here the
+  // moment it happens, not only after the candidate manually refreshes.
+  useEffect(() => {
+    if (!user?.id) return
+    const channel = supabase
+      .channel(`candidate-badges-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'badges', filter: `recipient_id=eq.${user.id}` },
+        () => void queryClient.invalidateQueries({ queryKey: ['badges', user.id] })
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [user?.id, queryClient])
 
   return (
     <SafeAreaView className="flex-1 bg-surface">

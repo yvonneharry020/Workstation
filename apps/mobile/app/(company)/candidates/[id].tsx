@@ -20,6 +20,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { PIPELINE_CONFIG } from '@/components/ats/types'
+import { Badge as BadgeMedal } from '@/components/ui/Badge'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 
@@ -166,6 +167,14 @@ function GraduationIcon() {
   )
 }
 
+function ShieldIcon() {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </Svg>
+  )
+}
+
 function LinkIcon() {
   return (
     <Svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="#818CF8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -259,6 +268,21 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
         .maybeSingle()
       if (error) throw error
       return data as unknown as CandidateProfile | null
+    },
+    enabled: visible && !!candidateId,
+  })
+
+  const { data: badges = [] } = useQuery({
+    queryKey: ['candidate-badges-for-company', candidateId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('badges')
+        .select('id, badge_type, role_held, company_profiles(company_name)')
+        .eq('recipient_id', candidateId)
+        .eq('status', 'active')
+        .order('issued_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as unknown as { id: string; badge_type: 'company' | 'admin'; role_held: string; company_profiles: { company_name: string } | null }[]
     },
     enabled: visible && !!candidateId,
   })
@@ -443,6 +467,29 @@ function ViewProfileModal({ candidateId, visible, onClose }: {
                     )}
                   </View>
                 ))}
+              </View>
+            )}
+
+            {/* Badges */}
+            {badges.length > 0 && (
+              <View style={{ marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <ShieldIcon />
+                  <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Badges</Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  {badges.map((b) => (
+                    <View key={b.id} style={{ alignItems: 'center', width: 90 }}>
+                      <BadgeMedal tone={b.badge_type === 'admin' ? 'bronze' : 'silver'} size="sm" />
+                      <Text style={{ color: '#1A1625', fontSize: 11, fontWeight: '700', marginTop: 4, textAlign: 'center' }} numberOfLines={2}>
+                        {b.role_held}
+                      </Text>
+                      <Text style={{ color: '#64748B', fontSize: 10, marginTop: 1, textAlign: 'center' }} numberOfLines={1}>
+                        {b.badge_type === 'admin' ? 'Workstation Admin' : b.company_profiles?.company_name}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
 import { Badge } from '@/components/ui/Badge'
@@ -65,6 +65,10 @@ export default function AdminBadgeReviewPage() {
   const [tab, setTab] = useState<Tab>('issue')
   const [history, setHistory] = useState<IssuedBadge[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [revokingRowId, setRevokingRowId] = useState<string | null>(null)
+  const [revokeReason, setRevokeReason] = useState('')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [historyError, setHistoryError] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const [searching, setSearching] = useState(false)
@@ -162,6 +166,76 @@ export default function AdminBadgeReviewPage() {
       }
     }))
     setLoadingHistory(false)
+  }
+
+  async function revokeBadge(id: string) {
+    setTogglingId(id)
+    setHistoryError(null)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { error: updateErr } = await supabase
+      .from('badges')
+      .update({
+        status: 'revoked',
+        revoked_at: new Date().toISOString(),
+        revoked_by: user?.id ?? null,
+        revocation_reason: revokeReason.trim() || null,
+      })
+      .eq('id', id)
+
+    if (updateErr) {
+      setHistoryError(`Could not revoke badge: ${updateErr.message}`)
+      setTogglingId(null)
+      return
+    }
+
+    await supabase.from('audit_logs').insert({
+      event: 'admin.badge_revoked',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: id,
+      target_type: 'badge',
+      severity: 'warning',
+      app: 'admin_panel',
+      metadata: { reason: revokeReason.trim() || null },
+    })
+
+    setHistory(prev => prev.map(h => h.id === id ? { ...h, status: 'revoked' } : h))
+    setRevokingRowId(null)
+    setRevokeReason('')
+    setTogglingId(null)
+  }
+
+  async function reactivateBadge(id: string) {
+    setTogglingId(id)
+    setHistoryError(null)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { error: updateErr } = await supabase
+      .from('badges')
+      .update({ status: 'active', revoked_at: null, revoked_by: null, revocation_reason: null })
+      .eq('id', id)
+
+    if (updateErr) {
+      setHistoryError(`Could not reactivate badge: ${updateErr.message}`)
+      setTogglingId(null)
+      return
+    }
+
+    await supabase.from('audit_logs').insert({
+      event: 'admin.badge_reactivated',
+      actor_email: user?.email ?? null,
+      actor_id: user?.id ?? null,
+      actor_type: 'admin',
+      target_id: id,
+      target_type: 'badge',
+      severity: 'info',
+      app: 'admin_panel',
+    })
+
+    setHistory(prev => prev.map(h => h.id === id ? { ...h, status: 'active' } : h))
+    setTogglingId(null)
   }
 
   function switchTab(next: Tab) {
@@ -319,6 +393,9 @@ export default function AdminBadgeReviewPage() {
 
       {tab === 'history' ? (
         <div className="px-8 py-4 flex-1 overflow-y-auto">
+          {historyError && (
+            <div className="max-w-3xl bg-red-900/20 border border-red-800/30 text-red-400 text-sm px-4 py-2.5 rounded-lg mb-4">{historyError}</div>
+          )}
           {loadingHistory ? (
             <p className="text-text-muted text-sm">Loading…</p>
           ) : history.length === 0 ? (
@@ -328,23 +405,72 @@ export default function AdminBadgeReviewPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-surface-elevated border-b border-surface-border">
-                    {['Candidate', 'Issued By', 'Date & Time', 'Status'].map(h => (
+                    {['Candidate', 'Issued By', 'Date & Time', 'Status', 'Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-muted">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border">
                   {history.map(h => (
-                    <tr key={h.id} className="hover:bg-surface-elevated/50 transition-colors">
-                      <td className="px-4 py-3 font-semibold text-text-primary">{h.recipient_name}</td>
-                      <td className="px-4 py-3 text-text-secondary">{h.issuer_label}</td>
-                      <td className="px-4 py-3 text-text-muted text-xs">{formatDateTime(h.issued_at)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${h.status === 'active' ? 'bg-trust-high-bg text-trust-high border-trust-high-border' : 'bg-red-900/20 text-red-400 border-red-800/30'}`}>
-                          {h.status}
-                        </span>
-                      </td>
-                    </tr>
+                    <Fragment key={h.id}>
+                      <tr className="hover:bg-surface-elevated/50 transition-colors">
+                        <td className="px-4 py-3 font-semibold text-text-primary">{h.recipient_name}</td>
+                        <td className="px-4 py-3 text-text-secondary">{h.issuer_label}</td>
+                        <td className="px-4 py-3 text-text-muted text-xs">{formatDateTime(h.issued_at)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${h.status === 'active' ? 'bg-trust-high-bg text-trust-high border-trust-high-border' : 'bg-red-900/20 text-red-400 border-red-800/30'}`}>
+                            {h.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {h.status === 'active' ? (
+                            <button
+                              onClick={() => { setRevokingRowId(revokingRowId === h.id ? null : h.id); setRevokeReason('') }}
+                              disabled={togglingId === h.id}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-800/30 text-red-400 hover:bg-red-900/20 transition-colors"
+                            >
+                              Revoke
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => void reactivateBadge(h.id)}
+                              disabled={togglingId === h.id}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-trust-high-border text-trust-high hover:bg-trust-high-bg transition-colors"
+                            >
+                              {togglingId === h.id ? '…' : 'Reactivate'}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {revokingRowId === h.id && (
+                        <tr key={`${h.id}-revoke`} className="bg-surface-elevated/30">
+                          <td colSpan={5} className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                autoFocus
+                                value={revokeReason}
+                                onChange={e => setRevokeReason(e.target.value)}
+                                placeholder="Reason for revoking (optional)…"
+                                className="flex-1 px-3 py-1.5 rounded-lg bg-surface-card border border-surface-border text-sm text-text-primary outline-none focus:border-red-500"
+                              />
+                              <button
+                                onClick={() => void revokeBadge(h.id)}
+                                disabled={togglingId === h.id}
+                                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+                              >
+                                {togglingId === h.id ? '…' : 'Confirm Revoke'}
+                              </button>
+                              <button
+                                onClick={() => { setRevokingRowId(null); setRevokeReason('') }}
+                                className="text-xs font-semibold px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

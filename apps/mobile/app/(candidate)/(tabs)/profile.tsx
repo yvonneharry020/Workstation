@@ -9,13 +9,14 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { router, useFocusEffect } from 'expo-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
+import { Badge as BadgeMedal } from '@/components/ui/Badge'
 
 const NIGERIAN_STATES: Record<number, string> = {
   1: 'Abia', 2: 'Adamawa', 3: 'Akwa Ibom', 4: 'Anambra', 5: 'Bauchi',
@@ -76,6 +77,7 @@ interface Skill {
 
 interface BadgeSummary {
   id: string
+  badge_type: 'company' | 'admin'
   role_held: string
   issued_at: string
   company_profiles: { company_name: string; logo_url: string | null; is_verified: boolean } | null
@@ -218,13 +220,27 @@ export default function CandidateProfileScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('badges')
-        .select('id, role_held, issued_at, company_profiles(company_name, logo_url, is_verified)')
+        .select('id, badge_type, role_held, issued_at, company_profiles(company_name, logo_url, is_verified)')
         .eq('recipient_id', user!.id).eq('status', 'active').limit(3)
       if (error) throw new Error(error.message)
       return (data ?? []) as unknown as BadgeSummary[]
     },
     enabled: !!user?.id,
   })
+
+  // Reflect a staff-issued or revoked badge immediately, not just on next visit.
+  useEffect(() => {
+    if (!user?.id) return
+    const channel = supabase
+      .channel(`candidate-profile-badges-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'badges', filter: `recipient_id=eq.${user.id}` },
+        () => void queryClient.invalidateQueries({ queryKey: ['candidate-badges-preview', user.id] })
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [user?.id, queryClient])
 
   const { data: gallery = [] } = useQuery<GalleryImage[]>({
     queryKey: ['candidate-gallery', user?.id],
@@ -476,24 +492,25 @@ export default function CandidateProfileScreen() {
                   <Text style={{ color: '#FF6240', fontSize: 12, fontWeight: '600' }}>See all →</Text>
                 </Pressable>
               </View>
-              {badges.map((b, idx) => (
-                <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: idx > 0 ? 12 : 0, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#DDD6C9' }}>
-                  {b.company_profiles?.logo_url ? (
-                    <Image source={{ uri: b.company_profiles.logo_url }} style={{ width: 40, height: 40, borderRadius: 10 }} contentFit="cover" />
-                  ) : (
-                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 18 }}>🏅</Text>
+              {badges.map((b, idx) => {
+                const isAdmin = b.badge_type === 'admin'
+                return (
+                  <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: idx > 0 ? 12 : 0, borderTopWidth: idx > 0 ? 1 : 0, borderTopColor: '#DDD6C9' }}>
+                    {!isAdmin && b.company_profiles?.logo_url ? (
+                      <Image source={{ uri: b.company_profiles.logo_url }} style={{ width: 40, height: 40, borderRadius: 10 }} contentFit="cover" />
+                    ) : (
+                      <BadgeMedal tone={isAdmin ? 'bronze' : 'silver'} size="sm" />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>{b.role_held}</Text>
+                      <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{isAdmin ? 'Workstation Admin' : b.company_profiles?.company_name}</Text>
                     </View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: '#1A1625', fontSize: 13, fontWeight: '700' }}>{b.role_held}</Text>
-                    <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{b.company_profiles?.company_name}</Text>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#0DD4C315', borderWidth: 1, borderColor: '#0DD4C330' }}>
+                      <Text style={{ color: '#0DD4C3', fontSize: 10, fontWeight: '700' }}>VERIFIED</Text>
+                    </View>
                   </View>
-                  <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: '#0DD4C315', borderWidth: 1, borderColor: '#0DD4C330' }}>
-                    <Text style={{ color: '#0DD4C3', fontSize: 10, fontWeight: '700' }}>VERIFIED</Text>
-                  </View>
-                </View>
-              ))}
+                )
+              })}
             </View>
           </Animated.View>
         )}
