@@ -8,6 +8,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
+import { useEffect } from 'react'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Circle, Rect } from 'react-native-svg'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -176,6 +177,24 @@ export default function NotificationsScreen() {
     enabled: !!user?.id,
     staleTime: 1000 * 30,
   })
+
+  useEffect(() => {
+    if (!user?.id) return
+    const channel = supabase
+      .channel(`candidate-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => void queryClient.invalidateQueries({ queryKey: ['notifications', user.id] })
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin_broadcasts' },
+        () => void queryClient.invalidateQueries({ queryKey: ['admin-broadcasts-candidate'] })
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [user?.id, queryClient])
 
   const markAllRead = useMutation({
     mutationFn: async () => {

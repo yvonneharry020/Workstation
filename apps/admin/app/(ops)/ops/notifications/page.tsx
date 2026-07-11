@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 type NotifTarget = 'all' | 'candidates' | 'companies'
 type NotifType = 'info' | 'warning' | 'success' | 'announcement'

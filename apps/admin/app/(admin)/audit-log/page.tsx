@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 type Severity = 'info' | 'warning' | 'critical'
 type AppFilter = 'all' | 'candidate_app' | 'company_app' | 'admin_panel'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import { Plus, Trash2, Edit3, Check, X, ChevronDown, ChevronUp, Star, Zap } from 'lucide-react'
 
 const CARD = {

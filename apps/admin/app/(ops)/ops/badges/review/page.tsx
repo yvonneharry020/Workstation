@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopBar from '@/components/layout/TopBar'
 import { Badge } from '@/components/ui/Badge'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 interface CandidateResult {
   id: string

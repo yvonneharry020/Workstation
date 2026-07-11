@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import Link from 'next/link'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -188,7 +188,7 @@ export default function DashboardPage() {
       supabase.from('candidates').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),        // 2
       supabase.from('companies').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),         // 3
       supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('status', 'active'),                            // 4
-      supabase.from('flagged_content').select('*', { count: 'exact', head: true }).eq('status', 'open'),                   // 5
+      supabase.from('flagged_content').select('*', { count: 'exact', head: true }).eq('status', 'pending'),                // 5
       supabase.from('badge_disputes').select('*', { count: 'exact', head: true }).not('status', 'in', '("upheld","badge_removed")'), // 6
       supabase.from('candidates').select('*', { count: 'exact', head: true }).gte('created_at', todayIso),                 // 7
       supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'sent'),                   // 8
@@ -245,7 +245,7 @@ export default function DashboardPage() {
     { href: '/analytics',      label: 'Analytics',         count: null,        color: 'text-sky-400' },
     { href: '/staff',          label: 'Staff Members',     count: null,        color: 'text-violet-400' },
     { href: '/audit-log',      label: 'Audit Log',         count: null,        color: 'text-sky-400' },
-    { href: '/notifications',  label: 'Send Notification', count: null,        color: 'text-emerald-400' },
+    { href: '/ops/notifications', label: 'Send Notification', count: null,     color: 'text-emerald-400' },
     { href: '/system-config',  label: 'System Config',     count: null,        color: 'text-rose-400' },
   ]
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 type AdminDisputeStatus = 'open' | 'investigating' | 'upheld' | 'badge_removed' | 'info_requested'
 type MgmtCopyStatus = 'open' | 'resolved' | 'denied'

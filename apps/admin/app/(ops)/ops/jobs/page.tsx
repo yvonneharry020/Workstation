@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createTabClient } from '@/lib/supabase/tab-client'
 
-type JobStatus = 'draft' | 'active' | 'paused' | 'closed'
+type JobStatus = 'draft' | 'active' | 'paused' | 'closed' | 'expired' | 'pending' | 'rejected'
 
 interface Job {
   id: string
@@ -14,14 +14,19 @@ interface Job {
   applications_count: number
   application_deadline: string | null
   posted_by: string
-  company_profiles: { company_name: string | null }[] | null
+  company_profiles: { company_name: string | null } | null
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; classes: string }> = {
-  draft:   { label: 'Draft',   classes: 'bg-gray-900/30 text-gray-400 border-gray-700/30' },
-  active:  { label: 'Live',    classes: 'bg-green-900/20 text-green-400 border-green-800/30' },
-  paused:  { label: 'Paused',  classes: 'bg-amber-900/20 text-amber-400 border-amber-800/30' },
-  closed:  { label: 'Closed',  classes: 'bg-red-900/20 text-red-400 border-red-800/30' },
+  draft:    { label: 'Draft',    classes: 'bg-gray-900/30 text-gray-400 border-gray-700/30' },
+  active:   { label: 'Live',     classes: 'bg-green-900/20 text-green-400 border-green-800/30' },
+  paused:   { label: 'Paused',   classes: 'bg-amber-900/20 text-amber-400 border-amber-800/30' },
+  // A job past its deadline reads the same as an admin/company closure —
+  // both mean "not accepting applications anymore" to anyone looking at this list.
+  closed:   { label: 'Closed',   classes: 'bg-red-900/20 text-red-400 border-red-800/30' },
+  expired:  { label: 'Closed',   classes: 'bg-red-900/20 text-red-400 border-red-800/30' },
+  pending:  { label: 'Pending Review', classes: 'bg-blue-900/20 text-blue-400 border-blue-800/30' },
+  rejected: { label: 'Rejected', classes: 'bg-red-900/30 text-red-400 border-red-800/40' },
 }
 
 const FILTER_TABS = [
@@ -53,6 +58,7 @@ export default function JobQueuePage() {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [toggling, setToggling] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     void load()
@@ -104,23 +110,33 @@ export default function JobQueuePage() {
   async function toggleClose(job: Job) {
     if (toggling) return
     setToggling(job.id)
+    setActionError(null)
 
     const closing = job.status !== 'closed'
     const newStatus: JobStatus = closing ? 'closed' : 'active'
 
-    await supabase
+    const { error: updateErr } = await supabase
       .from('job_postings')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', job.id)
 
+    if (updateErr) {
+      setActionError(`Could not update job status: ${updateErr.message}`)
+      setToggling(null)
+      return
+    }
+
     if (closing) {
-      await supabase.from('notifications').insert({
+      const { error: notifyErr } = await supabase.from('notifications').insert({
         user_id: job.posted_by,
-        type: 'system',
-        title: 'Job Posting Closed by Admin',
-        body: `Your job posting "${job.title}" has been temporarily closed by the Workstation admin team following a review. No new candidates will be able to view or apply to this posting. If you have any questions or require further clarification, please contact us directly via the Live Chat feature in your dashboard and our team will assist you promptly.`,
+        type: 'job_closed_by_admin',
+        title: 'Job Posting Removed',
+        body: `The admin has removed your job post "${job.title}". If you have any questions, contact the admin via Live Chat for further assistance.`,
         data: { job_id: job.id },
       })
+      if (notifyErr) {
+        setActionError(`Job was closed, but the company could not be notified: ${notifyErr.message}`)
+      }
     }
 
     setJobs(prev =>
@@ -129,14 +145,18 @@ export default function JobQueuePage() {
     setToggling(null)
   }
 
-  const byStatus = filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
+  // 'expired' displays as "Closed" (same badge, same meaning to anyone
+  // reading this list), so the Closed filter tab must catch both.
+  const byStatus = filter === 'all'
+    ? jobs
+    : jobs.filter(j => filter === 'closed' ? (j.status === 'closed' || j.status === 'expired') : j.status === filter)
   const filtered = search.trim() === ''
     ? byStatus
     : byStatus.filter(j => {
         const q = search.toLowerCase()
         return (
           j.title.toLowerCase().includes(q) ||
-          (j.company_profiles?.[0]?.company_name ?? '').toLowerCase().includes(q)
+          (j.company_profiles?.company_name ?? '').toLowerCase().includes(q)
         )
       })
 
@@ -148,6 +168,9 @@ export default function JobQueuePage() {
           <p className="text-sm text-text-muted mt-1">
             All job postings across every company on Workstation. Applications and status update in real time.
           </p>
+          {actionError && (
+            <p className="text-xs text-red-400 mt-2 bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-1.5 inline-block">{actionError}</p>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="relative">
@@ -232,7 +255,7 @@ export default function JobQueuePage() {
                   className={`border-b border-surface-border/50 transition-colors hover:bg-surface-elevated/60 ${i % 2 !== 0 ? 'bg-surface-elevated/20' : ''}`}
                 >
                   <td className="px-4 py-3 font-medium text-text-primary whitespace-nowrap">
-                    {job.company_profiles?.[0]?.company_name ?? <span className="text-text-muted italic">Unknown</span>}
+                    {job.company_profiles?.company_name ?? <span className="text-text-muted italic">Unknown</span>}
                   </td>
                   <td className="px-4 py-3 text-text-secondary max-w-[180px] truncate">{job.title}</td>
                   <td className="px-4 py-3">

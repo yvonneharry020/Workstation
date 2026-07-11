@@ -156,10 +156,11 @@ export default function CompanyStep2() {
     }
 
     try {
+      // overall_status is computed server-side by a trigger from cac_status —
+      // no need to set it here.
       await supabase.from('company_verification').upsert({
         company_id: currentUser.id,
         cac_status: 'pending',
-        overall_status: 'pending',
       }, { onConflict: 'company_id' })
 
       await new Promise((res) => setTimeout(res, 2500))
@@ -182,7 +183,6 @@ export default function CompanyStep2() {
         cac_status: 'approved',
         cac_verified_at: new Date().toISOString(),
         cac_result: cacResult,
-        overall_status: 'pending',
       }, { onConflict: 'company_id' })
 
       if (error) throw error

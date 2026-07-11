@@ -9,6 +9,7 @@ import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Svg, { Path, Rect } from 'react-native-svg'
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
@@ -22,6 +23,7 @@ type NotificationType =
   | 'badge_revoked'
   | 'verification_approved'
   | 'verification_rejected'
+  | 'job_closed_by_admin'
 
 interface Notification {
   id: string
@@ -51,6 +53,7 @@ const TYPE_CONFIG: Record<NotificationType, { color: string }> = {
   badge_revoked: { color: '#EF4444' },
   verification_approved: { color: '#22C55E' },
   verification_rejected: { color: '#EF4444' },
+  job_closed_by_admin: { color: '#EF4444' },
 }
 
 function NotificationIcon({ type, color }: { type: NotificationType; color: string }) {
@@ -132,6 +135,45 @@ function StickyBroadcast({ item }: { item: Broadcast }) {
   )
 }
 
+// Same pinned/red treatment as StickyBroadcast, for the one per-company
+// notification type that's urgent enough to always show at the top
+// regardless of when it was sent — an admin removing a company's job post.
+function PinnedNotification({ item, onDismiss }: { item: Notification; onDismiss: (id: string) => void }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(280)}>
+      <View style={{
+        backgroundColor: '#FEF2F2',
+        borderRadius: 14,
+        borderWidth: 1.5,
+        borderColor: '#FECACA',
+        borderLeftWidth: 4,
+        borderLeftColor: '#EF4444',
+        padding: 14,
+        marginBottom: 8,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <View style={{ backgroundColor: '#EF4444', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
+            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>📌 PINNED</Text>
+          </View>
+        </View>
+        <Text style={{ color: '#1A1625', fontSize: 14, fontWeight: '700', marginBottom: 4, lineHeight: 20 }}>
+          {item.title}
+        </Text>
+        <Text style={{ color: '#5A4F6E', fontSize: 12, lineHeight: 18, marginBottom: 10 }}>{item.body}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Pressable onPress={() => router.push('/(company)/support-chat')} className="active:opacity-70">
+            <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '700' }}>Contact Admin via Live Chat →</Text>
+          </Pressable>
+          <Pressable onPress={() => onDismiss(item.id)} className="active:opacity-70">
+            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600' }}>Dismiss</Text>
+          </Pressable>
+        </View>
+        <Text style={{ color: '#94A3B8', fontSize: 10, marginTop: 6 }}>{timeAgo(item.created_at)}</Text>
+      </View>
+    </Animated.View>
+  )
+}
+
 export default function NotificationsScreen() {
   const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
@@ -193,6 +235,29 @@ export default function NotificationsScreen() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
+
+  // New notifications/broadcasts should appear the moment they're sent, not
+  // only after the next manual refresh — subscribe to both tables for this user.
+  useEffect(() => {
+    if (!user?.id) return
+    const channel = supabase
+      .channel(`company-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => void queryClient.invalidateQueries({ queryKey: ['notifications', user.id] })
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin_broadcasts' },
+        () => void queryClient.invalidateQueries({ queryKey: ['admin-broadcasts-company'] })
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [user?.id, queryClient])
+
+  const pinnedNotifications = (notifications ?? []).filter((n) => n.type === 'job_closed_by_admin' && !n.read_at)
+  const listNotifications = (notifications ?? []).filter((n) => !(n.type === 'job_closed_by_admin' && !n.read_at))
 
   const unreadCount = (notifications ?? []).filter((n) => !n.read_at).length + broadcasts.length
 
@@ -264,20 +329,23 @@ export default function NotificationsScreen() {
         </View>
       ) : (
         <FlatList
-          data={notifications ?? []}
+          data={listNotifications}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 48 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            broadcasts.length > 0 ? (
+            pinnedNotifications.length > 0 || broadcasts.length > 0 ? (
               <View>
+                {pinnedNotifications.map(n => (
+                  <PinnedNotification key={n.id} item={n} onDismiss={(id) => markReadMutation.mutate(id)} />
+                ))}
                 {broadcasts.map(b => <StickyBroadcast key={b.id} item={b} />)}
               </View>
             ) : null
           }
           ListEmptyComponent={
-            broadcasts.length > 0 ? null : (
+            pinnedNotifications.length > 0 || broadcasts.length > 0 ? null : (
               <View className="items-center justify-center py-20">
                 <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#EDE7DB', borderWidth: 1, borderColor: '#DDD6C9', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                   <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">

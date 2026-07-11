@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import TopBar from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 type DisputeStatus = 'pending' | 'resolved' | 'denied' | 'info_requested'
 type DisputePriority = 'low' | 'medium' | 'high'

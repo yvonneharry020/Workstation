@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import { computeSessionPay, formatDuration } from '@/lib/clock-utils'
 import {
   Download, RefreshCw, CheckCircle, DollarSign,

@@ -9,7 +9,7 @@ import {
   Layers, Shield, BookOpen, PlayCircle, Timer, TrendingUp, Clock, CalendarClock, Database,
 } from 'lucide-react'
 import { useTheme } from '@/components/providers/ThemeProvider'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import LogoutButton from '@/components/auth/LogoutButton'
 import { useStaffInfo } from '@/lib/staff-cookies'
 import SessionWatcher from '@/components/auth/SessionWatcher'

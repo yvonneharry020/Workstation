@@ -20,6 +20,16 @@ function getTabEmail(): string | null {
   }
 }
 
+// Every 'use client' component on a page (Sidebar, ThemeProvider, the page
+// itself, ...) calls createTabClient() independently. A GoTrueClient is
+// stateful (it owns a refresh timer and an in-memory session), and Supabase's
+// own guidance is that multiple live instances sharing a storage key produce
+// undefined behavior — so this must be a real singleton per tab, not a fresh
+// client per caller. Cached at module scope, which is exactly "per tab" for
+// client-side code, and re-created only if the tab's active account changes.
+let cachedClient: ReturnType<typeof createClient> | ReturnType<typeof createBrowserClient> | null = null
+let cachedSlotKey: string | null = null
+
 /**
  * Returns a Supabase client that uses THIS tab's account token.
  *
@@ -34,20 +44,31 @@ export function createTabClient() {
   }
 
   const email = getTabEmail()
+
   if (!email) {
     // No tab session — fall back to the SSR browser client which reads the
     // shared Supabase cookie. This covers: users already logged in before
     // this multi-account system was deployed, page reloads in new tabs, etc.
-    return createBrowserClient(SUPABASE_URL, SUPABASE_ANON)
+    if (cachedClient && cachedSlotKey === '__shared__') return cachedClient
+    cachedClient = createBrowserClient(SUPABASE_URL, SUPABASE_ANON)
+    cachedSlotKey = '__shared__'
+    return cachedClient
   }
 
   const slotKey = tokenKey(email)
+  if (cachedClient && cachedSlotKey === slotKey) return cachedClient
 
-  return createClient(SUPABASE_URL, SUPABASE_ANON, {
+  cachedClient = createClient(SUPABASE_URL, SUPABASE_ANON, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+      // Without this, GoTrue falls back to its default internal identifier
+      // for every instance regardless of which account's storage it reads/
+      // writes — every tab-scoped client then collides under the same name,
+      // logging "Multiple GoTrueClient instances" and cross-talking on the
+      // internal auth BroadcastChannel used for token-refresh sync.
+      storageKey: slotKey,
       storage: {
         getItem(_key: string) {
           return localStorage.getItem(slotKey)
@@ -61,6 +82,8 @@ export function createTabClient() {
       },
     },
   })
+  cachedSlotKey = slotKey
+  return cachedClient
 }
 
 /** Save a session to the per-account localStorage slot at login time */

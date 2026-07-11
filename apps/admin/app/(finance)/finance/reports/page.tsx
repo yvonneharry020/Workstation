@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 
 const VAT_RATE = 0.075

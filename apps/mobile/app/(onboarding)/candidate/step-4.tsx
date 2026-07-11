@@ -131,6 +131,11 @@ export default function CandidateStep4() {
     await supabase.from('candidate_profiles').update({
       liveness_verified: true,
     }).eq('id', user.id)
+    await supabase.from('candidate_verification').upsert({
+      candidate_id: user.id,
+      liveness_status: 'approved',
+      liveness_verified_at: new Date().toISOString(),
+    }, { onConflict: 'candidate_id' })
   }
 
   const handleStart = () => {

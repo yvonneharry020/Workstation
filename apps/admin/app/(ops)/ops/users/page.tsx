@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 
 interface User {
   id: string
@@ -12,11 +12,13 @@ interface User {
   created_at: string
   type: 'candidate' | 'company'
   name?: string
+  avatar_url: string | null
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  verified: 'bg-green-900/20 text-green-400 border-green-800/30',
+  approved: 'bg-green-900/20 text-green-400 border-green-800/30',
   pending: 'bg-yellow-900/20 text-yellow-400 border-yellow-800/30',
+  in_review: 'bg-blue-900/20 text-blue-400 border-blue-800/30',
   rejected: 'bg-red-900/20 text-red-400 border-red-800/30',
   suspended: 'bg-red-900/30 text-red-400 border-red-800/40',
 }
@@ -37,13 +39,17 @@ export default function OpsUsersPage() {
   useEffect(() => { void load() }, [])
 
   async function load() {
-    const [{ data: candData }, { data: compData }] = await Promise.all([
+    const [{ data: candData }, { data: compData }, { data: avatarData }, { data: logoData }] = await Promise.all([
       supabase.from('candidates').select('id,full_name,email,verification_status,trust_score,created_at').order('created_at', { ascending: false }),
       supabase.from('companies').select('id,name,email,verification_status,created_at').order('created_at', { ascending: false }),
+      supabase.from('candidate_profiles').select('id,avatar_url'),
+      supabase.from('company_profiles').select('id,logo_url'),
     ])
+    const avatarMap = new Map((avatarData ?? []).map((r: { id: string; avatar_url: string | null }) => [r.id, r.avatar_url]))
+    const logoMap = new Map((logoData ?? []).map((r: { id: string; logo_url: string | null }) => [r.id, r.logo_url]))
     const all: User[] = [
-      ...((candData ?? []) as User[]).map(u => ({ ...u, type: 'candidate' as const })),
-      ...((compData ?? []) as unknown as (User & { name: string })[]).map(u => ({ ...u, full_name: u.name, type: 'company' as const })),
+      ...((candData ?? []) as User[]).map(u => ({ ...u, avatar_url: avatarMap.get(u.id) ?? null, type: 'candidate' as const })),
+      ...((compData ?? []) as unknown as (User & { name: string })[]).map(u => ({ ...u, full_name: u.name, trust_score: null, avatar_url: logoMap.get(u.id) ?? null, type: 'company' as const })),
     ]
     setUsers(all)
     setLoading(false)
@@ -152,9 +158,20 @@ export default function OpsUsersPage() {
                 {filtered.map(user => (
                   <tr key={user.id} className="hover:bg-surface-elevated/50 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-text-primary">{user.full_name}</p>
-                      <p className="text-xs text-text-muted">{user.email}</p>
-                      {warnMsg[user.id] && <p className="text-xs text-green-400 mt-0.5">{warnMsg[user.id]}</p>}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-ops-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {user.avatar_url
+                            ? // eslint-disable-next-line @next/next/no-img-element
+                              <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                            : <span className="text-ops-400 text-xs font-bold">{user.full_name?.[0]?.toUpperCase() ?? '?'}</span>
+                          }
+                        </div>
+                        <div>
+                          <p className="font-semibold text-text-primary">{user.full_name}</p>
+                          <p className="text-xs text-text-muted">{user.email}</p>
+                          {warnMsg[user.id] && <p className="text-xs text-green-400 mt-0.5">{warnMsg[user.id]}</p>}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${user.type === 'candidate' ? 'bg-blue-900/20 text-blue-400 border-blue-800/30' : 'bg-purple-900/20 text-purple-400 border-purple-800/30'}`}>{user.type}</span>

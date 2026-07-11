@@ -3,7 +3,7 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { LogOut } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createTabClient as createClient } from '@/lib/supabase/tab-client'
 import { logoutSingleAction } from '@/lib/auth-actions'
 import { removeAccountToken } from '@/lib/supabase/tab-client'
 

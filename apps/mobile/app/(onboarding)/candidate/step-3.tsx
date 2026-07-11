@@ -104,10 +104,13 @@ export default function CandidateStep3() {
 
         if (passed && user?.id) {
           await supabase.from('candidate_profiles').update({
-            nin_submitted: true,
             nin_verified: true,
-            verification_status: 'nin_verified',
           }).eq('id', user.id)
+          await supabase.from('candidate_verification').upsert({
+            candidate_id: user.id,
+            nin_status: 'approved',
+            nin_verified_at: new Date().toISOString(),
+          }, { onConflict: 'candidate_id' })
         }
         return
       }
