@@ -131,15 +131,6 @@ function SectionLabel({ title }: { title: string }) {
   )
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#EDE9E0' }}>
-      <Text style={{ color: '#94A3B8', fontSize: 12, width: 90, flexShrink: 0 }}>{label}</Text>
-      <Text style={{ color: '#1A1625', fontSize: 13, flex: 1, fontWeight: '500' }}>{value}</Text>
-    </View>
-  )
-}
-
 function formatPeriod(start: string, end: string | null, isCurrent: boolean): string {
   const fmt = (d: string) => new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
   return `${fmt(start)} – ${isCurrent ? 'Present' : (end ? fmt(end) : '')}`

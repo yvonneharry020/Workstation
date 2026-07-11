@@ -6,6 +6,8 @@ Sentry.init({
   environment: process.env.NODE_ENV ?? 'development',
   debug: false,
 })
+
+/* eslint-disable import/first -- Sentry must init before anything else runs, so these imports intentionally come after it */
 import { View, Modal, Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -40,6 +42,7 @@ import { OfflineScreen } from '@/components/system/OfflineScreen'
 import { UpdateRequiredScreen } from '@/components/system/UpdateRequiredScreen'
 import { MaintenanceScreen } from '@/components/system/MaintenanceScreen'
 import type { UserRole } from '@workstation/types'
+/* eslint-enable import/first */
 
 // Register third-party components so NativeWind className prop is handled correctly.
 // These are not in css-interop's built-in registry (only plain RN components are).

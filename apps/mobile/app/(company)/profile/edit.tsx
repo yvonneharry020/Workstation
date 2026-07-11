@@ -101,14 +101,6 @@ function PlusIcon() {
   )
 }
 
-function TrashIcon() {
-  return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-    </Svg>
-  )
-}
-
 function SectionLabel({ children }: { children: string }) {
   return (
     <Text style={{ color: '#5A4F6E', fontSize: 11, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 12, marginTop: 8 }}>

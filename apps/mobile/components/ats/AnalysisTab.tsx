@@ -108,6 +108,8 @@ function AnimatedSlice({ slice, delay }: { slice: SliceData; delay: number }) {
   useEffect(() => {
     opacity.value = withDelay(delay, withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) }))
     scale.value   = withDelay(delay, withTiming(1, { duration: 420, easing: Easing.out(Easing.back(1.2)) }))
+    // entrance animation must fire once on mount only, not replay on every re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const animStyle = useAnimatedStyle(() => ({
@@ -202,6 +204,8 @@ export function AnalysisTab({ rows }: Props) {
   const centerOpacity = useSharedValue(0)
   useEffect(() => {
     centerOpacity.value = withDelay(280, withTiming(1, { duration: 480 }))
+    // entrance animation must fire once on mount only, not replay on every re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const centerStyle = useAnimatedStyle(() => ({ opacity: centerOpacity.value }))
 

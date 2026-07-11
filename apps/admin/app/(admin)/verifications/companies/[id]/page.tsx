@@ -334,7 +334,7 @@ export default function CompanyVerificationDetailPage() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <TopBar title="Not Found" subtitle="Company not found" />
         <div style={{ padding: '48px 32px', textAlign: 'center', color: 'var(--tx-3)', fontSize: 14 }}>
-          <p>This company profile doesn't exist or was deleted.</p>
+          <p>This company profile doesn&apos;t exist or was deleted.</p>
           <button onClick={() => router.push('/verifications')} style={{ marginTop: 16, padding: '8px 18px', borderRadius: 10, border: 'none', backgroundColor: '#6366F1', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>
             ← Back to Queue
           </button>
@@ -437,7 +437,7 @@ export default function CompanyVerificationDetailPage() {
           <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: '32px 24px', textAlign: 'center' }}>
             <p style={{ fontSize: 28, marginBottom: 10 }}>⏳</p>
             <p style={{ color: 'var(--tx-1)', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>No verification started</p>
-            <p style={{ color: 'var(--tx-3)', fontSize: 13 }}>This company hasn't gone through any verification steps yet.</p>
+            <p style={{ color: 'var(--tx-3)', fontSize: 13 }}>This company hasn&apos;t gone through any verification steps yet.</p>
           </div>
         )}
 

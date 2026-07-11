@@ -17,15 +17,6 @@ import Svg, { Path } from 'react-native-svg'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 
-interface JobApplicationStep1Form {
-  fullName: string
-  email: string
-  location: string
-  phone: string
-  role: string
-  coverLetter: string
-}
-
 interface JobInfo {
   id: string
   title: string

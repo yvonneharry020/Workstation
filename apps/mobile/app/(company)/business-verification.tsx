@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  TextInput,
   ActivityIndicator,
   Alert,
   Platform,
@@ -81,7 +80,6 @@ export default function BusinessVerificationScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [videoUri, setVideoUri] = useState<string | null>(null)
   const [videoName, setVideoName] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { data: verification, isLoading } = useQuery({
     queryKey: ['business-verification', user?.id],

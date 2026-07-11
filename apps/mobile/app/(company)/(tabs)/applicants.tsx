@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  TextInput,
   RefreshControl,
   ScrollView,
   StatusBar,
